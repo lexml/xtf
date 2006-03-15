@@ -62,7 +62,6 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Hits;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.spell.SpellWriter;
 import org.apache.lucene.store.FSDirectory;
 
 import org.apache.lucene.analysis.*;
@@ -376,9 +375,6 @@ public class XMLTextProcessor extends DefaultHandler
    */
   private IndexWriter indexWriter;
   
-  /** Queues words for spelling dictionary creator */
-  private SpellWriter spellWriter;
-  
   /** Maximum number of document deletions to do in a single batch */
   private static final int MAX_DELETION_BATCH = 50;
   
@@ -633,12 +629,11 @@ public class XMLTextProcessor extends DefaultHandler
   public void close() throws IOException
 
   {
-      if( spellWriter   != null ) spellWriter.close();
+      
       if( indexWriter   != null ) indexWriter.close();
       if( indexSearcher != null ) indexSearcher.close();
       if( indexReader   != null ) indexReader.close();
       
-      spellWriter   = null;
       indexWriter   = null;
       indexSearcher = null;
       indexReader   = null;
@@ -3731,10 +3726,6 @@ public class XMLTextProcessor extends DefaultHandler
         indexWriter.close();
     indexWriter = null;
     
-    if( spellWriter != null )
-        spellWriter.close();
-    spellWriter = null;
-      
     if( indexReader == null )
         indexReader = IndexReader.open( indexPath );
     
@@ -3791,18 +3782,6 @@ public class XMLTextProcessor extends DefaultHandler
     //
     IndexWriter.COMMIT_LOCK_TIMEOUT = 60 * 1000;
 
-    // If requested to make a spellcheck dictionary for this index, attach 
-    // a spelling writer to the text analyzer, so that tokenized words get 
-    // passed to it and queued.
-    //
-    if( indexInfo.createSpellcheckDict ) {
-        if( spellWriter == null ) {
-            spellWriter = new SpellWriter();
-            spellWriter.open( indexPath + "spellDict/" );
-        }
-        analyzer.setSpellWriter( spellWriter );
-    }
-    
   } // private openIdxForWriting()  
 
 

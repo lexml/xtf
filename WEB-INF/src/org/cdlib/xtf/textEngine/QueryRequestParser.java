@@ -247,8 +247,6 @@ public class QueryRequestParser
                 continue;
             else if( "facet".equalsIgnoreCase(el.name()) )
                 parseFacetSpec( el );
-            else if( "spellcheck".equalsIgnoreCase(el.name()) )
-                parseSpellcheck( el );
             else if( "resultData".equalsIgnoreCase(el.name()) )
                 continue;
             else {
@@ -352,53 +350,6 @@ public class QueryRequestParser
         groupSpecs.add( fs );
         
     } // parseFacetSpec
-    
-    
-    /**
-     * Parses a 'spellcheck' element and adds a SpellcheckParams to the query.
-     * 
-     * @param el  The 'spellcheck' element to parse
-     */
-    void parseSpellcheck( EasyNode el ) 
-    {
-        SpellcheckParams params = new SpellcheckParams();
-        
-        // Process all the attributes.
-        FacetSpec fs = new FacetSpec();
-        for( int i = 0; i < el.nAttrs(); i++ ) 
-        {
-            String attr = el.attrName(i);
-            
-            if( attr.equalsIgnoreCase("suggestionsPerTerm") )
-                params.suggestionsPerTerm = parseIntAttrib( el, attr );
-            else if( attr.equalsIgnoreCase("fields") ||
-                     attr.equalsIgnoreCase("field") )
-            {
-            }
-            else if( attr.equalsIgnoreCase("docScoreCutoff") )
-                params.docScoreCutoff = parseFloatAttrib( el, attr );
-            else if( attr.equalsIgnoreCase("totalDocsCutoff") )
-                params.totalDocsCutoff = parseIntAttrib( el, attr );
-            else if( attr.equalsIgnoreCase("termOccurrenceFactor") ||
-                     attr.equalsIgnoreCase("termOcurrenceFactor") ||
-                     attr.equalsIgnoreCase("termOccurenceFactor") )
-            {
-                params.termOccurrenceFactor = parseFloatAttrib( el, attr );
-            }
-            else if( attr.equalsIgnoreCase("accuracy") )
-                params.accuracy = parseFloatAttrib( el, attr );
-            else
-                error( "Unknown attribute '" + attr + "' on '" + el.name() + "' element" );
-        } // for i
-        
-        // Make sure the number of suggestions was specified.
-        if( params.suggestionsPerTerm <= 0 )
-            error( "'" + el.name() + "' element requires 'suggestionsPerTerm' attribute" );
-        
-        // Finally, add the new params to the query.
-        req.spellcheckParams = params;
-        
-    } // parseSpellcheck
     
     
     /**

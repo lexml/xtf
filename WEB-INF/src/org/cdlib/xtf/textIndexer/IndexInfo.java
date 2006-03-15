@@ -128,9 +128,6 @@ public class IndexInfo
    */
   public String accentMapPath;
   
-  /** Whether to create a spellcheck dictionary for this index */
-  public boolean createSpellcheckDict = false;
-  
   /** Text chunk attribute array. Currently this array consists of two entries:
    *  <br><br>
    * 

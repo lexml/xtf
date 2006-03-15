@@ -44,7 +44,6 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Hits;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.spell.SpellReader;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.cdlib.xtf.util.CharMap;
@@ -78,9 +77,6 @@ public class XtfSearcher
     
     /** Keeps track of which chunks belong to which documents */
     private DocNumMap     docNumMap;
-    
-    /** Fetching spelling suggestions */
-    private SpellReader   spellReader;
     
     /** Max # of words in a chunk */
     private int           chunkSize;
@@ -188,13 +184,6 @@ public class XtfSearcher
             accentMap = new CharMap( stream );
         }
         
-        // If there's a spelling correction dictionary, attach to it.
-        File spellDir = new File( indexPath, "spellDict" );
-        if( spellDir.isDirectory() ) {
-            FSDirectory dir = FSDirectory.getDirectory(spellDir, false);
-            spellReader = new SpellReader( dir );
-        }
-
         // Determine whether this is a "sparse" index. Our definition of
         // sparse is that there are more than 5 chunks per document, meaning
         // that meta-data sorting and grouping will waste a lot of memory
@@ -265,12 +254,6 @@ public class XtfSearcher
     }
     
     
-    public SpellReader spellReader() 
-    {
-        return spellReader;
-    }
-    
-    
     /** 
      * Find out if the index is sparse (i.e. more than 5 chunks per doc)
      */
@@ -288,11 +271,6 @@ public class XtfSearcher
         if( indexReader != null ) {
             indexReader.close();
             indexReader = null;
-        }
-        
-        if( spellReader != null ) {
-            spellReader.close();
-            spellReader = null;
         }
         
         curVersion = -99;

@@ -85,9 +85,6 @@ public class QueryRequest implements Cloneable
     /** Experimental, and probably temporary: Boost set info */
     public BoostSetParams boostSetParams = null;
     
-    /** Experimental: provide spelling suggestions */
-    public SpellcheckParams spellcheckParams = null;
-    
     /** Optional: the <parameters> block sent to the query parser stylesheet */
     public String     parserInput = null;
     

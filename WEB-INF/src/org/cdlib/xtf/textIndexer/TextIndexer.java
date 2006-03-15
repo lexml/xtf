@@ -373,29 +373,6 @@ public class TextIndexer
       }
         
       
-      // Create spelling dictionaries, now that we're done indexing.
-      if( cfgInfo.updateSpellDict ) {
-        
-        // Create a tree culler.
-        IdxTreeDictMaker dictMaker = new IdxTreeDictMaker();
-       
-        Trace.info("");
-        Trace.info( "Updating Spellcheck Dictionary:" );
-        Trace.tab();
-        
-        File idxRootDir = new File( cfgInfo.indexInfo.indexPath );      
-        dictMaker.processDir( idxRootDir );
-        
-        Trace.untab();
-        Trace.info( "Done." );
-        
-      }
-      else {
-        Trace.info("");
-        Trace.info( "Skipping Spellcheck Dictionary Pass." );
-      }
-        
-      
       Trace.untab();
       Trace.info("");
       
