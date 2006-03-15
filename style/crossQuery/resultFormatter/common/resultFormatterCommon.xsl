@@ -177,13 +177,6 @@
   <!-- XML Output Parameter -->
   <xsl:param name="raw"/>
   
-  <!-- Score normalization and explanation -->
-  <xsl:param name="normalizeScores"/>
-  <xsl:param name="explainScores"/>
-   
-  <!-- Recommendation parameters -->
-  <xsl:param name="maxRecords" as="xs:integer" select="5"/>
-  
   <!-- Retrieve Branding Nodes -->
   <xsl:variable name="brand.file">
     <xsl:choose>
@@ -1100,10 +1093,10 @@
       <search count="{@totalDocs}" queryString="{$queryString}">
         <xsl:for-each select="docHit">
           <xsl:sort select="number(@rank)" />
-          <hit sysID="{meta/sysID}"
+          <hit ark="{replace(@path, '.+/([A-Za-z0-9]+)/.+', '$1')}"
             rank="{@rank}"
             score="{@score}"
-            totalHits="{count(.//hit)}"/>
+            totalHits="{@totalHits}"/>
         </xsl:for-each>
       </search>
     </xsl:result-document>
