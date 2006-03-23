@@ -557,9 +557,6 @@
       <td align="center">
         <span class="heading">
           <xsl:value-of select="@score"/>
-          <xsl:if test="not(matches($normalizeScores, 'no|false'))">
-            <xsl:text>%</xsl:text>
-          </xsl:if>
         </span>
       </td>
     </tr>
