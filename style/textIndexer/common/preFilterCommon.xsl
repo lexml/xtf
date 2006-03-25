@@ -321,28 +321,29 @@
     <newKeyword xtf:meta="true" xtf:store="no">
       <xsl:for-each select="title">
         <xsl:value-of select="string(.)"/>
+        <xsl:text> </xsl:text>
       </xsl:for-each>
-      <xsl:text> </xsl:text>
       <xsl:for-each select="creator">
         <xsl:value-of select="string(.)"/>
+        <xsl:text> </xsl:text>
       </xsl:for-each>
-      <xsl:text> </xsl:text>
       <xsl:for-each select="subject">
         <xsl:value-of select="string(.)"/>
+        <xsl:text> </xsl:text>
       </xsl:for-each>
-      <xsl:text> </xsl:text>
       <xsl:for-each select="description">
         <xsl:value-of select="string(.)"/>
+        <xsl:text> </xsl:text>
       </xsl:for-each>
-      <xsl:text> </xsl:text>
       <xsl:for-each select="publisher">
         <xsl:value-of select="string(.)"/>
+        <xsl:text> </xsl:text>
       </xsl:for-each>
     </newKeyword>  
   </xsl:template>
 
 <!-- ====================================================================== -->
-<!-- Functions                                                              -->
+<!-- Functions                                                                                                                                             -->
 <!-- ====================================================================== -->
   
   <!-- Function to parse normalized titles out of dc:title -->  
