@@ -84,6 +84,9 @@
             <xsl:when test="$sort='year'">
               <xsl:value-of select="'sort-year,sort-title,sort-creator,sort-publisher'"/>
             </xsl:when>              
+            <xsl:when test="$sort='reverse-year'">
+              <xsl:value-of select="'-sort-year,sort-title,sort-creator,sort-publisher'"/>
+            </xsl:when>              
             <xsl:when test="$sort='creator'">
               <xsl:value-of select="'sort-creator,sort-year,sort-title'"/>
             </xsl:when>
@@ -117,6 +120,7 @@
           <xsl:call-template name="moreLike"/>
         </xsl:when>
         <xsl:otherwise>
+          <xsl:call-template name="spellcheck"/>
           <xsl:apply-templates/>
         </xsl:otherwise>
       </xsl:choose>
@@ -151,7 +155,19 @@
       <!-- Process the text query, if any -->
       <xsl:if test="count($textParam) &gt; 0">
         <xsl:apply-templates select="$textParam"/>
-      </xsl:if>     
+      </xsl:if>   <!-- Unary Not -->
+      <xsl:for-each select="param[contains(@name, '-exclude')]">
+        <xsl:variable name="field" select="replace(@name, '-exclude', '')"/>
+        <xsl:if test="not(//param[@name=$field])">
+          <not field="{$field}">
+            <xsl:apply-templates/>
+          </not>
+        </xsl:if>
+      </xsl:for-each>  
+      <!-- If there are no meta, text queries, or unary nots, output a dummy -->
+      <xsl:if test="count($metaParams) = 0 and count($textParam) = 0 and not(param[matches(@name, '.*-exclude')])">
+        <term field="text">$!@$$@!$</term>
+      </xsl:if>
     </and>
     
   </xsl:template>

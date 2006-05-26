@@ -1874,14 +1874,7 @@ public class XMLTextProcessor extends DefaultHandler
   
   {
 
-      // Increment the tag ID (count) for the new node we encountered, and
-      // reset the accumulated word count for this node.
-      //
-      incrementNode();
-      
-      // Build the lazy tree along the way.
-      if( lazyHandler != null )
-          lazyHandler.processingInstruction( target, data );
+      // Filter out processing instructions.
 
   } // processingInstruction()
   
@@ -3282,6 +3275,9 @@ public class XMLTextProcessor extends DefaultHandler
         // If the current attribute is the section type, get it.      
         if( attName.equalsIgnoreCase("sectionType") )
             sectionTypeStr = atts.getValue(i);
+        
+        else if( attName.equalsIgnoreCase("sectionTypeAdd") )
+            sectionTypeStr += " " + atts.getValue(i);
         
         // If the current attribute is the section bump, get it.    
         else if( attName.equalsIgnoreCase("sectionBump") ) {

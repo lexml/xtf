@@ -654,7 +654,13 @@ public abstract class TextServlet extends HttpServlet
             ((Controller)trans).makePipelineConfiguration(),
             trans.getOutputProperties() );
         
-        return new SessionURLRewriter( target, req, res );
+        TextConfig config = getConfig();
+        if( config.trackSessions )
+            return new SessionURLRewriter( target, 
+                                           config.sessionEncodeURLPattern, 
+                                           req, res );
+        else
+            return target;
     } // createFilteredReceiver
 
     /**

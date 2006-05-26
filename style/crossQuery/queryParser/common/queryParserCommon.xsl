@@ -365,9 +365,19 @@
   
   <xsl:template name="moreLike">
     <xsl:variable name="identifier" select="string(//param[@name='identifier']/@value)"/>
-    <moreLike>
+    <moreLike fields="title,subject">
       <term field="identifier"><xsl:value-of select="$identifier"/></term>
     </moreLike>
   </xsl:template>
     
+<!-- ====================================================================== -->
+<!-- Spellcheck Template                                                    -->
+<!--                                                                        -->
+<!-- Specifies parameters for spellcheck of search terms.                   -->
+<!-- ====================================================================== -->
+
+  <xsl:template name="spellcheck">
+    <spellcheck suggestionsPerTerm="1"/>
+  </xsl:template>
+  
 </xsl:stylesheet>
