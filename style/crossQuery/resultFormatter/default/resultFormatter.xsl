@@ -141,7 +141,7 @@
           </xsl:analyze-string>
         </xsl:when>
         <xsl:otherwise>
-          <xsl:value-of select="concat($queryString, 'smode=simple-modify')"/>
+          <xsl:value-of select="concat($queryString, '&amp;smode=simple-modify')"/>
         </xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
@@ -177,9 +177,7 @@
                   Bag contents
                 </xsl:when>
                 <xsl:otherwise>
-                  <xsl:call-template name="format-query">
-                    <xsl:with-param name="query" select="$query"/>
-                  </xsl:call-template>
+                  <xsl:call-template name="format-query"/>
                 </xsl:otherwise>
               </xsl:choose>
             </td>
@@ -204,7 +202,9 @@
             <form class="search-form" method="get" action="{$xtfURL}{$crossqueryPath}">
               <td align="left" valign="bottom">
                 <xsl:call-template name="sort.options"/>
-                <xsl:call-template name="hidden.query"/>
+                <xsl:call-template name="hidden.query">
+                  <xsl:with-param name="queryString" select="replace($queryString, 'sort=[^&amp;]+&amp;', '')"/>
+                </xsl:call-template>
                 <input type="submit" value="Go!"/>
               </td>
             </form>
@@ -488,9 +488,12 @@
   
   <xsl:template match="docHit">
 
+    <xsl:variable name="path" select="@path"/>
+    
     <xsl:variable name="fullark" select="meta/identifier[1]"/>
     <xsl:variable name="ark" select="substring($fullark, string-length($fullark)-9)"/>
     <xsl:variable name="quotedArk" select="concat('&quot;', $ark, '&quot;')"/>
+    
     <xsl:variable name="collection" select="string(meta/collection)"/>
 
     <!-- The identifier stored in the index is the full ark minus "http:/cdlib/ark:/" -->    
@@ -513,7 +516,7 @@
     <tr>
       <td align="right" width="4%">
         <xsl:choose>
-          <xsl:when test="$sort != 'title' and $sort != 'creator' and $sort != 'year'">
+          <xsl:when test="$sort = ''">
             <span class="heading"><xsl:value-of select="@rank"/></span>
           </xsl:when>
           <xsl:otherwise>
@@ -548,7 +551,7 @@
         <a>
           <xsl:attribute name="href">
             <xsl:call-template name="dynaxml.url">
-              <xsl:with-param name="fullark" select="$fullark"/>
+              <xsl:with-param name="path" select="$path"/>
             </xsl:call-template>
           </xsl:attribute>
           <xsl:apply-templates select="meta/title[1]"/>
@@ -557,6 +560,9 @@
       <td align="center">
         <span class="heading">
           <xsl:value-of select="@score"/>
+          <xsl:if test="not(matches($normalizeScores, 'no|false'))">
+            <xsl:text>%</xsl:text>
+          </xsl:if>
         </span>
       </td>
     </tr>
@@ -568,16 +574,7 @@
         <span class="heading">Collection:&#160;&#160;</span>
       </td>
       <td align="left">
-        <!-- THIS NEEDS WORK -->
-        <xsl:choose>
-          <xsl:when test="contains(meta/relation[2], 'escholarship')">
-            <xsl:text>eScholarship Editions&#160;&#160;</xsl:text>
-          </xsl:when>
-          <xsl:otherwise>
-            <xsl:apply-templates select="meta/relation[1]"/>
-            <xsl:text>&#160;&#160;</xsl:text>
-          </xsl:otherwise>
-        </xsl:choose>
+        <xsl:apply-templates select="meta/relation[1]"/>
       </td>
       <td align="right">
         <xsl:text>&#160;</xsl:text>
@@ -591,16 +588,6 @@
         <span class="heading">Published:&#160;&#160;</span>
       </td>
       <td align="left">
-        <!-- THIS NEEDS WORK -->
-        <xsl:choose>
-          <xsl:when test="contains(meta/relation[1], 'ucpress')">
-            <xsl:text>University of California Press.&#160;&#160;</xsl:text>
-          </xsl:when>
-          <xsl:otherwise>
-            <xsl:apply-templates select="meta/relation[1]"/>
-            <xsl:text>&#160;&#160;</xsl:text>
-          </xsl:otherwise>
-        </xsl:choose>
         <xsl:apply-templates select="meta/year"/>
       </td>
       <td align="right">
@@ -621,7 +608,7 @@
         <xsl:text>&#160;</xsl:text>
       </td>
     </tr>
-    <xsl:if test="(snippet) and ($sort != 'title' and $sort != 'creator' and $sort != 'year')">
+    <xsl:if test="(snippet) and ($sort = '')">
       <tr>
         <td align="right">
           <xsl:text>&#160;</xsl:text>
@@ -630,7 +617,7 @@
           <span class="heading">Matches:&#160;&#160;</span>
         </td>
         <td align="left">
-          <xsl:apply-templates select="snippet"/>
+          <xsl:apply-templates select="snippet" mode="text"/>
         </td>
         <td align="right">
           <xsl:text>&#160;</xsl:text>
@@ -732,36 +719,34 @@
   </xsl:template>
     
   <!-- ====================================================================== -->
-  <!-- Snippet Template                                                       -->
+  <!-- Snippet Template (for snippets in the full text)                       -->
   <!-- ====================================================================== -->
 
   <xsl:template match="snippet">
-    <xsl:text>...</xsl:text>
-    <xsl:apply-templates/>
-    <xsl:text>...</xsl:text>
+    <xsl:choose>
+      <xsl:when test="ancestor::*">
+        <xsl:apply-templates/>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:text>...xxx</xsl:text>
+        <xsl:apply-templates/>
+        <xsl:text>...</xsl:text>
+      </xsl:otherwise>
+    </xsl:choose>
     <br/>
   </xsl:template>
     
   <!-- ====================================================================== -->
-  <!-- Hit Template                                                           -->
-  <!-- ====================================================================== -->
-  
-  <xsl:template match="hit">
-    <xsl:apply-templates/>
-  </xsl:template>
-    
-  <!-- ====================================================================== -->
-  <!-- Term Template                                                          -->
+  <!-- Term Template (for snippets in the full text)                          -->
   <!-- ====================================================================== -->
  
-  <xsl:template match="term">
-    <xsl:variable name="fullark" select="ancestor::docHit/meta/identifier[1]"/>
-    <xsl:variable name="ark" select="substring($fullark, string-length($fullark)-9)"/>
+  <xsl:template match="term" mode="text">
+    <xsl:variable name="path" select="ancestor::docHit/@path"/>
     <xsl:variable name="collection" select="string(meta/collection)"/>
     <xsl:variable name="hit.rank"><xsl:value-of select="ancestor::snippet/@rank"/></xsl:variable>
     <xsl:variable name="snippet.link">    
       <xsl:call-template name="dynaxml.url">
-        <xsl:with-param name="fullark" select="$fullark"/>
+        <xsl:with-param name="path" select="$path"/>
       </xsl:call-template>
       <xsl:value-of select="concat('&amp;hit.rank=', $hit.rank)"/>
     </xsl:variable>
@@ -782,6 +767,22 @@
    
   </xsl:template>
 
+  <!-- ====================================================================== -->
+  <!-- Term Template (for snippets in meta-data fields)                       -->
+  <!-- ====================================================================== -->
+  
+  <xsl:template match="term">
+    <xsl:choose>
+      <xsl:when test="ancestor::query"/>
+      <xsl:otherwise>
+        <span class="term">
+          <xsl:apply-templates/>
+        </span>
+      </xsl:otherwise>
+    </xsl:choose> 
+    
+  </xsl:template>
+  
   <!-- ====================================================================== -->
   <!-- Explanation Template                                                   -->
   <!-- ====================================================================== -->
@@ -813,12 +814,12 @@
   
   <xsl:template match="docHit" mode="moreLike">
 
-    <xsl:variable name="fullark" select="meta/identifier[1]"/>
+    <xsl:variable name="path" select="@path"/>
     
     <a>
       <xsl:attribute name="href">
         <xsl:call-template name="dynaxml.url">
-          <xsl:with-param name="fullark" select="$fullark"/>
+          <xsl:with-param name="path" select="$path"/>
         </xsl:call-template>
       </xsl:attribute>
       <xsl:apply-templates select="meta/title[1]"/>
