@@ -33,7 +33,6 @@ import java.text.Collator;
  *
  * @author  Tim Jones (Nacimiento Software)
  * @since   lucene 1.4
- * @see FieldCache
  */
 public class FieldSortedHitQueue
 extends PriorityQueue {
@@ -107,7 +106,6 @@ extends PriorityQueue {
    * by a MultiSearcher with other search hits.
    * @param  doc  The FieldDoc to store sort values into.
    * @return  The same FieldDoc passed in.
-   * @see Searchable#search(Query,Filter,int,Sort)
    */
   FieldDoc fillFields (final FieldDoc doc) {
     final int n = comparators.length;
