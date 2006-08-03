@@ -31,8 +31,9 @@ package org.cdlib.xtf.textIndexer;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 
@@ -40,6 +41,7 @@ import javax.xml.transform.Templates;
 
 import org.cdlib.xtf.util.StructuredStore;
 import org.xml.sax.InputSource;
+
 
 /**
  * Transforms an HTML file to a single-record XML file.
@@ -68,7 +70,8 @@ public class TextIndexSource extends XMLIndexSource
     // Map XML special characters in the text, and add a dummy
     // top-level element.
     //
-    Reader reader = new BufferedReader(new FileReader(textFile));
+    Reader reader = new BufferedReader(
+            new InputStreamReader(new FileInputStream(textFile), "UTF-8"));
     char[] tmp = new char[1000];
     StringBuffer buf = new StringBuffer( 1000 );
     while( true ) {
@@ -78,11 +81,8 @@ public class TextIndexSource extends XMLIndexSource
         buf.append( tmp, 0, nRead );
     }
     
-    String str = buf.toString();
-    str = str.replaceAll( "&", "&amp;" );
-    str = str.replaceAll( "<", "&lt;" );
-    str = str.replaceAll( ">", "&gt;" );
-    str = "<doc>" + str + "</doc>";
+    String str = normalize( buf.toString() );
+    str = "<doc><text-data>" + str + "</text-data></doc>";
     
     // And make an InputSource with a proper system ID
     InputSource finalSrc = new InputSource( new StringReader(str) );
