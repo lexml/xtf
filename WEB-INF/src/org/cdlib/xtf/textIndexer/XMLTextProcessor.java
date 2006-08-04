@@ -1486,7 +1486,7 @@ public class XMLTextProcessor extends DefaultHandler
   // called at element start
 
   {
-    
+
     // Process any characters accumulated for the previous node, writing them
     // out as chunks to the index if needed.
     // 
@@ -1552,8 +1552,8 @@ public class XMLTextProcessor extends DefaultHandler
                 tokenize = false;
         }
         
-        // See if there is a "tokenize" attribute set for this node. If not,
-        // default to true.
+        // See if there is a "facet" attribute set for this node. If not,
+        // default to false.
         //
         boolean isFacet = false;
         tokIdx = atts.getIndex( xtfUri, "facet" );
@@ -2043,9 +2043,11 @@ public class XMLTextProcessor extends DefaultHandler
     charBufPos = 0;
 
     // If the entire buffer is whitespace (or empty), we can safely strip it.
-    int i;
-    for( i = 0; i < length; i++ )
-        if( !Character.isWhitespace(charBuf[i]) ) break;
+    int i = 0;
+    if( indexInfo.stripWhitespace ) {
+        for( i = 0; i < length; i++ )
+            if( !Character.isWhitespace(charBuf[i]) ) break;
+    }
     if( i == length ) return;
 
     // Build this part of the lazy tree, and increment the node number in
