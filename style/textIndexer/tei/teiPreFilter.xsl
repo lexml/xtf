@@ -42,7 +42,15 @@
 <!-- ====================================================================== -->
   
   <xsl:import href="../common/preFilterCommon.xsl"/>
-
+  
+<!-- ====================================================================== -->
+<!-- Output parameters                                                      -->
+<!-- ====================================================================== -->
+  
+  <xsl:output method="xml" 
+              indent="yes" 
+              encoding="UTF-8"/>
+  
 <!-- ====================================================================== -->
 <!-- Default: identity transformation                                       -->
 <!-- ====================================================================== -->
@@ -59,6 +67,7 @@
 
   <xsl:template match="/*">
     <xsl:copy>
+      <xsl:namespace name="xtf" select="'http://cdlib.org/xtf'"/>
       <xsl:copy-of select="@*"/>
       <xsl:call-template name="get-meta"/>
       <xsl:apply-templates/>
@@ -102,87 +111,107 @@
 <!-- Metadata Indexing                                                      -->
 <!-- ====================================================================== -->
 
-  <!-- Access Dublin Core Record -->
   <xsl:template name="get-meta">
-    <xsl:variable name="docpath" select="saxon:system-id()"/>
-    <xsl:variable name="base" select="substring-before($docpath, '.xml')"/>
-    <xsl:variable name="dcpath" select="concat($base, '.dc.xml')"/>
-    <xsl:variable name="metspath" select="concat($base, '.mets.xml')"/>
-    <xtf:meta>
-      <xsl:apply-templates select="document($dcpath)" mode="inmeta"/>
-    </xtf:meta>
+    <!-- Access Dublin Core Record (if present) -->
+    <xsl:variable name="dcMeta">
+      <xsl:call-template name="get-dc-meta"/>
+    </xsl:variable>
+    
+    <!-- If no Dublin Core present, then extract meta-data from the TEI -->
+    <xsl:variable name="meta">
+      <xsl:choose>
+        <xsl:when test="$dcMeta/*">
+          <xsl:copy-of select="$dcMeta"/>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:call-template name="get-tei-title"/>
+          <xsl:call-template name="get-tei-author"/>
+          <xsl:call-template name="get-tei-date"/>
+          <xsl:call-template name="get-tei-description"/>
+          <xsl:call-template name="get-tei-identifier"/>
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+
+    <!-- Add doc kind and sort fields to the data, and output the result. -->
+    <xsl:call-template name="add-fields">
+      <xsl:with-param name="display-kind" select="'dynaXML/TEI'"/>
+      <xsl:with-param name="meta" select="$meta"/>
+    </xsl:call-template>    
   </xsl:template>
   
-  <!-- Process DC -->
-  <xsl:template match="dc" mode="inmeta">
-    
-    <!-- metadata fields -->
-    <xsl:for-each select="*">
-      <xsl:element name="{name()}">
-        <xsl:attribute name="xtf:meta" select="'true'"/>
-        <xsl:copy-of select="@*"/>
-        <xsl:value-of select="string()"/>
-      </xsl:element>
-    </xsl:for-each>
-    
-    <!-- create sort fields -->
-    <xsl:apply-templates select="title" mode="sort"/>    
-    <xsl:apply-templates select="creator" mode="sort"/>
-    <xsl:apply-templates select="date" mode="sort"/>
-    
-    <!-- create facet fields -->
-    <xsl:apply-templates select="title" mode="facet"/>
-    <xsl:apply-templates select="creator" mode="facet"/>
-    <xsl:apply-templates select="subject" mode="facet"/>
-    <xsl:apply-templates select="description" mode="facet"/>
-    <xsl:apply-templates select="publisher" mode="facet"/>
-    <xsl:apply-templates select="contributor" mode="facet"/>
-    <xsl:apply-templates select="date" mode="facet"/>
-    <xsl:apply-templates select="type" mode="facet"/>
-    <xsl:apply-templates select="format" mode="facet"/>
-    <xsl:apply-templates select="identifier" mode="facet"/>
-    <xsl:apply-templates select="source" mode="facet"/>
-    <xsl:apply-templates select="language" mode="facet"/>
-    <xsl:apply-templates select="relation" mode="facet"/>
-    <xsl:apply-templates select="coverage" mode="facet"/>
-    <xsl:apply-templates select="rights" mode="facet"/>
-    
+  <!-- Fetch title info from the titleStmt or the titlePage. --> 
+  <xsl:template name="get-tei-title">
+    <xsl:choose>
+      <xsl:when test="//fileDesc/titleStmt/title">
+        <title xtf:meta="true">
+          <xsl:value-of select="string(//fileDesc/titleStmt/title)"/>
+        </title>
+      </xsl:when>
+      <xsl:when test="//titlePage/titlePart[@type='main']">
+        <title xtf:meta="true">
+          <xsl:value-of select="string(//titlePage/titlePart[@type='main'])"/>
+          <xsl:if test="//titlePage/titlePart[@type='subtitle']">
+            <xsl:text>: </xsl:text>
+            <xsl:value-of select="string(//titlePage/titlePart[@type='subtitle'])"/>
+          </xsl:if>
+        </title>
+      </xsl:when>
+    </xsl:choose>
   </xsl:template>
 
-  <!-- generate sort-title -->
-  <xsl:template match="title" mode="sort">
-    
-    <xsl:variable name="title" select="string(.)"/>
- 
-    <sort-title>
-      <xsl:attribute name="xtf:meta" select="'true'"/>
-      <xsl:attribute name="xtf:tokenize" select="'no'"/>
-      <xsl:value-of select="parse:title($title)"/>
-    </sort-title>
-  </xsl:template>
-
-  <!-- generate sort-creator -->
-  <xsl:template match="creator" mode="sort">
-    
-    <xsl:variable name="creator" select="string(.)"/>
-    
-    <xsl:if test="number(position()) = 1">
-      <sort-creator>
-        <xsl:attribute name="xtf:meta" select="'true'"/>
-        <xsl:attribute name="xtf:tokenize" select="'no'"/>
-        <xsl:copy-of select="parse:name($creator)"/>
-      </sort-creator>
-    </xsl:if>
-    
+  <!-- Fetch creator (author) info from the titleStmt or the titlePage. --> 
+  <xsl:template name="get-tei-author">
+    <xsl:choose>
+      <xsl:when test="//fileDesc/titleStmt/author">
+        <creator xtf:meta="true">
+          <xsl:value-of select="string(//fileDesc/titleStmt/author)"/>
+        </creator>
+      </xsl:when>
+      <xsl:when test="//titlePage/docAuthor">
+        <creator xtf:meta="true">
+          <xsl:value-of select="string(//titlePage/docAuthor)"/>
+        </creator>
+      </xsl:when>
+    </xsl:choose>
   </xsl:template>
   
-  <!-- generate year and sort-year -->
-  <xsl:template match="date" mode="sort">
-
-    <xsl:variable name="date" select="string(.)"/>
-    <xsl:variable name="pos" select="number(position())"/>
-    
-    <xsl:copy-of select="parse:year($date, $pos)"/>
+  <!-- Fetch date info from the publicationStmt or the titlePage. --> 
+  <xsl:template name="get-tei-date">
+    <xsl:choose>
+      <xsl:when test="//fileDesc/publicationStmt/date">
+        <date xtf:meta="true">
+          <xsl:value-of select="string(//fileDesc/publicationStmt/date)"/>
+        </date>
+      </xsl:when>
+      <xsl:when test="//titlePage/docImprint/docDate">
+        <date xtf:meta="true">
+          <xsl:value-of select="//titlePage/docImprint/docDate"/>
+        </date>
+      </xsl:when>
+    </xsl:choose>
   </xsl:template>
-
+  
+  <!-- Fetch description info from the TEI, if possible. --> 
+  <xsl:template name="get-tei-description">
+    <xsl:choose>
+      <xsl:when test="//text/body/div1[1]/p">
+        <description xtf:meta="true">
+          <xsl:value-of select="//text/body/div1[1]/p[1]"/>
+        </description>
+      </xsl:when>
+    </xsl:choose>
+  </xsl:template>
+  
+  <!-- Fetch identifier info from the TEI, if possible. --> 
+  <xsl:template name="get-tei-identifier">
+    <xsl:choose>
+      <xsl:when test="//fileDesc/publicationStmt/idno">
+        <identifier xtf:meta="true">
+          <xsl:value-of select="//fileDesc/publicationStmt/idno[1]"/>
+        </identifier>
+      </xsl:when>
+    </xsl:choose>
+  </xsl:template>
+  
 </xsl:stylesheet>
