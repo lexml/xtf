@@ -106,9 +106,10 @@
     document instead of the parameters.
 -->
 
-<xsl:variable name="subDir" select="substring($docId, 9, 2)"/>
+<!-- xsl:variable name="subDir" select="substring($docId, 9, 2)"/ -->
+<xsl:variable name="subDir" select="substring($docId, (string-length($docId) -1 ), 2)"/>
 
-<xsl:variable name="sourceDir" select="concat('data/', $subDir, '/', $docId, '/')"/>
+<xsl:variable name="sourceDir" select="concat('data/13030/', $subDir, '/', $docId, '/')"/>
 
 <xsl:variable name="METS" select="document(concat('../../', $sourceDir, $docId, '.mets.xml'))"/>
 
