@@ -293,6 +293,16 @@ public class LazyTreeBuilder
         for( int i = 0; i < tree.numberOfNodes; i++ ) {
             PackedByteBuf buf = nodeBufs[i] = new PackedByteBuf( 20 );
             
+            // FIXME: Kludge: We don't currently handle writing processing
+            // instructions to the lazy file, so for now it seems to work
+            // just replacing them with an empty element.
+            //
+            if (tree.nodeKind[i] == Type.PROCESSING_INSTRUCTION) {
+              tree.nodeKind[i] = Type.ELEMENT;
+              tree.alpha[i] = -1;
+              tree.beta[i] = -1;
+            }
+            
             // Kind
             buf.writeByte( tree.nodeKind[i] );
             
