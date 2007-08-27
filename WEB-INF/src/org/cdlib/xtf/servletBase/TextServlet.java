@@ -1174,7 +1174,9 @@ public abstract class TextServlet extends HttpServlet
     String mime = details.getProperty(OutputKeys.MEDIA_TYPE);
     if (mime == null) {
       String method = details.getProperty(OutputKeys.METHOD);
-      if (method.equalsIgnoreCase("xml"))
+      if (method == null)
+        mime = "text/html"; // Take a guess.
+      else if (method.equalsIgnoreCase("xml"))
         mime = "text/xml";
       else if (method.equalsIgnoreCase("xhtml"))
         mime = "application/xhtml+xml";
