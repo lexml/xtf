@@ -76,7 +76,7 @@
    <!-- TEI Indexing                                                           -->
    <!-- ====================================================================== -->
    
-   <!-- Ignored Elements -->
+   <!-- Ignored Elements. -->
    <xsl:template match="*[local-name()='teiHeader']">
       <xsl:copy>
          <xsl:copy-of select="@*"/>

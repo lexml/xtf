@@ -197,7 +197,7 @@
                preFilter="style/textIndexer/default/defaultPreFilter.xsl"/>
          </xsl:when>
          
-         <!-- PDF files -->
+         <!-- Microsoft Word documents -->
          <xsl:when test="ends-with(@fileName, '.doc')">
             <indexFile fileName="{@fileName}" 
                type="MSWord"

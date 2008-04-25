@@ -684,7 +684,9 @@ Item number <xsl:value-of select="$num"/>:
                   </a>
                   <xsl:text>&#160;</xsl:text>
                   <xsl:variable name="type" select="meta/type"/>
-                  <i><b><xsl:value-of select="$type"/></b></i>
+                  <span class="typeIcon">
+                     <img src="{$icon.path}i_{$type}.gif" class="typeIcon"/>
+                  </span>
                </td>
                <td class="col4">
                   <xsl:text>&#160;</xsl:text>
@@ -735,7 +737,8 @@ Item number <xsl:value-of select="$num"/>:
                   <td class="col2">
                      <b>Matches:&#160;&#160;</b>
                      <br/>
-                     <xsl:value-of select="@totalHits"/> hit(s)&#160;&#160;&#160;&#160;
+                     <xsl:value-of select="@totalHits"/> 
+                     <xsl:value-of select="if (@totalHits = 1) then ' hit' else ' hits'"/>&#160;&#160;&#160;&#160;
                   </td>
                   <td class="col3" colspan="2">
                      <xsl:apply-templates select="snippet" mode="text"/>

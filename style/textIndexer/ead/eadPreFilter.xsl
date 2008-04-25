@@ -186,7 +186,7 @@
       </xsl:choose>
    </xsl:template>
    
-   <!-- creator --> 
+   <!-- creator -->
    <xsl:template name="get-ead-creator">
       <xsl:choose>
          <xsl:when test="/ead/archdesc/did/origination[starts-with(@label, 'Creator')]">
