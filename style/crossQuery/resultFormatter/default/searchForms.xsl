@@ -298,7 +298,7 @@
                                  <input type="radio" name="sectionType" value="head" checked="checked"/><xsl:text> headings </xsl:text><br/>
                                  <input type="radio" name="sectionType" value="citation"/><xsl:text> citations </xsl:text>
                               </xsl:when>
-                              <xsl:when test="$sectionType = 'note'"> 
+                              <xsl:when test="$sectionType = 'citation'"> 
                                  <input type="radio" name="sectionType" value=""/><xsl:text> any </xsl:text><br/>
                                  <input type="radio" name="sectionType" value="head"/><xsl:text> headings </xsl:text><br/>
                                  <input type="radio" name="sectionType" value="citation" checked="checked"/><xsl:text> citations </xsl:text>
