@@ -953,10 +953,6 @@ public class DefaultQueryProcessor extends QueryProcessor
               emptyLast = true;
             else
               throw new IOException("Unknown sort modifier: '" + parts[j] + "'");
-            }
-            else {
-                throw new IOException("Unknown sort modifier: '" + parts[j] + "'");
-            }
           }
           
           // Check for conflicting modifiers.
