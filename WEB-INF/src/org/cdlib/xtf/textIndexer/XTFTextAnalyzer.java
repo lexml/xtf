@@ -302,13 +302,15 @@ public class XTFTextAnalyzer extends Analyzer
     // If adding to a spelling dictionary, put an adder in the chain.
     if (spellWriter != null && !misspelledFields.contains(fieldName))
       result = new SpellWritingFilter(result, spellWriter);
-
-    // If a plural map was specified, fold plural and singular words together.
-    if (pluralMap != null)
-      result = new PluralFoldingFilter(result, pluralMap);
+    
+    // Map non-normalized Unicode to normalized form C ("NFC")
+    result = new UnicodeNormalizingFilter(result);
 
     // If an accent map was specified, fold accented and unaccented chars
-    // together.
+    // together. We need to do this before plural mapping so that if a word
+    // is both accented and plural, it gets mapped correctly. For instance,
+    // publicos, publico and their accented counterparts should all end up mapping
+    // to "publico" (assuming the plural mapping publicos|publico is present.)
     //
     if (accentMap != null)
       result = new AccentFoldingFilter(result, accentMap);
@@ -319,7 +321,7 @@ public class XTFTextAnalyzer extends Analyzer
 
     // Aplica regras de reescrita
     result = new NumberRewriteFilter(result);
-
+    
     // Convert stop-words to bi-grams (if any stop words were specified). We must
     // do this after XtfSpecialTokensFilter to ensure that special tokens don't
     // become part of any bi-grams. Also, we must do it after the lower-case

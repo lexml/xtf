@@ -29,8 +29,20 @@ package org.cdlib.xtf.textIndexer;
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-import java.io.*;
-import org.cdlib.xtf.util.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+
+import org.apache.lucene.index.IndexReader;
+import org.cdlib.xtf.textEngine.IndexValidator;
+import org.cdlib.xtf.textEngine.NativeFSDirectory;
+import org.cdlib.xtf.util.DirSync;
+import org.cdlib.xtf.util.Path;
+import org.cdlib.xtf.util.SubDirFilter;
+import org.cdlib.xtf.util.Trace;
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -111,11 +123,14 @@ import org.cdlib.xtf.util.*;
  */
 public class TextIndexer 
 {
-  /** The version of the text indexer (placed into any indexes created */
-  public static final String CURRENT_VERSION = "2.1.1";
+  /** The version to be shown to the user (does not need to string compare as higher than prev.) */
+  public static final String SHOW_VERSION = "3.1";
   
-  /** The minimum index version that we can read */
-  public static final String REQUIRED_VERSION = "2.0";
+  /** The version of the text indexer (placed into any indexes created) */
+  public static final String CURRENT_VERSION = "3.1";
+  
+  /** The minimum index version that we can read and append to */
+  public static final String REQUIRED_VERSION = "2.2b";
   
   //////////////////////////////////////////////////////////////////////////////
 
@@ -146,7 +161,6 @@ public class TextIndexer
     {
       IndexerConfig cfgInfo = new IndexerConfig();
       XMLConfigParser cfgParser = new XMLConfigParser();
-      SrcTreeProcessor srcTreeProcessor = new SrcTreeProcessor();
       IdxTreeCleaner indexCleaner = new IdxTreeCleaner();
 
       int startArg = 0;
@@ -157,7 +171,7 @@ public class TextIndexer
       long startTime = System.currentTimeMillis();
 
       // Regardless of whether we succeed or fail, say our name.
-      Trace.info("TextIndexer v" + CURRENT_VERSION);
+      Trace.info("TextIndexer v" + SHOW_VERSION);
       Trace.info("");
       Trace.tab();
 
@@ -175,6 +189,7 @@ public class TextIndexer
           "\" does not exist or cannot be read.");
         System.exit(1);
       }
+      File xtfHomeFile = new File(cfgInfo.xtfHomePath);
 
       // Perform indexing for each index specified.
       for (;;) 
@@ -246,19 +261,23 @@ public class TextIndexer
         {
           // Do so...
           Trace.error("Usage: textIndexer {options} -index indexname");
-          Trace.error("Available options:");
+          Trace.error("Basic options:");
           Trace.tab();
-          Trace.error(
-            "-config <configfile>                  Default: -config textIndexer.conf");
-          Trace.error(
-            "-incremental|-clean                   Default: -incremental");
+          Trace.error("-config <configfile>                  Default: -config textIndexer.conf");
+          Trace.error("-incremental|-clean|-force            Default: -incremental");
+          Trace.error("-dir <subdir1> -dir <subdir2>...      Default: (all directories)");
+          Trace.error("-dirlist <fileOfSubdirs>              Default: (all directories)");
+          Trace.error("\n");
+          Trace.untab();
+          Trace.error("Advanced options:");
+          Trace.error("-nosync|-syncfrom <otherIndexDir>     Default: -nosync");
           Trace.error("-optimize|-nooptimize                 Default: -optimize");
           Trace.error("-trace errors|warnings|info|debug     Default: -trace info");
-          Trace.error(
-            "-dir <subdir>                         Default: (all data directories)");
           Trace.error("-buildlazy|-nobuildlazy               Default: -buildlazy");
-          Trace.error(
-            "-updatespell|-noupdatespell           Default: -updatespell");
+          Trace.error("-updatespell|-noupdatespell           Default: -updatespell");
+          Trace.error("-rotate|-norotate                     Default: -rotate");
+          Trace.error("-validate|-novalidate                 Default: -validate");
+          Trace.tab();
           Trace.error("\n");
           Trace.untab();
 
@@ -266,26 +285,30 @@ public class TextIndexer
           System.exit(1);
         } // if( showUsage )    
 
-        // Begin processing.
-        File xtfHomeFile = new File(cfgInfo.xtfHomePath);
+        // If rotation is enabled for this index, target the "-new" directory.
+        if (cfgInfo.indexInfo.rotate) 
+        {
+          cfgInfo.indexInfo.indexPath = 
+            cfgInfo.indexInfo.indexPath.replaceFirst("/$", "-new/");
+        }
 
+        // Lock each index directory as we encounter it.
         // If this is our first time through, purge any incomplete
         // documents from the indices, and tell the user what 
         // we're doing.
         //
+        // Clean all indices below the root index directory. 
+        File idxRoot = new File(
+            Path.resolveRelOrAbs(xtfHomeFile, cfgInfo.indexInfo.indexPath));
         if (firstIndex) 
         {
           if (!cfgInfo.mustClean) 
           {
-            // Clean all indices below the root index directory. 
-            File idxRootDir = new File(
-              Path.resolveRelOrAbs(xtfHomeFile, cfgInfo.indexInfo.indexPath));
-
             Trace.info("");
             Trace.info("Purging Incomplete Documents From Indexes:");
             Trace.tab();
 
-            indexCleaner.processDir(idxRootDir);
+            indexCleaner.processDir(idxRoot);
 
             Trace.untab();
             Trace.info("Done.");
@@ -311,39 +334,9 @@ public class TextIndexer
             ", Overlap = " + cfgInfo.indexInfo.getChunkOvlp() + " ]");
         Trace.tab();
 
-        // Start at the root directory specified by the config file. 
-        String srcRootDir = Path.resolveRelOrAbs(xtfHomeFile,
-                                                 cfgInfo.indexInfo.sourcePath);
-
-        // If a sub-directory was specified, limit to just that.
-        if (cfgInfo.indexInfo.subDir != null) {
-          srcRootDir = Path.resolveRelOrAbs(srcRootDir,
-                                            Path.normalizePath(
-                                              cfgInfo.indexInfo.subDir));
-        }
-
-        // Process everything below it (unless instructed to skip this part)
+        // Process the index directories.
         if (!cfgInfo.skipIndexing) 
-        {
-          srcTreeProcessor.open(cfgInfo);
-          srcTreeProcessor.processDir(new File(srcRootDir), 0);
-          srcTreeProcessor.close();
-          
-          System.err.println("AVISO: Esta versão não suporta remoção de registros do índice!");
-
-          // Cull files which are present in the index but missing
-          // from the filesystem.
-          //
-        //  IdxTreeCuller culler = new IdxTreeCuller();
-
-          //Trace.info("Removing Missing Documents From Index:");
-          //Trace.tab();
-
-          //culler.cullIndex(new File(cfgInfo.xtfHomePath), cfgInfo.indexInfo);
-
-          //Trace.untab();
-          //Trace.info("Done.");
-        }
+          doIndexing(cfgInfo, xtfHomeFile);
 
         Trace.untab();
         Trace.info("Done.");
@@ -396,12 +389,43 @@ public class TextIndexer
         Trace.info("");
         Trace.info("Skipping Spellcheck Dictionary Pass.");
       }
+      
+      // Validate the index if specified.
+      if (cfgInfo.indexInfo.validationPath != null &&
+          cfgInfo.indexInfo.validationPath.length() > 0)
+      {
+        Trace.info("");
+        if (cfgInfo.validate)
+          doValidation(cfgInfo);
+        else
+          Trace.info("Skipping Index Validation.");
+      }
+      
+      // Finally, perform index rotation if specified (and the index supports it)
+      if (cfgInfo.indexInfo.rotate)
+      {
+        if (cfgInfo.rotate)
+        {
+          Trace.info("");
+          Trace.info("Performing Index Rotation:");
+          Trace.tab();
+
+          doRotation(cfgInfo);
+          
+          Trace.untab();
+          Trace.info("Done.");
+        }
+        else {
+          Trace.info("");
+          Trace.info("Skipping Index Rotation Pass.");
+        }
+      }
 
       Trace.untab();
       Trace.info("");
 
       long timeMsec = System.currentTimeMillis() - startTime;
-      long timeSec = timeMsec / 1000;
+      long timeSec = (timeMsec+500) / 1000;
       long timeMin = timeSec / 60;
       long timeHour = timeMin / 60;
 
@@ -436,4 +460,256 @@ public class TextIndexer
     // Exit successfully.
     return;
   } // main()
+
+  
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * Handles the main work of adding and removing documents to/from the index.
+   */
+  private static void doIndexing(IndexerConfig cfgInfo, File xtfHomeFile)
+    throws Exception 
+  {
+    SrcTreeProcessor srcTreeProcessor = new SrcTreeProcessor();
+    srcTreeProcessor.open(cfgInfo);
+    
+    // Start at the root directory specified by the config file. 
+    String srcRoot = Path.resolveRelOrAbs(xtfHomeFile,
+                                          cfgInfo.indexInfo.sourcePath);
+    File srcRootFile = new File(srcRoot);
+
+    // Also figure out where the index is going to go.
+    String indexPath = Path.resolveRelOrAbs(cfgInfo.xtfHomePath,
+        cfgInfo.indexInfo.indexPath);
+    File indexFile = new File(indexPath);
+    
+    // Record the directories that we scan, for incremental syncing runs later.
+    writeScanDirs(indexFile, cfgInfo.indexInfo);
+
+    // Make a filter for the specified source directories (null for all)
+    SubDirFilter subDirFilter = makeSubDirFilter(srcRootFile, cfgInfo);
+    
+    // If requested, clone the data and use that as our source.
+    if (cfgInfo.indexInfo.cloneData) 
+    {
+      Trace.info("Cloning Data Directories.");
+      
+      // Clone the source data.
+      File cloneRootFile = new File(indexFile, "dataClone/" + cfgInfo.indexInfo.indexName);
+      if (!cloneRootFile.exists() && !cloneRootFile.mkdirs())
+        throw new IOException("Error creating clone directory '" + cloneRootFile + "'");
+      DirSync sync = new DirSync(subDirFilter);
+      sync.syncDirs(srcRootFile, cloneRootFile);
+      
+      // Switch to using the clone data as our source
+      subDirFilter = makeSubDirFilter(cloneRootFile, cfgInfo);
+      srcRootFile = cloneRootFile;
+      
+      Trace.more(Trace.info, " Done.");
+    }
+      
+    Trace.info("Scanning Data Directories...");
+    srcTreeProcessor.processDir(srcRootFile, subDirFilter, true);
+    Trace.more(Trace.info, " Done.");
+
+    srcTreeProcessor.close();
+    
+    // Cull files which are present in the index but missing
+    // from the filesystem.
+    //
+    // LEXML: Do not remove missing documents
+    /*
+    IdxTreeCuller culler = new IdxTreeCuller();
+
+    Trace.info("Removing Missing Documents From Index:");
+    Trace.tab();
+
+    culler.cullIndex(new File(cfgInfo.xtfHomePath), cfgInfo.indexInfo, 
+                     srcRootFile, subDirFilter);
+
+    Trace.untab();
+    */
+    Trace.info("Done.");
+  }
+  
+  
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * Append the current subdirectories we're about to scan to the scanDirs.list
+   * file. This file is used in incremental index rotation to figure out which
+   * data and lazy subdirectories need to be scanned for changes.
+   */
+  private static void writeScanDirs(File indexFile, IndexInfo idxInfo) 
+    throws IOException 
+  {
+    File oldScanFile = new File(indexFile, "scanDirs.list");
+    File newScanFile = new File(indexFile, "scanDirs.list.new");
+    try
+    {
+      BufferedWriter scanWriter = new BufferedWriter(new FileWriter(newScanFile));
+      
+      if (oldScanFile.canRead())
+      {
+        // Copy the contents of the old file. We can't just append to the old file
+        // because it may be hard linked to a older index.
+        //
+        BufferedReader scanReader = new BufferedReader(new FileReader(oldScanFile));
+        while (true) {
+          String line = scanReader.readLine();
+          if (line == null)
+            break;
+          scanWriter.write(line+"\n");
+        }
+        scanReader.close();
+      }
+      
+      // And append directories being scanned this time.
+      if (idxInfo.subDirs == null)
+        scanWriter.write(idxInfo.indexName + ":/\n");
+      else {
+        for (String subdir : idxInfo.subDirs)
+          scanWriter.write(idxInfo.indexName + ":" + subdir + "\n");
+      }
+      scanWriter.close();
+      
+      // Finally, get rid of the old file.
+      newScanFile.renameTo(oldScanFile);
+    }
+    catch (IOException e) {
+      newScanFile.delete();
+      throw e;
+    }
+  }
+
+  
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * Create a subdirectory filter, using the specified source root directory
+   * and the given configuration info.
+   */
+  private static SubDirFilter makeSubDirFilter(File srcRootFile, IndexerConfig cfgInfo) 
+  {
+    if (cfgInfo.indexInfo.subDirs == null)
+      return null;
+    SubDirFilter filter = new SubDirFilter();
+    for (String subdir : cfgInfo.indexInfo.subDirs)
+      filter.add(new File(Path.normalizePath(srcRootFile.toString() + "/" + subdir)));
+    return filter;
+  }
+
+  
+  //////////////////////////////////////////////////////////////////////////////
+
+
+  /**
+   * Rotates a rotation-enabled index.
+   * 
+   * @throws IOException if anything goes wrong 
+   */
+  private static void doRotation(IndexerConfig cfgInfo) 
+    throws IOException 
+  {
+    // Let's figure out the paths to the various versions of the index
+    String indexPath = cfgInfo.indexInfo.indexPath;
+    assert indexPath.endsWith("-new/"); // Should have been modified above
+    
+    String home = cfgInfo.xtfHomePath;
+    File newIndex = new File(Path.resolveRelOrAbs(home, 
+        indexPath));
+    File currentIndex = new File(Path.resolveRelOrAbs(home, 
+        indexPath.replaceFirst("-new/$", "/")));
+    File pendingIndex = new File(Path.resolveRelOrAbs(home, 
+        indexPath.replaceFirst("-new/$", "-pending/")));
+    File spareIndex = new File(Path.resolveRelOrAbs(home, 
+        indexPath.replaceFirst("-new/$", "-spare/")));
+    
+    // If nothing has happened to the new index since the current one was
+    // made, then it would be silly to rotate.
+    //
+    if (currentIndex.exists() &&
+        IndexSync.newestTime(currentIndex).equals(IndexSync.newestTime(newIndex)))
+    {
+      Trace.info("Nothing has changed, so not rotating.");
+      return;
+    }
+    
+    // If nothing has happened to the new index since the current one was
+    // made, then it would be silly to rotate.
+    //
+    if (pendingIndex.exists() &&
+        IndexSync.newestTime(pendingIndex).equals(IndexSync.newestTime(newIndex)))
+    {
+      Trace.info("Nothing has changed, so not rotating.");
+      return;
+    }
+    
+    // If there's a pending index, it means the servlets haven't gotten around
+    // to grabbing it yet, so we can't rotate yet.
+    //
+    if (pendingIndex.exists()) {
+      Trace.info("A previous index is still pending, so not rotating.");
+      return;
+    }
+    
+    // To rotate, we'll need a spare. If there isn't one yet, create it from 
+    // scratch by cloning the entire new index.
+    //
+    if (!spareIndex.exists()) {
+      Trace.info("Creating spare index clone.");
+      if (!spareIndex.mkdir())
+        throw new IOException("Error creating spare index '" + spareIndex + "'");
+      new DirSync().syncDirs(newIndex, spareIndex);
+      Trace.more(Trace.info, " Done.");
+    }
+    
+    // If there is a spare already, update it from the new index. We use
+    // the fancy IndexSync class that knows how to do this faster than a
+    // brute-force scan.
+    //
+    else {
+      Trace.info("Bringing spare index clone up to date:");
+      Trace.tab();
+      new IndexSync().syncDirs(cfgInfo.indexInfo.indexName, newIndex, spareIndex);
+      Trace.untab();
+      Trace.info("Done.");
+    }
+    
+    // Ready to rotate. Let's do it!
+    Trace.info("Rotating Indexes:  [pending]  <-  [new]  <-  [spare]");
+    renameOrElse(newIndex, pendingIndex);
+    renameOrElse(spareIndex, newIndex);
+  }
+  
+  private static void doValidation(IndexerConfig cfgInfo) throws IOException
+  {
+    // First, open the index.
+    String indexPath = Path.resolveRelOrAbs(cfgInfo.xtfHomePath,
+        cfgInfo.indexInfo.indexPath);
+    IndexReader reader = IndexReader.open(NativeFSDirectory.getDirectory(
+                            Path.normalizePath(indexPath)));
+    
+    // Then validate if specified in the index.
+    IndexValidator validator = new IndexValidator();
+    if (validator.validate(cfgInfo.xtfHomePath, indexPath, reader))
+      return;
+    
+    Trace.untab();
+    Trace.error("Indexing aborted.");
+    Trace.error("");
+    System.exit(1);
+  }
+
+  /**
+   * Utility function to perform a rename, and throw an exception if the it
+   * fails.
+   * @throws IOException 
+   */
+  private static void renameOrElse(File from, File to) throws IOException
+  {
+    if (!from.renameTo(to))
+      throw new IOException("Error renaming '" + from + "' to '" + to + "'");
+  }
+  
 } // class textIndexer

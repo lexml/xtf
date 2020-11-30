@@ -32,6 +32,7 @@ package org.cdlib.xtf.util;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
@@ -59,11 +60,14 @@ public class PackedByteBuf {
   /** Tells whether compression succeeded */
   private boolean compressed = false;
 
+  /** Special flag to avoid compression (if buffer will be included in another) */
+  private boolean doNotCompress = false;
+
   /** Original (uncompressed) length of the buffer */
   private int uncompLen = 0;
 
   /** Used to compress/decompress data */
-  private static ThreadLocal compressInfo = new ThreadLocal();
+  private static ThreadLocal<WeakReference<CompressInfo>> compressInfo = new ThreadLocal();
 
   /** Special marker used to denote a compressed buffer */
   private static final byte compressMarker = (byte)0xBF;
@@ -138,6 +142,16 @@ public class PackedByteBuf {
     reset();
     decompress();
   } // setBytes()
+  
+  /** 
+   * Call this to avoid compressing the contents of the buffer (for instance, if
+   * it will be copied into another buffer.)
+   */
+  public void doNotCompress() {
+    this.doNotCompress = true;
+    if (compressed)
+      decompress();
+  }
 
   /**
    * Given a raw buffer, this method determines if it is compressed, and if
@@ -166,11 +180,7 @@ public class PackedByteBuf {
     }
 
     // Get the thread-local compression info.
-    CompressInfo info = (CompressInfo)compressInfo.get();
-    if (info == null) {
-      info = new CompressInfo();
-      compressInfo.set(info);
-    }
+    CompressInfo info = getCompressInfo();
     if (info.inflater == null)
       info.inflater = new Inflater(true); // no header info
 
@@ -195,12 +205,29 @@ public class PackedByteBuf {
   } // decompress()
 
   /**
+   * Obtain thread-local compression info, cached for speed.
+   */
+  private CompressInfo getCompressInfo() 
+  {
+    WeakReference<CompressInfo> ref = compressInfo.get();
+    CompressInfo info = (ref != null) ? ref.get() : null;
+    if (info == null) {
+      info = new CompressInfo();
+      compressInfo.set(new WeakReference<CompressInfo>(info));
+    }
+    return info;
+  }
+
+  /**
    * Obtain a copy of this buffer (with only the valid bytes)
    */
   public Object clone() {
     PackedByteBuf other = new PackedByteBuf(pos);
     System.arraycopy(bytes, 0, other.bytes, 0, pos);
     other.pos = pos;
+    other.compressed = compressed;
+    other.compressTried = compressTried;
+    other.uncompLen = uncompLen;
     return other;
   } // clone()
 
@@ -328,6 +355,7 @@ public class PackedByteBuf {
    * @param b  The buffer to write.
    */
   public void writeBuffer(PackedByteBuf b) {
+    assert !b.compressed; // If you want to do this, call doNotCompress first
     writeInt(b.length());
     writeBytes(b.bytes, 0, b.length());
   } // writeBuffer()
@@ -365,16 +393,12 @@ public class PackedByteBuf {
     // If already done, get out. Also, if buffer is small, we're very
     // unlikely to get a good savings, so skip it.
     //
-    if (compressTried || pos < compressLimitMin || pos > compressLimitMax)
+    if (compressTried || pos < compressLimitMin || pos > compressLimitMax || doNotCompress)
       return;
     compressTried = true;
 
     // Get the thread-local compression info.
-    CompressInfo info = (CompressInfo)compressInfo.get();
-    if (info == null) {
-      info = new CompressInfo();
-      compressInfo.set(info);
-    }
+    CompressInfo info = getCompressInfo();
     if (info.deflater == null)
       info.deflater = new Deflater(9, true); // no header info
 

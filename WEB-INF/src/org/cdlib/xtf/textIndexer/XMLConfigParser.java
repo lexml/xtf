@@ -322,6 +322,21 @@ public class XMLConfigParser extends DefaultHandler
     {
       // Save it away as the database root directory. 
       configInfo.indexInfo.indexPath = Path.normalizePath(atts.getValue("path"));
+      
+      // Validate the 'rotation' attribute if present
+      String val = atts.getValue("rotate");
+      if (val != null) {
+        if ("yes".equals(val) || "true".equals(val) || "1".equals(val))
+          configInfo.indexInfo.rotate = true;
+        else if ("no".equals(val) || "false".equals(val) || "0".equals(val))
+          configInfo.indexInfo.rotate = false;
+        else {
+          Trace.error(
+            "Unrecognized value for 'rotation' attribute of " +
+            "config option: '" + qName + "'");
+          System.exit(1);
+        }
+      }
 
       return;
     }
@@ -333,6 +348,44 @@ public class XMLConfigParser extends DefaultHandler
       // source XML text files.
       //
       configInfo.indexInfo.sourcePath = Path.normalizePath(atts.getValue("path"));
+      
+      // Validate the 'scan' attribute if present
+      String val = atts.getValue("scan");
+      if (val != null) {
+        if ("all".equals(val))
+          configInfo.indexInfo.scanAllDirs = true;
+        else if ("pruned".equals(val))
+          configInfo.indexInfo.scanAllDirs = false;
+        else {
+          Trace.error(
+            "Unrecognized value for 'scan' attribute of " +
+            "config option: '" + qName + "'");
+          System.exit(1);
+        }
+      }
+
+      // Validate the 'clone' attribute if present
+      val = atts.getValue("clone");
+      if (val != null) {
+        if ("yes".equals(val) || "1".equals(val) || "true".equals(val)) {
+          configInfo.indexInfo.cloneData = true;
+          String osName = System.getProperty("os.name");
+          if (osName.indexOf("Windows") >= 0) {
+            Trace.warning(
+                "Warning: data cloning probably will not work due to " +
+                "limitations of Windows filesystem support.");
+          }
+        }
+        else if ("no".equals(val) || "0".equals(val) || "false".equals(val))
+          configInfo.indexInfo.cloneData = false;
+        else {
+          Trace.error(
+            "Unrecognized value for 'clone' attribute of " +
+            "config option: '" + qName + "'");
+          System.exit(1);
+        }
+      }
+
       return;
     }
 
@@ -477,6 +530,16 @@ public class XMLConfigParser extends DefaultHandler
           qName + "'");
         System.exit(1);
       }
+      return;
+    }
+
+    // If the current tag points to validation specs...
+    if (qName.equalsIgnoreCase("validation")) 
+    {
+      // Save it away
+      configInfo.indexInfo.validationPath = Path.normalizePath(
+        atts.getValue("path"));
+
       return;
     }
 

@@ -31,8 +31,8 @@ package org.cdlib.xtf.textIndexer;
  */
 import java.io.IOException;
 import java.io.InputStream;
-import org.pdfbox.pdmodel.PDDocument;
-import org.pdfbox.util.PDFTextStripper;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.util.PDFTextStripper;
 import org.cdlib.xtf.util.*;
 
 //////////////////////////////////////////////////////////////////////////////
@@ -71,6 +71,14 @@ public class PDFToString
     if (stripper == null)
       stripper = new PDFTextStripper();
 
+    // Workaround: using PDFTextStripper normally results in a Window
+    // being created. However, since we're running in a servlet container, this
+    // isn't generally desirable (and often isn't possible.) So we let AWT know
+    // that it's running in "headless" mode, and this prevents the window from
+    // being created.
+    //
+    System.setProperty("java.awt.headless", "true");
+    
     XMLFormatter formatter = new XMLFormatter();
 
     try 

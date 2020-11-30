@@ -5,6 +5,7 @@
    xmlns:xtf="http://cdlib.org/xtf"
    xmlns:saxon="http://saxon.sf.net/"
    xmlns:FileUtils="java:org.cdlib.xtf.xslt.FileUtils"
+   xmlns:CharUtils="java:org.cdlib.xtf.xslt.CharUtils"
    extension-element-prefixes="saxon FileUtils"
    exclude-result-prefixes="#all">
    
@@ -49,7 +50,7 @@
       <xsl:variable name="dcpath" select="concat($base, '.dc.xml')"/>
       <xsl:if test="FileUtils:exists($dcpath)">
          <xsl:apply-templates select="document($dcpath)" mode="inmeta"/>
-         <xsl:if test="not(document($dcpath)//*[matches(local-name(),'identifier')])">
+         <xsl:if test="not(document($dcpath)//*:identifier)">
             <identifier xtf:meta="true" xtf:tokenize="no">
                <xsl:value-of select="replace(replace($docpath,'^.+/',''),'\.[A-Za-z]+$','')"/>
             </identifier>
@@ -113,83 +114,85 @@
          </display>
          
          <!-- Parse the date field to create a year (or range of years) -->
-         <xsl:apply-templates select="$meta/*[matches(local-name(),'^date$')]" mode="year"/>
+         <xsl:apply-templates select="$meta/*:date" mode="year"/>
          
          <!-- Create sort fields -->
-         <xsl:apply-templates select="$meta/*[matches(local-name(),'^title$')][1]" mode="sort"/>    
-         <xsl:apply-templates select="$meta/*[matches(local-name(),'^creator$')][1]" mode="sort"/>
-         <xsl:apply-templates select="$meta/*[matches(local-name(),'^date$')][1]" mode="sort"/>
+         <xsl:apply-templates select="$meta/*:title[1]" mode="sort"/>    
+         <xsl:apply-templates select="$meta/*:creator[1]" mode="sort"/>
+         <xsl:apply-templates select="$meta/*:date[1]" mode="sort"/>
          
          <!-- Create facets -->
-         <xsl:apply-templates select="$meta/*[matches(local-name(),'^date$')]" mode="facet"/>
-         <xsl:apply-templates select="$meta/*[matches(local-name(),'^subject$')]" mode="facet"/>
+         <xsl:apply-templates select="$meta/*:date" mode="facet"/>
+         <xsl:apply-templates select="$meta/*:subject" mode="facet"/>
          
-         <xsl:apply-templates select="$meta/*[matches(local-name(),'^title$')][1]" mode="browse"/>    
-         <xsl:apply-templates select="$meta/*[matches(local-name(),'^creator$')][1]" mode="browse"/>
+         <xsl:apply-templates select="$meta/*:title[1]" mode="browse"/>    
+         <xsl:apply-templates select="$meta/*:creator[1]" mode="browse"/>
          
       </xtf:meta>
    </xsl:template>
    
    <!-- Parse the date to determine the year (or range of years) -->
-   <xsl:template match="*[matches(local-name(),'^date$')]" mode="year">
+   <xsl:template match="*:date" mode="year">
       <year xtf:meta="yes">
          <xsl:copy-of select="parse:year(string(.))"/>
       </year>
    </xsl:template>
    
    <!-- Generate sort-title -->
-   <xsl:template match="*[matches(local-name(),'^title$')]" mode="sort">
+   <xsl:template match="*:title" mode="sort">
       <sort-title xtf:meta="yes" xtf:tokenize="no">
          <xsl:value-of select="parse:title(string(.))"/>
       </sort-title>
    </xsl:template>
    
    <!-- Generate sort-creator -->
-   <xsl:template match="*[matches(local-name(),'^creator$')]" mode="sort">
+   <xsl:template match="*:creator" mode="sort">
       <sort-creator xtf:meta="yes" xtf:tokenize="no">
          <xsl:copy-of select="parse:name(string(.))"/>
       </sort-creator>
    </xsl:template>
    
    <!-- Generate sort-year (if range, only use first year) -->
-   <xsl:template match="*[matches(local-name(),'^date$')]" mode="sort">
+   <xsl:template match="*:date" mode="sort">
       <sort-year xtf:meta="true" xtf:tokenize="no">
          <xsl:value-of select="parse:year(string(.))[1]"/>
       </sort-year>
    </xsl:template>
    
    <!-- Generate facet-date -->
-   <xsl:template match="*[matches(local-name(),'^date$')]" mode="facet">
-      <facet-date>
-         <xsl:attribute name="xtf:meta" select="'true'"/>
-         <xsl:attribute name="xtf:facet" select="'yes'"/>
-         <xsl:choose>
-            <xsl:when test="matches(.,'[0-9]{2}-[0-9]{2}-[0-9]{4}')">
+   <xsl:template match="*:date" mode="facet">
+      <xsl:choose>
+         <xsl:when test="matches(.,'[0-9]{2}-[0-9]{2}-[0-9]{4}')">
+            <facet-date xtf:meta="true" xtf:facet="yes">
                <xsl:value-of select="replace(.,'([0-9]{2})-([0-9]{2})-([0-9]{4})','$3::$1::$2')"/>
-            </xsl:when>
-            <xsl:when test="matches(.,'[0-9]{4}-[0-9]{2}-[0-9]{2}')">
+            </facet-date>
+         </xsl:when>
+         <xsl:when test="matches(.,'[0-9]{4}-[0-9]{2}-[0-9]{2}')">
+            <facet-date xtf:meta="true" xtf:facet="yes">
                <xsl:value-of select="replace(.,'-','::')"/>
-            </xsl:when>
-            <xsl:otherwise>
-               <xsl:for-each select="parse:year(string(.))">
+            </facet-date>
+         </xsl:when>
+         <xsl:otherwise>
+            <xsl:for-each select="parse:year(string(.))">
+               <facet-date xtf:meta="true" xtf:facet="yes">
                   <xsl:value-of select="concat(.,'::01::01')"/>
-               </xsl:for-each>
-            </xsl:otherwise>
-         </xsl:choose>
-      </facet-date>
+               </facet-date>
+            </xsl:for-each>
+         </xsl:otherwise>
+      </xsl:choose>
    </xsl:template>
    
    <!-- Generate facet-subject -->
-   <xsl:template match="*[matches(local-name(),'^subject$')]" mode="facet">
+   <xsl:template match="*:subject" mode="facet">
       <facet-subject>
          <xsl:attribute name="xtf:meta" select="'true'"/>
          <xsl:attribute name="xtf:facet" select="'yes'"/>
-         <xsl:value-of select="string(.)"/>
+         <xsl:value-of select="normalize-unicode(string(.))"/>
       </facet-subject>
    </xsl:template>
    
    <!-- Generate browse-title -->
-   <xsl:template match="*[matches(local-name(),'^title$')]" mode="browse">
+   <xsl:template match="*:title" mode="browse">
       <browse-title>
          <xsl:attribute name="xtf:meta" select="'true'"/>
          <xsl:attribute name="xtf:tokenize" select="'no'"/>
@@ -198,7 +201,7 @@
    </xsl:template>
    
    <!-- Generate browse-creator -->
-   <xsl:template match="*[matches(local-name(),'^creator$')]" mode="browse">
+   <xsl:template match="*:creator" mode="browse">
       <browse-creator>
          <xsl:attribute name="xtf:meta" select="'true'"/>
          <xsl:attribute name="xtf:tokenize" select="'no'"/>
@@ -217,7 +220,7 @@
       
       <!-- Normalize Spaces & Case-->
       <xsl:variable name="lower-title">
-         <xsl:value-of select="translate(normalize-space($title), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')"/>
+         <xsl:value-of select="lower-case(normalize-space($title))"/>
       </xsl:variable>
       
       <!-- Remove Punctuation -->
@@ -248,9 +251,14 @@
       
       <xsl:param name="creator"/>
       
+      <!-- Remove accent marks and other diacritics -->
+      <xsl:variable name="no-accents-name">
+         <xsl:value-of select="CharUtils:applyAccentMap('../../../conf/accentFolding/accentMap.txt', $creator)"/>
+      </xsl:variable>
+      
       <!-- Normalize Spaces & Case-->
       <xsl:variable name="lower-name">
-         <xsl:value-of select="translate(normalize-space($creator), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')"/>
+         <xsl:value-of select="lower-case(normalize-space($no-accents-name))"/>
       </xsl:variable>
       
       <!-- Remove additional authors and information -->
@@ -451,14 +459,23 @@
       
       <xsl:param name="string"/>
       
-      <xsl:variable name="cleanString" select="lower-case(string($string))"/>
+      <!-- Remove accent marks and other diacritics -->
+      <xsl:variable name="no-accents-name">
+         <xsl:value-of select="CharUtils:applyAccentMap('../../../conf/accentFolding/accentMap.txt', $string)"/>
+      </xsl:variable>
+      
+      <!-- Normalize Spaces & Case-->
+      <xsl:variable name="lower-name">
+         <xsl:value-of select="lower-case(normalize-space($no-accents-name))"/>
+      </xsl:variable>
       
       <xsl:choose>
-         <xsl:when test="matches($cleanString,'^\W*[a-z]')">
-            <xsl:value-of select="replace($cleanString,'^\W*([a-z]).*','$1$1')"/>
+         <xsl:when test="matches($lower-name,'^.*?[a-z].*$')">
+            <xsl:value-of select="replace($lower-name,'^.*?([a-z]).*$','$1$1')"/>
          </xsl:when>
          <xsl:otherwise>
-            <xsl:value-of select="'other'"/>
+            <!-- Can't find any letters... put it on the first tab. -->
+            <xsl:value-of select="'aa'"/>
          </xsl:otherwise>
       </xsl:choose>
       

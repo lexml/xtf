@@ -63,7 +63,7 @@ public class FakeServletRequest implements HttpServletRequest
     url = url.replaceAll("&amp;", "&");
     this.url = url;
 
-    StringTokenizer tok1 = new StringTokenizer(url, "?&");
+    StringTokenizer tok1 = new StringTokenizer(url, "?&;");
     if (tok1.hasMoreTokens())
       tok1.nextToken();
 
@@ -372,7 +372,7 @@ public class FakeServletRequest implements HttpServletRequest
   }
 
   public String getRemoteAddr() {
-    return "192.168.1.1";
+    return "1.2.3.4";
   }
 
   public String getRemoteHost() {

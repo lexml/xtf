@@ -6,10 +6,17 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.lang.reflect.Method;
+import java.math.BigInteger;
 import java.net.URL;
 import java.net.URLConnection;
+import java.security.MessageDigest;
+import java.text.DecimalFormat;
+import java.text.FieldPosition;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -24,6 +31,7 @@ import org.xml.sax.InputSource;
 
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.DocumentInfo;
+import net.sf.saxon.trace.InstructionInfo;
 import net.sf.saxon.trans.XPathException;
 
 /*
@@ -137,12 +145,168 @@ public class FileUtils
   } // length()
 
   /**
+   * Converts the size of a file to a human-readable string, e.g.
+   * "36 Kb", "1.2 Mb", etc. Contributor: Michael A. Russell
+   * 
+   * @param  longFileSize        The size to convert
+   * @return                     Human-readable string approximating that size.
+   */
+  public static String humanFileSize(Long longFileSize) 
+  {
+    /* If the input is negative, return a zero-length string.  */
+    if (longFileSize < 0) return("");
+
+    /* If it's up to 512, use the number itself.  */
+    if (longFileSize < 512) return(longFileSize.toString( ));
+
+    /* Provide a place to put the result of the division.  */
+    double doubleBytes;
+
+    /* We want at most two digits to the right of the decimal point.  */
+    DecimalFormat outputFormat = new DecimalFormat("0.00");
+
+    /* Provide a place to put the converted value.  */
+    StringBuffer outputStrBuf = new StringBuffer( );
+
+    /* Provide a "FieldPosition" object.  It looks like it's returned
+     * by the "format( )" method, but I don't really care about it.
+     * I haven't been able to find an example of how to use it, so
+     * I'll just try using zero, and see what that does.
+     */
+    FieldPosition fieldPos = new FieldPosition(0);
+
+    /* If it's up to 1024 * 512, express in terms of kilobytes.  */
+    if (longFileSize < (1024L * 512L)) {
+      doubleBytes = longFileSize.doubleValue( ) / 1024.0;
+      outputFormat.format(doubleBytes, outputStrBuf, fieldPos);
+      return(outputStrBuf.toString( ) + " Kb");
+    }
+
+    /* If it's up to 1024 * 1024 * 512, express in terms of megabytes.  */
+    if (longFileSize < (1024L * 1024L * 512L)) {
+      doubleBytes = longFileSize.doubleValue( ) / (1024.0 * 1024.0);
+      outputFormat.format(doubleBytes, outputStrBuf, fieldPos);
+      return(outputStrBuf.toString( ) + " Mb");
+    }
+
+    /* If it's up to 1024 * 1024 * 1024 * 512, express in terms of
+     * gigabytes.
+     */
+    if (longFileSize < (1024L * 1024L * 1024L * 512L)) {
+      doubleBytes = longFileSize.doubleValue( ) / (1024.0 * 1024.0 *
+          1024.0);
+      outputFormat.format(doubleBytes, outputStrBuf, fieldPos);
+      return(outputStrBuf.toString( ) + " Gb");
+    }
+
+    /* If it's up to 1024 * 1024 * 1024 * 1024 * 512, express in terms of
+     * terabytes.
+     */
+    if (longFileSize < (1024L * 1024L * 1024L * 1024L * 512L)) {
+      doubleBytes = longFileSize.doubleValue( ) / (1024.0 * 1024.0 *
+          1024.0 * 1024.0);
+      outputFormat.format(doubleBytes, outputStrBuf, fieldPos);
+      return(outputStrBuf.toString( ) + " Tb");
+    }
+
+    /* If it's up to 1024 * 1024 * 1024 * 1024 * 1024 * 512, express in
+     * terms of petabytes.
+     */
+    if (longFileSize < (1024L * 1024L * 1024L * 1024L * 1024L * 512L)) {
+      doubleBytes = longFileSize.doubleValue( ) / (1024.0 * 1024.0 *
+          1024.0 * 1024.0 * 1024.0);
+      outputFormat.format(doubleBytes, outputStrBuf, fieldPos);
+      return(outputStrBuf.toString( ) + " Pb");
+    }
+
+    /* Express in exabytes.  A long integer can be at most 2**63 - 1,
+     * and that's about 9 exabytes, so we don't need to go higher.
+     */
+    doubleBytes = longFileSize.doubleValue( ) / (1024.0 * 1024.0 *
+            1024.0 * 1024.0 * 1024.0 * 1024.0);
+    outputFormat.format(doubleBytes, outputStrBuf, fieldPos);
+    return(outputStrBuf.toString( ) + " Eb");
+  }
+  
+  /**
+   * Calculate the MD5 digest of a string. Contributor: Michael A. Russell
+   * 
+   * @param inputString         String to digest
+   * @return                    The string's MD5 hash
+   */
+  public static String md5Hash(String inputString) 
+  {
+    /* Get an md5 message digest object.  */
+    MessageDigest msgDigest;
+    try {
+      msgDigest = MessageDigest.getInstance("MD5");
+    }
+    catch (Exception e) {
+      /* NoSuchAlgorithmException probably.  Return a zero-length
+       * string.
+       */
+      return("");
+    }
+
+    /* Calculate the md5 digest for the input string.  */
+    msgDigest.update(inputString.getBytes( ), 0, inputString.length( ));
+
+    /* Get a BigInteger version of the md5 digest.  */
+    BigInteger bigInt;
+    try {
+      bigInt = new BigInteger(1, msgDigest.digest( ));
+    }
+    catch (Exception e) {
+      /* NumberFormatException probably.  Return a zero-length string.  */
+      return("");
+    }
+
+    /* Convert the BigInteger to a hex string.  */
+    String outputString = bigInt.toString(16);
+
+    /* If the number of characters is odd, then prefix a zero.  */
+    if (outputString.length( ) % 2 == 1)
+      outputString = "0" + outputString;
+
+    /* Return the result.  */
+    return(outputString);
+  }
+
+  /**
+   * Unfortunately the interface for getting systemId from an XPath context changed
+   * between Saxon 9.0 and Saxon 9.1, so we jump through hoops to be compatible
+   * with both.
+   */
+  private static String getSystemId(XPathContext context)
+  {
+    try {
+      // Saxon 9.0 and below
+      return context.getOrigin().getInstructionInfo().getSystemId();
+    }
+    catch (NoSuchMethodError e)
+    {
+      // Saxon 9.1 and above
+      for (Method method : context.getClass().getMethods()) {
+        if (method.getName().equals("getOrigin")) 
+        {
+          try {
+            return ((InstructionInfo)method.invoke(context)).getSystemId();
+          } catch (Exception e2) {
+            throw new RuntimeException(e2);
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  
+  /**
    * Resolve the location of a file given the stylesheet context.
    */
-  private static File resolveFile(XPathContext context, String filePath) 
+  public static File resolveFile(XPathContext context, String filePath) 
   {
-    String stylesheetPath = context.getOrigin().getInstructionInfo()
-                            .getSystemId();
+    String stylesheetPath = getSystemId(context);
     stylesheetPath = stylesheetPath.replaceFirst("^file:", "");
     stylesheetPath = stylesheetPath.replaceAll("%20", " "); // fix spaces from Saxon on Windows
     File stylesheetDir = new File(stylesheetPath).getParentFile();
@@ -161,8 +325,7 @@ public class FileUtils
    */
   public static String resolvePath(XPathContext context, String filePath)
   {
-    String stylesheetPath = context.getOrigin().getInstructionInfo()
-                            .getSystemId();
+    String stylesheetPath = getSystemId(context);
     stylesheetPath = stylesheetPath.replaceFirst("^file:", "");
     stylesheetPath = stylesheetPath.replaceAll("%20", " "); // fix spaces from Saxon on Windows
     File stylesheetDir = new File(stylesheetPath).getParentFile();
@@ -187,6 +350,75 @@ public class FileUtils
     String result = fmt.format(new Date());
     return result;
   } // curDateTime()
+  
+  /**
+   * All minutes have this many milliseconds except the last minute of the day on a day defined with
+   * a leap second.
+   */
+  private static final long MILLISECS_PER_MINUTE = 60*1000;
+  
+  /**
+   * Number of milliseconds per hour, except when a leap second is inserted.
+   */
+  private static final long MILLISECS_PER_HOUR   = 60*MILLISECS_PER_MINUTE;
+  
+  /**
+   * Number of leap seconds per day except on 
+   * <BR/>1. days when a leap second has been inserted, e.g. 1999 JAN  1.
+   * <BR/>2. Daylight-savings "spring forward" or "fall back" days.
+   */
+  private static final long MILLISECS_PER_DAY = 24*MILLISECS_PER_HOUR;
+
+  /**
+   * Compute the number of days, hours, or minutes that have elapsed between
+   * the given time and now.
+   * 
+   * @param context     Context used to figure out which stylesheet is calling
+   *                    the function.
+   * @param targetDateStr The target date
+   * @param units       Units to return: 'days', 'hours', or 'minutes'. Plural
+   *                    is optional, and single-letter abbreviations are accepted.
+   * @param formatStr   The format of the target date; see {@link SimpleDateFormat}.
+   * @return number of days, hours or minutes elapsed
+   */
+  public static long timeSince(XPathContext context, 
+                               String targetDateStr, String units, String formatStr) 
+  {
+    try {
+      // First, parse the target time.
+      SimpleDateFormat fmt = getDateFormat(formatStr);
+      Date targetDate = fmt.parse(targetDateStr);
+      Calendar tmpCal = Calendar.getInstance();
+      tmpCal.setTime(targetDate);
+      long targetMillis = adjustedMillis(tmpCal);
+      
+      // Now get the current time for comparison
+      tmpCal.setTime(new Date());
+      long currentMillis = adjustedMillis(tmpCal);
+      long diff = currentMillis - targetMillis;
+      
+      // Compute the answer in the desired units.
+      if (units.matches("d|D|day|Day|days|Days"))
+        return diff / MILLISECS_PER_DAY;
+      else if (units.matches("h|H|hour|Hour|hours|Hours"))
+        return diff / MILLISECS_PER_HOUR;
+      else if (units.matches("m|M|min|Min|minute|Minute|minutes|Minutes"))
+        return diff / MILLISECS_PER_MINUTE;
+      else
+        throw new RuntimeException("timeSince units must be days, hours, or minutes (or d/h/m)");
+    }
+    catch (ParseException e) {
+      throw new RuntimeException("error parsing date '" + targetDateStr + "'");
+    }
+  }
+  
+  /**
+   * Gets the time in milliseconds from a Calendar, adjusting for timezone
+   * so that day subtraction works properly.
+   */
+  private static long adjustedMillis(Calendar cal) {
+    return cal.getTimeInMillis() +  cal.getTimeZone().getOffset(cal.getTimeInMillis() );
+  }
 
   /**
    * Get a SimpleDateFormatter for the given format string. If one has
@@ -235,10 +467,10 @@ public class FileUtils
   {
     ArrayList<File> files = tempFiles.get();
     if (files != null) {
-      for (File f : files) {
-        if (f.delete())
-          files.remove(f);
-      }
+      for (File f : files)
+        f.delete();
+      files.clear();
+      tempFiles.set(null);
     }
   }
   
@@ -260,11 +492,16 @@ public class FileUtils
     // Now read it in, up to the first close-element marker.
     XMLStubReader xmlReader = new XMLStubReader();
     BufferedInputStream bufStream = new BufferedInputStream(new FileInputStream(file));
-    InputSource inputSrc = new InputSource(bufStream);
-    inputSrc.setSystemId(file.toURI().toString());
-    Source saxSrc = new SAXSource(xmlReader, inputSrc);
-    DocumentInfo doc = context.getConfiguration().buildDocument(saxSrc);
-    return doc;
+    try {
+      InputSource inputSrc = new InputSource(bufStream);
+      inputSrc.setSystemId(file.toURI().toString());
+      Source saxSrc = new SAXSource(xmlReader, inputSrc);
+      DocumentInfo doc = context.getConfiguration().buildDocument(saxSrc);
+      return doc;
+    }
+    finally {
+      bufStream.close();
+    }
   }
   
   /**

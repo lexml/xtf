@@ -7,6 +7,7 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermEnum;
 import org.cdlib.xtf.textEngine.IndexUtil;
+import org.cdlib.xtf.textEngine.NativeFSDirectory;
 import org.cdlib.xtf.util.Path;
 import org.cdlib.xtf.util.Trace;
 
@@ -85,7 +86,7 @@ public class IndexStats
       boolean showUsage = false;
 
       // Regardless of whether we succeed or fail, say our name.
-      Trace.info("IndexStats v2.1.1");
+      Trace.info("IndexStats v3.1");
       Trace.info("");
 
       // Make sure the XTF_HOME environment variable is specified.
@@ -268,7 +269,7 @@ public class IndexStats
     //
     String idxPath = Path.resolveRelOrAbs(cfgInfo.xtfHomePath, idxInfo.indexPath);
     File idxFile = new File(idxPath);
-    IndexReader indexReader = IndexReader.open(idxPath);
+    IndexReader indexReader = IndexReader.open(NativeFSDirectory.getDirectory(idxPath));
 
     // Give an estimate of the total number of documents.
     long totalDocs = indexReader.docFreq(new Term("docInfo", "1"));

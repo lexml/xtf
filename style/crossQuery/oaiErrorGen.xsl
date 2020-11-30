@@ -55,6 +55,7 @@
    <xsl:param name="message"/>
    <xsl:param name="stackTrace" select="''"/>
    <xsl:param name="http.URL"/>
+   <xsl:param name="http.rawURL"/>
    
    <xsl:template match="/">
       <xsl:choose>
@@ -80,7 +81,7 @@
       
       <xsl:param name="message"/>
       <xsl:variable name="responseDate" select="replace(replace(FileUtils:curDateTime('yyyy-MM-dd::HH:mm:ss'),'::','T'),'([0-9])$','$1Z')"/>
-      <xsl:variable name="request" select="$http.URL"/>
+      <xsl:variable name="request" select="$http.rawURL"/>
       <xsl:variable name="verb" select="replace($message,'(.+)::.+::.+','$1')"/>
       <xsl:variable name="code" select="replace($message,'.+::(.+)::.+','$1')"/>
       <xsl:variable name="messageText" select="replace($message,'.+::.+::(.+)','$1')"/>
@@ -90,9 +91,18 @@
          <responseDate>
             <xsl:value-of select="replace(string($responseDate),'\n','')"/>
          </responseDate>
-         <request verb="{$verb}">
-            <xsl:value-of select="$request"/>
-         </request>
+         <xsl:choose>
+             <xsl:when test="$verb='badVerb'">
+                 <request>
+                     <xsl:value-of select="$request"/>
+                 </request>
+             </xsl:when>
+             <xsl:otherwise>
+                 <request verb="{$verb}">
+                     <xsl:value-of select="$request"/>
+                 </request>
+                </xsl:otherwise>
+            </xsl:choose>
          <error code="{$code}">
             <xsl:value-of select="$messageText"/>
          </error>

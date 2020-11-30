@@ -29,13 +29,25 @@ package org.cdlib.xtf.crossQuery.test;
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+import java.io.IOException;
+
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.cdlib.xtf.crossQuery.CrossQuery;
+import org.cdlib.xtf.crossQuery.QueryRoute;
+import org.cdlib.xtf.servletBase.TextConfig;
+import org.cdlib.xtf.test.FakeServletConfig;
+import org.cdlib.xtf.test.FakeServletContext;
+import org.cdlib.xtf.test.FakeServletRequest;
+import org.cdlib.xtf.test.FakeServletResponse;
+import org.cdlib.xtf.test.NullOutputStream;
+import org.cdlib.xtf.textEngine.DefaultQueryProcessor;
+import org.cdlib.xtf.textEngine.IndexWarmer;
+import org.cdlib.xtf.textEngine.QueryProcessor;
 import org.cdlib.xtf.textEngine.QueryRequest;
 import org.cdlib.xtf.textEngine.QueryResult;
 import org.cdlib.xtf.util.AttribList;
-import org.cdlib.xtf.util.Trace;
 
 /**
  * Derived version of the crossQuery servlet, used to abuse crossQuery during
@@ -50,12 +62,84 @@ import org.cdlib.xtf.util.Trace;
  */
 public class TestableCrossQuery extends CrossQuery 
 {
+  private String baseDir;
+  private String indexDirOverride;
+  private IndexWarmer indexWarmer;
   private ThreadLocal<Integer> nHits = new ThreadLocal<Integer>();
+  
+  /**
+   * Simplified initialization for use outside a real servlet container.
+   * 
+   * @param baseDir the XTF home directory.
+   * @throws ServletException if anything goes wrong.
+   */
+  public TestableCrossQuery(String baseDir) throws ServletException
+  {
+    this.baseDir = baseDir;
+    FakeServletContext context = new FakeServletContext();
+    FakeServletConfig config = new FakeServletConfig(context, baseDir, "crossQuery");
+    super.init(config);
+  }
+  
+  /** Allows overriding the directory specified in future query requests. */
+  public void overrideIndexDir(String dir) {
+    indexDirOverride = dir;
+  }
+  
+  /** Allows overriding default index warmer. */
+  public void setIndexWarmer(IndexWarmer warmer) {
+    indexWarmer = warmer;
+  }
   
   /** Return the number of hits in the last request processed by this thread */
   public int nHits() { return nHits.get(); }
 
+  /** For test mode, do nothing to the current trace flags. */
+  @Override
+  protected void setupTrace(TextConfig config) { }
+
+  /** Allow overriding the index directory */
+  @Override
+  protected QueryRequest runQueryParser(HttpServletRequest req,
+                                        HttpServletResponse res,
+                                        QueryRoute route, 
+                                        AttribList attribs)
+    throws Exception 
+  {
+    QueryRequest queryReq = super.runQueryParser(req, res, route, attribs);
+    if (indexDirOverride != null)
+      queryReq.indexPath = indexDirOverride;
+    return queryReq;
+  }
+  
+  /** For test mode, allow override of index warmer. Default to foreground warming. */
+  @Override
+  public QueryProcessor createQueryProcessor()
+  {
+    DefaultQueryProcessor processor = new DefaultQueryProcessor();
+    processor.setXtfHome(baseDir);
+    if (indexWarmer == null)
+      indexWarmer = new IndexWarmer(baseDir, 0);
+    processor.setIndexWarmer(indexWarmer);
+    return processor;
+  }
+
+  /**
+   * Simplified method to test-get the given URL. Throws away the output
+   * but retains the number of hits.
+   * 
+   * @param url the URL to test-get
+   */
+  public void service(String url) throws ServletException, IOException
+  {
+    FakeServletRequest req = new FakeServletRequest(url);
+    NullOutputStream out = new NullOutputStream();
+    FakeServletResponse res = new FakeServletResponse(out);
+    super.service(req, res);
+  }
+
   // inherit Javadoc
+  @Override
   protected void formatHits(String mainTagName, HttpServletRequest req,
                             HttpServletResponse res, AttribList attribs,
                             QueryRequest queryRequest, QueryResult queryResult,
@@ -73,11 +157,11 @@ public class TestableCrossQuery extends CrossQuery
   }
 
   // inherit Javadoc
+  @Override
   protected void genErrorPage(HttpServletRequest req, HttpServletResponse res,
                               Exception exc) 
   {
     nHits.set(-1);
-    Trace.error("Exception occurred in crossQuery: " + exc);
     throw new RuntimeException(exc);
   } // genErrorPage()
 } // class TestableCrossQuery

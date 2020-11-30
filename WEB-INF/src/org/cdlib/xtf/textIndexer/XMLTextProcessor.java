@@ -78,6 +78,7 @@ import org.apache.lucene.search.Hits;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.spelt.SpellWriter;
+import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.analysis.*;
 import org.apache.lucene.bigram.BigramStopFilter;
@@ -90,6 +91,7 @@ import org.cdlib.xtf.lazyTree.LazyKeyManager;
 import org.cdlib.xtf.lazyTree.LazyTreeBuilder;
 import org.cdlib.xtf.textEngine.IndexUtil;
 import org.cdlib.xtf.textEngine.Constants;
+import org.cdlib.xtf.textEngine.NativeFSDirectory;
 import org.cdlib.xtf.textEngine.XtfSearcher;
 import org.cdlib.xtf.util.CharMap;
 import org.cdlib.xtf.util.FastStringReader;
@@ -197,6 +199,19 @@ public class XMLTextProcessor extends DefaultHandler
   /** The current XML node we are currently reading source text from. */
   private int curNode = -1;
 
+  /** Number of words encountered so far for the current document. Used to
+   *  to determine whether any real data has been encountered requiring
+   *  a sub-document docInfo chunk (we don't want to write them for empty
+   *  sections.)
+   */
+  private int docWordCount = 0;
+
+  /** 
+   * Sub-documents that have been written out. Used to
+   * know whether a main docInfo chunk needs to be written.
+   */
+  private HashSet<String> subDocsWritten;
+
   /** Number of words encountered so far for the current XML node. Used to
    *  to track the current working position in a node. This value is recorded
    *  in {@link XMLTextProcessor#chunkWordOffset chunkWordOffset} whenever a
@@ -289,6 +304,9 @@ public class XMLTextProcessor extends DefaultHandler
    *  updated. See the {@link IndexInfo} class description for more details.
    */
   private IndexInfo indexInfo;
+  
+  /** Whether to ignore file modification times */
+  private boolean ignoreFileTimes;
 
   /** The base directory from which to resolve relative paths (if any) */
   private String xtfHomePath;
@@ -312,7 +330,7 @@ public class XMLTextProcessor extends DefaultHandler
 
   /** The base directory for the current Lucene database. */
   private String indexPath;
-
+  
   /** Object used to construct a "lazy tree" representation of the XML source
    *  file being processed. <br><br>
    *
@@ -354,9 +372,6 @@ public class XMLTextProcessor extends DefaultHandler
    *  text/tag being processed is.
    */
   private int inMeta = 0;
-
-  /** List of meta-info currently accumulated for the current meta-tag. */
-  private LinkedList metaInfo;
 
   /** The current meta-field data being processed. */
   private MetaField metaField;
@@ -426,7 +441,7 @@ public class XMLTextProcessor extends DefaultHandler
    *  section type is encountered. See the {@link SectionInfoStack} class for
    *  more about section nesting.
    */
-  private SectionInfoStack section = new SectionInfoStack();
+  private SectionInfoStack section;
 
   /** The namespace string used to identify attributes that must be processed
    *  by the <code>XMLTextProcessor</code> class. <br><br>
@@ -440,6 +455,18 @@ public class XMLTextProcessor extends DefaultHandler
    */
   private static final String xtfUri = "http://cdlib.org/xtf";
 
+  ////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * Version for source-level backward compatibility since this API is
+   * used sometimes externally. Defaults 'ignoreFileTimes' to false.
+   */
+  public void open(String homePath, IndexInfo idxInfo, boolean clean)
+    throws IOException
+  {
+    open(homePath, idxInfo, clean, false);
+  }
+  
   ////////////////////////////////////////////////////////////////////////////
 
   /**
@@ -459,6 +486,9 @@ public class XMLTextProcessor extends DefaultHandler
    *
    * @param  clean    true to truncate any existing index; false to add to it.
    *                  <br><br>
+   *                  
+   * @param ignoreFileTimes true to ignore file time checks (only applies
+   *                  during incremental indexing).
    *
    * @.notes
    *   This method will create an index if it doesn't exist, or truncate an index
@@ -475,11 +505,12 @@ public class XMLTextProcessor extends DefaultHandler
    *                creation, or truncation of the Lucene index. <br><br>
    *
    */
-  public void open(String homePath, IndexInfo idxInfo, boolean clean)
+  public void open(String homePath, IndexInfo idxInfo, boolean clean,
+                   boolean ignoreFileTimes)
     throws IOException 
   {
     fileQueue = new LinkedList();
-
+    
     try 
     {
       // Get a reference to the passed in configuration that all the
@@ -487,6 +518,7 @@ public class XMLTextProcessor extends DefaultHandler
       //
       this.indexInfo = idxInfo;
       this.xtfHomePath = homePath;
+      this.ignoreFileTimes = ignoreFileTimes;
 
       // Determine where the index database is located.
       indexPath = getIndexPath();
@@ -514,7 +546,7 @@ public class XMLTextProcessor extends DefaultHandler
         Path.createPath(indexPath);
 
         // Get a Lucene style directory.
-        FSDirectory idxDir = FSDirectory.getDirectory(indexPath);
+        FSDirectory idxDir = NativeFSDirectory.getDirectory(indexPath);
 
         // If an index doesn't exist there, create it.
         if (!IndexReader.indexExists(idxDir))
@@ -568,20 +600,6 @@ public class XMLTextProcessor extends DefaultHandler
           ") doesn't match config (" + indexInfo.stopWords + ")");
       }
 
-      // Read in the plural map, if there is one.
-      String pluralMapName = doc.get("pluralMap");
-      if (pluralMapName != null && pluralMapName.length() > 0) 
-      {
-        File pluralMapFile = new File(
-          Path.normalizePath(indexPath + pluralMapName));
-        InputStream stream = new FileInputStream(pluralMapFile);
-
-        if (pluralMapName.endsWith(".gz"))
-          stream = new GZIPInputStream(stream);
-
-        pluralMap = new WordMap(stream);
-      }
-
       // Read in the accent map, if there is one.
       String accentMapName = doc.get("accentMap");
       if (accentMapName != null && accentMapName.length() > 0) 
@@ -594,6 +612,23 @@ public class XMLTextProcessor extends DefaultHandler
           stream = new GZIPInputStream(stream);
 
         accentMap = new CharMap(stream);
+      }
+
+      // Read in the plural map, if there is one. Be sure to apply
+      // the accent map (if any) to it so that plurals get mapped
+      // whether they're accented or not.
+      //
+      String pluralMapName = doc.get("pluralMap");
+      if (pluralMapName != null && pluralMapName.length() > 0) 
+      {
+        File pluralMapFile = new File(
+          Path.normalizePath(indexPath + pluralMapName));
+        InputStream stream = new FileInputStream(pluralMapFile);
+
+        if (pluralMapName.endsWith(".gz"))
+          stream = new GZIPInputStream(stream);
+
+        pluralMap = new WordMap(stream, accentMap);
       }
 
       // Read in the the list of all the tokenized fields (if any).
@@ -683,11 +718,9 @@ public class XMLTextProcessor extends DefaultHandler
       Path.deleteDir(new File(indexPath));
 
       // First, make the index.
-      indexWriter = new IndexWriter(indexPath,
-                                    new XTFTextAnalyzer(
-                                                        stopSet,
-                                                        pluralMap,
-                                                        accentMap),
+      Directory indexDir = NativeFSDirectory.getDirectory(indexPath);
+      indexWriter = new IndexWriter(indexDir,
+                                    new XTFTextAnalyzer(stopSet, pluralMap, accentMap),
                                     true);
 
       // Then add the index info chunk to it.
@@ -697,29 +730,12 @@ public class XMLTextProcessor extends DefaultHandler
       doc.add(new Field("chunkSize", indexInfo.getChunkSizeStr(), Field.Store.YES, Field.Index.NO));
       doc.add(new Field("chunkOvlp", indexInfo.getChunkOvlpStr(), Field.Store.YES, Field.Index.NO));
 
-      // If a plural map was specified, copy it to the index directory.
-      if (indexInfo.pluralMapPath != null &&
-          indexInfo.pluralMapPath.length() > 0) 
-      {
-        String fileName = new File(indexInfo.pluralMapPath).getName();
-        String sourcePath = Path.normalizeFileName(
-          xtfHomePath + indexInfo.pluralMapPath);
-        String targetPath = Path.normalizeFileName(indexPath + fileName);
-        Path.copyFile(new File(sourcePath), new File(targetPath));
-        doc.add(new Field("pluralMap", fileName, Field.Store.YES, Field.Index.NO));
-      }
-
-      // If an accent map was specified, copy it to the index directory.
-      if (indexInfo.accentMapPath != null &&
-          indexInfo.accentMapPath.length() > 0) 
-      {
-        String fileName = new File(indexInfo.accentMapPath).getName();
-        String sourcePath = Path.normalizeFileName(
-          xtfHomePath + indexInfo.accentMapPath);
-        String targetPath = Path.normalizeFileName(indexPath + fileName);
-        Path.copyFile(new File(sourcePath), new File(targetPath));
-        doc.add(new Field("accentMap", fileName, Field.Store.YES, Field.Index.NO));
-      }
+      // If plural map, accent map, and/or validation files were specified, copy them to the
+      // index directory.
+      //
+      copyDependentFile(indexInfo.pluralMapPath,  "pluralMap", doc);
+      copyDependentFile(indexInfo.accentMapPath,  "accentMap", doc);
+      copyDependentFile(indexInfo.validationPath, "validation", doc);
 
       // Copy the stopwords to the index
       String stopWords = indexInfo.stopWords;
@@ -738,6 +754,19 @@ public class XMLTextProcessor extends DefaultHandler
       }
     } // finally
   } // createIndex()
+
+  ////////////////////////////////////////////////////////////////////////////
+
+  private void copyDependentFile(String filePath, String fieldName, Document doc)
+      throws IOException 
+  {
+    if (filePath != null && filePath.length() > 0) { 
+      File sourceFile = new File(Path.resolveRelOrAbs(xtfHomePath, filePath));
+      File targetFile = new File(new File(indexPath), sourceFile.getName());
+      Path.copyFile(sourceFile, targetFile);
+      doc.add(new Field(fieldName, sourceFile.getName(), Field.Store.YES, Field.Index.NO));
+    }
+  }
 
   ////////////////////////////////////////////////////////////////////////////
 
@@ -1152,22 +1181,25 @@ public class XMLTextProcessor extends DefaultHandler
     nextChunkWordCount = 0;
     nextChunkWordOffset = 0;
 
+    subDocsWritten = new HashSet();
+
     forcedChunk = false;
     inMeta = 0;
 
     // Reset the meta info for the new document.
     metaBuf.setLength(0);
-    metaInfo = null;
 
-    // Reset count of how many chunks we've written.
+    // Reset count of how many chunks and words we've written.
     chunkCount = 0;
+    docWordCount = 0;
 
     // Create an initial unnamed section with depth zero, indexing turned on, 
     // a blank section name, no section bump, a word bump of 1, no word boost,
-    // and a default sentence bump.
+    // default sentence bump, blank subdocument name, and empty meta-data.
     //
+    section = new SectionInfoStack();
     section.push();
-
+    
     // Now parse it.
     int result = parseText();
 
@@ -1330,6 +1362,22 @@ public class XMLTextProcessor extends DefaultHandler
 
       Trace.info(message);
 
+      // We need to delete any chunks that did make it through for this document,
+      // otherwise they would end up improperly tacked onto the beginning of the
+      // next document.
+      //
+      if (docWordCount > 0 || subDocsWritten.size() > 0)
+      {
+        try {
+          openIdxForReading();
+          indexReader.deleteDocuments(new Term("key", curIdxSrc.key()));
+        }
+        catch (Throwable t2) {
+          Trace.warning("Warning: Error deleting partially complete document's chunks: " + 
+                        t2.getClass() + ": " + t2.getMessage());
+        }
+      }
+      
       return -1;
     } // try( to filter the input file )
 
@@ -1458,8 +1506,6 @@ public class XMLTextProcessor extends DefaultHandler
         throw new RuntimeException("Meta-data fields may not nest");
 
       inMeta = 1;
-      if (metaInfo == null)
-        metaInfo = new LinkedList();
 
       // See if there is a "store" attribute set for this node. If not,
       // default to true.
@@ -1547,7 +1593,8 @@ public class XMLTextProcessor extends DefaultHandler
                                 tokenize,
                                 isFacet,
                                 spell,
-                                boost);
+                                boost,
+                                false);
       assert metaBuf.length() == 0 : "Should have cleared meta-buf";
 
       // If there are non-XTF attributes on the node, record them.
@@ -1575,27 +1622,26 @@ public class XMLTextProcessor extends DefaultHandler
     else 
     {
       // Get the current section type and word boost.
-      String prevSectionType = section.sectionType();
-      float prevWordBoost = section.wordBoost();
-      int prevSpellFlag = section.spellFlag();
+      SectionInfo prev = section.prev();
 
       // Process the node specific attributes such as section type,
       // section bump, word bump, word boost, and so on.
       //
-      ProcessNodeAttributes(atts);
+      processNodeAttributes(atts);
 
       // If the section type changed, we need to start a new chunk.
-      if (section.sectionType() != prevSectionType ||
-          section.wordBoost() != prevWordBoost ||
-          section.spellFlag() != prevSpellFlag) 
+      if (section.sectionType() != prev.sectionType ||
+          section.wordBoost()   != prev.wordBoost   ||
+          section.spellFlag()   != prev.spellFlag   ||
+          section.subDocument() != prev.subDocument) 
       {
         // Clear out any remaining accumulated text.
-        forceNewChunk(prevSectionType, prevWordBoost, prevSpellFlag);
+        forceNewChunk(prev);
 
         // Diagnostic info.
-        Trace.tab();
-        Trace.debug("Begin Section [" + section.sectionType() + "]");
-        Trace.untab();
+        //Trace.tab();
+        //Trace.debug("Begin Section [" + section.sectionType() + "]");
+        //Trace.untab();
       }
     }
 
@@ -1706,7 +1752,7 @@ public class XMLTextProcessor extends DefaultHandler
     //
     if (inMeta > 1)
       metaBuf.append("</" + localName + ">");
-
+    
     // If this is the end of a meta-data field, record it.
     if (inMeta == 1) 
     {
@@ -1747,10 +1793,17 @@ public class XMLTextProcessor extends DefaultHandler
       //
       boolean add = true;
       int nFound = 0;
-      for (Iterator i = metaInfo.iterator(); i.hasNext();) 
+      for (Iterator i = section.metaInfo().iterator(); i.hasNext();) 
       {
         MetaField mf = (MetaField)i.next();
         boolean found = mf.name.equals(metaField.name);
+        
+        // Overwrite inherited field of the same name
+        if (found && mf.isInherited) {
+          i.remove();
+          continue;
+        }
+        
         if (found)
           ++nFound;
         if (found && mf.tokenize && !mf.isFacet) {
@@ -1777,7 +1830,7 @@ public class XMLTextProcessor extends DefaultHandler
           metaField.wordBoost = 1.0f;
 
         // Record the new field.
-        metaInfo.add(metaField);
+        section.metaInfo().add(metaField);
       }
 
       metaField = null;
@@ -1786,31 +1839,52 @@ public class XMLTextProcessor extends DefaultHandler
     }
     else if (inMeta > 1)
       inMeta--;
-
-    // Save the section type and word boost value before popping the current 
-    // section info off the stack.
-    //
-    String prevSectionType = section.sectionType();
-    float prevWordBoost = section.wordBoost();
-    int prevSpellFlag = section.spellFlag();
-
-    // Decrease the section stack depth as needed, possibly pulling
-    // the entire section entry off the stack.
-    //
-    section.pop();
-
-    // If the section type changed, force new text to start in a new chunk. 
-    if (section.sectionType() != prevSectionType ||
-        section.wordBoost() != prevWordBoost ||
-        section.spellFlag() != prevSpellFlag) 
+    else
     {
-      // Output any remaining accumulated text.
-      forceNewChunk(prevSectionType, prevWordBoost, prevSpellFlag);
-
-      // Diagnostic info.
-      Trace.tab();
-      Trace.debug("End Section [" + prevSectionType + "]");
-      Trace.untab();
+      // For non-meta nodes, we need to pop the section stack. First, 
+      // save the section type and word boost value so we can use them
+      // if changes occur.
+      //
+      SectionInfo prev = section.prev();
+  
+      // Decrease the section stack depth as needed, possibly pulling
+      // the entire section entry off the stack.
+      //
+      section.pop();
+  
+      // If the section type changed, force new text to start in a new chunk. 
+      if (section.sectionType() != prev.sectionType ||
+          section.wordBoost() != prev.wordBoost ||
+          section.spellFlag() != prev.spellFlag) 
+      {
+        // Output any remaining accumulated text.
+        forceNewChunk(prev);
+  
+        // Diagnostic info.
+        //Trace.tab();
+        //Trace.debug("End Section [" + prevSectionType + "]");
+        //Trace.untab();
+      }
+      
+      // If the subdocument has changed...
+      if (section.subDocument() != prev.subDocument) 
+      {
+        // Clear out any partially accumulated chunks.         
+        forceNewChunk(prev);
+  
+        // Insert a docInfo chunk right here, if there are words to include or the
+        // sub-doc hasn't been written yet. Note that intervening chunks with no 
+        // new words don't deserve a new docInfo.
+        //
+        if (docWordCount > 0 || !subDocsWritten.contains(prev.subDocument)) {
+          saveDocInfo(prev);
+          subDocsWritten.add(prev.subDocument);
+        }
+  
+        // We're now in a new section, and a new subdocument.
+        chunkStartNode = -1;
+        chunkWordOffset = -1;
+      }
     }
 
     // Cross-check to make sure our node counting matches the lazy tree.
@@ -1863,11 +1937,16 @@ public class XMLTextProcessor extends DefaultHandler
   public void endDocument()
     throws SAXException 
   {
-    // Index the remaining accumulated chunk (if any).
-    indexText(section.sectionType(), section.wordBoost(), section.spellFlag());
+    // Save the document "header" info if anything has been indexed, or
+    // if no sub-docs were found (meaning it's a text-less document.)
+    //
+    if (docWordCount > 0 || subDocsWritten.isEmpty())
+    {
+      // Index the remaining accumulated chunk (if any).
+      indexText(section.peek());
 
-    // Save the document "header" info.
-    saveDocInfo();
+      saveDocInfo(section.peek());
+    }
 
     // Finish building the lazy tree
     if (lazyHandler != null)
@@ -2128,8 +2207,11 @@ public class XMLTextProcessor extends DefaultHandler
         //
         chunkWordCount++;
         nextChunkWordCount++;
-        if (!word.termText().equals(Constants.VIRTUAL_WORD))
+        if (!word.termText().equals(Constants.VIRTUAL_WORD)) {
           nodeWordCount++;
+          docWordCount++;
+        }
+          
 
         // If we've got all the words required for the current chunk...
         if (chunkWordCount == chunkWordSize) 
@@ -2160,9 +2242,7 @@ public class XMLTextProcessor extends DefaultHandler
           trimAccumText(false);
 
           // Index the accumulated text.
-          indexText(section.sectionType(),
-                    section.wordBoost(),
-                    section.spellFlag());
+          indexText(section.peek());
 
           // Advance the punctuation start point for the next word to
           // the beginning of the word itself, since we already 
@@ -2238,26 +2318,17 @@ public class XMLTextProcessor extends DefaultHandler
    *  breaks or new section types does not overlap with any previously
    *  accumulated source text.
    *
-   *  @param  sectionType  The section type to apply to the previously
-   *                       accumulated chunk.
-   *
-   *  @param  wordBoost    The word boost to apply to the previously
-   *                       accumulated chunk.
-   *
-   *  @param  spellFlag    Whether to add words to the spellcheck
-   *                       dictionary. <br><br>
-   *
    *  @.notes
    *    This method writes out any accumulated text and resets the chunk
    *    tracking information to the start of a new chunk.
    */
-  private void forceNewChunk(String sectionType, float wordBoost, int spellFlag) 
+  private void forceNewChunk(SectionInfo secInfo) 
   {
     // If there is a full chunk that hasn't been written yet, do it
     // now.
     if (nextChunkStartIdx > 0) 
     {
-      indexText(sectionType, wordBoost, spellFlag);
+      indexText(secInfo);
 
       // Make the next chunk current.
       chunkStartNode = nextChunkStartNode;
@@ -2280,7 +2351,7 @@ public class XMLTextProcessor extends DefaultHandler
     }
 
     // Index whatever is left in the accumulated text buffer.
-    indexText(sectionType, wordBoost, spellFlag);
+    indexText(secInfo);
 
     // Since we're forcing a new chunk, advance the next chunk past
     // the one we just wrote.
@@ -2745,9 +2816,7 @@ public class XMLTextProcessor extends DefaultHandler
   /** Add the current accumulated chunk of text to the Lucene database for
    *  the active index. <br><br>
    *
-   *  @param  sectionType  The section type name for this chunk of text.
-   *  @param  wordBoost    The word boost value for this chunk of text.
-   *  @param  spellFlag    Whether to add words to spelling dictionary. <br><br>
+   *  @param  secInfo      Info such as sectionType, wordBoost, etc.
    *
    *  @.notes
    *    This method peforms the final step of adding a chunk of assembled text
@@ -2760,7 +2829,7 @@ public class XMLTextProcessor extends DefaultHandler
    *    the XML node in which the chunk begins, the word offset of the chunk,
    *    and the "blurbified" text for the chunk. <br><br>
    */
-  private void indexText(String sectionType, float wordBoost, int spellFlag) 
+  private void indexText(SectionInfo secInfo) 
   {
     try 
     {
@@ -2801,8 +2870,16 @@ public class XMLTextProcessor extends DefaultHandler
     doc.add(new Field("key", curIdxSrc.key(), Field.Store.NO, Field.Index.UN_TOKENIZED));
 
     // Write the current section type as a stored, indexed, tokenized field.
-    if (sectionType != null && sectionType.length() > 0)
-      doc.add(new Field("sectionType", sectionType, Field.Store.YES, Field.Index.TOKENIZED));
+    if (secInfo.sectionType != null && secInfo.sectionType.length() > 0)
+      doc.add(new Field("sectionType", secInfo.sectionType, Field.Store.YES, Field.Index.TOKENIZED));
+    
+    // Write the subdocument id as a non-stored, indexed, non-tokenized field. It's
+    // non-tokenized because the intent is that it will contain some sort of
+    // subdocument identifier. And it's non-stored because the returning the subdoc
+    // will only be done at the docHit level, not the chunk level.
+    //
+    if (secInfo.subDocument != null && secInfo.subDocument.length() > 0)
+      doc.add(new Field("subDocument", secInfo.subDocument, Field.Store.NO, Field.Index.UN_TOKENIZED));
 
     // Convert the various integer field values to strings for writing.
     String nodeStr = Integer.toString(chunkStartNode);
@@ -2810,10 +2887,9 @@ public class XMLTextProcessor extends DefaultHandler
     String textStr = compactedAccumText.toString();
 
     // Diagnostic output.
-    Trace.tab();
-    Trace.debug("node " + nodeStr + ", offset = " + wordOffsetStr);
-    Trace.more(" text = [" + textStr + "]");
-    Trace.untab();
+    //Trace.tab();
+    //Trace.info("Chunk: text = [" + textStr + "], subDoc = " + secInfo.subDocument);
+    //Trace.untab();
 
     // Add the node number for this chunk. Store, but don't index or tokenize.
     doc.add(new Field("node", nodeStr, Field.Store.YES, Field.Index.NO));
@@ -2825,12 +2901,12 @@ public class XMLTextProcessor extends DefaultHandler
     Field textField = new Field("text", textStr, Field.Store.YES, Field.Index.TOKENIZED);
 
     // Set the boost value for the text.
-    textField.setBoost(wordBoost);
+    textField.setBoost(secInfo.wordBoost);
 
     // Establish whether to add words to the spellcheck dictionary.
     XTFTextAnalyzer analyzer = (XTFTextAnalyzer)indexWriter.getAnalyzer();
     analyzer.clearMisspelledFields();
-    if (spellFlag == SectionInfo.noSpell)
+    if (secInfo.spellFlag == SectionInfo.noSpell)
       analyzer.addMisspelledField("text");
 
     // Finally, add the text in the chunk to the index as a stored, indexed,
@@ -3141,7 +3217,7 @@ public class XMLTextProcessor extends DefaultHandler
    *    {@link XMLTextProcessor} class description. <br><br>
    *
    */
-  private void ProcessNodeAttributes(Attributes atts) 
+  private void processNodeAttributes(Attributes atts) 
   {
     String valueStr;
 
@@ -3154,6 +3230,9 @@ public class XMLTextProcessor extends DefaultHandler
     int indexFlag = SectionInfo.parentIndex;
     int spellFlag = SectionInfo.parentSpell;
     int sectionBump = 0;
+    String subDocumentStr = "";
+    boolean subDocumentMetaInherit = true;
+    LinkedList metaInfo = null;
 
     // Process each of the specified node attributes, outputting warnings
     // for the ones we don't recognize.
@@ -3244,17 +3323,15 @@ public class XMLTextProcessor extends DefaultHandler
         if (trueOrFalse(valueStr, false)) 
         {
           // Clear out any partially accumulated chunks.         
-          forceNewChunk(section.sectionType(),
-                        section.wordBoost(),
-                        section.spellFlag());
+          forceNewChunk(section.peek());
 
           // Reset the chunk position to the node we're in now.
           chunkStartNode = -1;
           chunkWordOffset = -1;
 
-          Trace.tab();
-          Trace.debug("Proximity Break");
-          Trace.untab();
+          //Trace.tab();
+          //Trace.debug("Proximity Break");
+          //Trace.untab();
         }
       } // else if( atts.getQName(i).equalsIgnoreCase("xtfProximityBreak") )
 
@@ -3269,9 +3346,7 @@ public class XMLTextProcessor extends DefaultHandler
         if (wordBoost != newBoost) 
         {
           // Clear out any partially accumulated chunks.         
-          forceNewChunk(section.sectionType(),
-                        section.wordBoost(),
-                        section.spellFlag());
+          forceNewChunk(section.peek());
 
           // Reset the chunk position to the node we're in now.
           chunkStartNode = -1;
@@ -3280,9 +3355,9 @@ public class XMLTextProcessor extends DefaultHandler
           // Hang on to the new boost value.
           wordBoost = newBoost;
 
-          Trace.tab();
-          Trace.debug("Word Boost: " + newBoost);
-          Trace.untab();
+          //Trace.tab();
+          //Trace.debug("Word Boost: " + newBoost);
+          //Trace.untab();
         }
       } // else if( atts.getQName(i).equalsIgnoreCase("xtfProximityBreak") )
 
@@ -3308,20 +3383,76 @@ public class XMLTextProcessor extends DefaultHandler
         if (spellFlag != section.spellFlag()) 
         {
           // Clear out any partially accumulated chunks.         
-          forceNewChunk(section.sectionType(),
-                        section.wordBoost(),
-                        section.spellFlag());
+          forceNewChunk(section.peek());
 
           // Reset the chunk position to the node we're in now.
           chunkStartNode = -1;
           chunkWordOffset = -1;
 
-          Trace.tab();
-          Trace.debug("Spell: " + spellFlag);
-          Trace.untab();
+          //Trace.tab();
+          //Trace.debug("Spell: " + spellFlag);
+          //Trace.untab();
         }
       } // else if( atts.getQName(i).equalsIgnoreCase("xtfIndex") )
+      
+      // If the current attribute indicates a new subdocument, get it.  
+      else if (attName.equalsIgnoreCase("subDocument")) {
+        subDocumentStr = atts.getValue(i);
+        
+        // If the subdocument has changed...
+        if (subDocumentStr != section.subDocument()) 
+        {
+          // Clear out any partially accumulated chunks.         
+          forceNewChunk(section.peek());
 
+          // Insert a docInfo chunk right here, if there are any words that need
+          // to be associated with a sub-doc. Note that if there are no intervening
+          // words between sub-docs we don't want to insert useless (and confusing)
+          // empty sub-docs.
+          //
+          if (docWordCount > 0) {
+            saveDocInfo(section.peek());
+            subDocsWritten.add(section.peek().subDocument);
+          }
+
+          // We're now in a new section, and a new subdocument.
+          chunkStartNode = -1;
+          chunkWordOffset = -1;
+        }
+      }
+      
+      // If the current attribute affects inheritance...
+      else if (attName.equalsIgnoreCase("noInHeritMeta") || attName.equalsIgnoreCase("inheritMeta")) 
+      {
+        // Translate the attribute value to a boolean true or false.
+        subDocumentMetaInherit = trueOrFalse(atts.getValue(i), true);
+
+        // Invert if "noInheritMeta" was used instead of "inheritMeta" 
+        if (attName.equalsIgnoreCase("noInHeritMeta"))
+          subDocumentMetaInherit = !subDocumentMetaInherit;
+        
+      } // else if (attName.equalsIgnoreCase("noInHeritMeta") || attName.equalsIgnoreCase("inheritMeta"))
+
+      // If the current attribute is the index flag...
+      else if (attName.equalsIgnoreCase("index")) 
+      {
+        // Determine the default "index" flag value from the parent
+        // section.
+        //
+        boolean defaultIndexFlag = (section.indexFlag() == SectionInfo.index)
+                                   ? true : false;
+
+        // Get the value of the "index" attribute.
+        valueStr = atts.getValue(i);
+
+        // Build the final index flag based on the attribute and default
+        // values passed.
+        //
+        indexFlag = trueOrFalse(valueStr, defaultIndexFlag) ? SectionInfo.index
+                    : SectionInfo.noIndex;
+      } // else if( atts.getQName(i).equalsIgnoreCase("xtfIndex") )
+
+      
       // If we got to this point, and we've encountered an unrecognized 
       // xtf:xxxx attribute, display a warning message (if enabled for 
       // output.)
@@ -3334,7 +3465,23 @@ public class XMLTextProcessor extends DefaultHandler
         Trace.untab();
       }
     } // for( int i = 0; i < atts.getLength(); i++ )
-
+    
+    // A new subdocument means forking the metadata as well (unless inheritance disabled)
+    if (!subDocumentStr.equals(""))
+    {
+      metaInfo = new LinkedList();
+      LinkedList<MetaField> parentInfo = (LinkedList)section.metaInfo();
+      if (subDocumentMetaInherit && parentInfo != null)
+      {
+        for (MetaField parentField : parentInfo)
+        {
+          MetaField newField = (MetaField) parentField.clone();
+          newField.isInherited = true;
+          metaInfo.add(newField);
+        }
+      }
+    }
+    
     // Finally, push the new section info. Note that if all the values passed
     // match the parent values exactly, this call will simply increase the 
     // depth of the parent to save space.
@@ -3344,7 +3491,9 @@ public class XMLTextProcessor extends DefaultHandler
                  sectionBump,
                  wordBoost,
                  sentenceBump,
-                 spellFlag);
+                 spellFlag,
+                 subDocumentStr,
+                 metaInfo);
   } // private ProcessNodeAttributes()
 
   ////////////////////////////////////////////////////////////////////////////
@@ -3371,7 +3520,7 @@ public class XMLTextProcessor extends DefaultHandler
    *    text chunks, the date the document was added to the index, and any
    *    meta-data associated with the document. <br><br>
    */
-  private void saveDocInfo() 
+  private void saveDocInfo(SectionInfo secInfo) 
   {
     // Make a new document, to which we can add our fields.     
     Document doc = new Document();
@@ -3386,6 +3535,12 @@ public class XMLTextProcessor extends DefaultHandler
     doc.add(new Field("chunkCount",
                       Integer.toString(chunkCount),
                       Field.Store.YES, Field.Index.NO));
+    
+    // Reset the chunk count, in case this is just a subdocument within
+    // the larger text. Also reset the word counter for this sub-doc.
+    //
+    chunkCount = 0;
+    docWordCount = 0;
 
     // Add the key to the document header as a stored, indexed, 
     // non-tokenized field.
@@ -3393,13 +3548,21 @@ public class XMLTextProcessor extends DefaultHandler
     doc.add(new Field("key", curIdxSrc.key(), 
                       Field.Store.YES, Field.Index.UN_TOKENIZED));
 
-    // If record number is non-zero, write it out as a stored, non-indexed,
-    // non-tokenized field.
-    //
+    // If record number is non-zero, write it out as a stored, non-indexed field.
     int recordNum = curIdxRecord.recordNum();
     if (recordNum > 0) {
       doc.add(new Field("recordNum",
                         Integer.toString(recordNum),
+                        Field.Store.YES, Field.Index.NO));
+    }
+
+    // If subdocument name is non-empty, write it out as a stored, non-indexed field.
+    // Why not indexed? Because it's also put on the individual text chunks, and
+    // on those it is indexed. Search is across text chunks, not docInfo chunks.
+    //
+    if (secInfo.subDocument != null) {
+      doc.add(new Field("subDocument",
+                        secInfo.subDocument,
                         Field.Store.YES, Field.Index.NO));
     }
 
@@ -3423,7 +3586,7 @@ public class XMLTextProcessor extends DefaultHandler
     analyzer.clearFacetFields();
 
     // Make sure we got meta-info for this document.
-    if (metaInfo == null || metaInfo.isEmpty()) {
+    if (secInfo.metaInfo.isEmpty()) {
       Trace.tab();
       Trace.warning("*** Warning: No meta data found for document.");
       Trace.untab();
@@ -3433,7 +3596,7 @@ public class XMLTextProcessor extends DefaultHandler
       // Get an iterator so we can add the various meta fields we found for
       // the document (most usually, things like author, title, etc.)
       //
-      Iterator metaIter = metaInfo.iterator();
+      Iterator<MetaField> metaIter = secInfo.metaInfo.iterator();
 
       // Add all the meta fields to the docInfo chunk.
       while (metaIter.hasNext()) 
@@ -3609,8 +3772,8 @@ public class XMLTextProcessor extends DefaultHandler
         srcPath.lastModified(), 
         DateTools.Resolution.MILLISECOND);
 
-      // If the dates are different...
-      if (fileDateStr.compareTo(indexDateStr) != 0) 
+      // If the dates are different (or we're ignoring them)...
+      if (fileDateStr.compareTo(indexDateStr) != 0 || ignoreFileTimes) 
       {
         // Delete the old lazy file, if any. Might as well delete any
         // empty parent directories as well.
@@ -3705,7 +3868,7 @@ public class XMLTextProcessor extends DefaultHandler
     spellWriter = null;
 
     if (indexReader == null)
-      indexReader = IndexReader.open(indexPath);
+      indexReader = IndexReader.open(NativeFSDirectory.getDirectory(indexPath));
 
     if (indexSearcher == null)
       indexSearcher = new IndexSearcher(indexReader);
@@ -3745,7 +3908,8 @@ public class XMLTextProcessor extends DefaultHandler
     // Create an index writer, using the selected index db Path
     // and create mode. Pass it our own text analyzer. 
     //
-    indexWriter = new IndexWriter(indexPath, analyzer, false);
+    Directory indexDir = NativeFSDirectory.getDirectory(indexPath);
+    indexWriter = new IndexWriter(indexDir, analyzer, false);
 
     // Since we end up adding tons of little 'documents' to Lucene, it's much 
     // faster to queue up a bunch in RAM before sorting and writing them out. 
@@ -3769,7 +3933,7 @@ public class XMLTextProcessor extends DefaultHandler
   } // private openIdxForWriting()  
 
   ////////////////////////////////////////////////////////////////////////////
-  private class MetaField 
+  private class MetaField implements Cloneable
   {
     public String name;
     public String value;
@@ -3779,10 +3943,11 @@ public class XMLTextProcessor extends DefaultHandler
     public boolean isFacet;
     public boolean spell;
     public float wordBoost;
+    public boolean isInherited;
 
     public MetaField(String name, boolean store, boolean index,
                      boolean tokenize, boolean isFacet, boolean spell,
-                     float wordBoost) 
+                     float wordBoost, boolean isInherited) 
     {
       this.name = name;
       this.store = store;
@@ -3792,7 +3957,13 @@ public class XMLTextProcessor extends DefaultHandler
       this.spell = spell;
       this.wordBoost = wordBoost;
     }
-  } // private class MetaField
+    
+    // Creates an exact copy of this field and its value.
+    public Object clone() { 
+      try { return super.clone(); }
+      catch (CloneNotSupportedException e) { throw new RuntimeException(e); }
+    } // clone()
+} // private class MetaField
 
   ////////////////////////////////////////////////////////////////////////////
   private class FileQueueEntry 

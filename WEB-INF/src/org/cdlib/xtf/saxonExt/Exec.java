@@ -37,7 +37,9 @@ package org.cdlib.xtf.saxonExt;
  */
 import org.cdlib.xtf.saxonExt.exec.ArgElement;
 import org.cdlib.xtf.saxonExt.exec.InputElement;
+import org.cdlib.xtf.saxonExt.exec.PipeImageElement;
 import org.cdlib.xtf.saxonExt.exec.RunElement;
+
 import net.sf.saxon.style.ExtensionElementFactory;
 
 /**
@@ -59,6 +61,9 @@ public class Exec implements ExtensionElementFactory
   {
     if (localname.equals("run"))
       return RunElement.class;
+    
+    if (localname.equals("pipeImage"))
+      return PipeImageElement.class;
 
     if (localname.equals("arg") || localname.equals("argument"))
       return ArgElement.class;

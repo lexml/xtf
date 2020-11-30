@@ -68,7 +68,11 @@
    <!-- Parameters                                                             -->
    <!-- ====================================================================== -->
    
-   <xsl:param name="docId"/>
+   <xsl:param name="http.URL"/>
+   <xsl:variable name="ercPat" select="'^(http://[^?]+)/erc/([^?]+)\?q$'"/>
+   <!-- Normally this is a URL parameter, but for ERC we also support an 
+        abbreviated form where it's part of the main URL instead. -->
+   <xsl:param name="docId" select="replace($http.URL, $ercPat, '$2')"/>
    <xsl:param name="query" select="'0'"/>
    <xsl:param name="query-join" select="'0'"/>
    <xsl:param name="query-exclude" select="'0'"/>
@@ -93,8 +97,9 @@
          so the code below runs only once.
       -->
       <xsl:variable name="file" select="concat('../../data/',$docId)"/>
+      <xsl:variable name="stub" select="if ($docId and FileUtils:exists($file)) then FileUtils:readXMLStub($file) else ()"/>
       <xsl:variable name="fileType">
-         <xsl:for-each select="FileUtils:readXMLStub($file)">
+         <xsl:for-each select="$stub">
             
             <xsl:variable name="root-element-name" select="name(*[1])"/>
             <xsl:variable name="pid" select="unparsed-entity-public-id($root-element-name)"/>
@@ -123,6 +128,11 @@
                   matches($ns,'tei')">
                   <xsl:value-of select="'tei'"/>
                </xsl:when>
+               <!-- Look for METS-encoded scanned books -->
+               <xsl:when test="matches($root-element-name,'^METS') and 
+                               document($file)//*:book">
+                  <xsl:value-of select="'book'"/>
+               </xsl:when>
                <!-- Default processing for XML files -->
                <xsl:otherwise>
                   <xsl:value-of select="'default'"/>
@@ -137,9 +147,11 @@
          into an HTML page
       -->
       <style path="{
-         if      ($fileType = 'ead') then 'style/dynaXML/docFormatter/ead/eadDocFormatter.xsl'
+         if (matches($http.URL, $ercPat)) then 'style/dynaXML/docFormatter/erc/ercDocFormatter.xsl'
+         else if ($fileType = 'ead') then 'style/dynaXML/docFormatter/ead/eadDocFormatter.xsl'
          else if ($fileType = 'nlm') then 'style/dynaXML/docFormatter/nlm/nlmDocFormatter.xsl'
          else if ($fileType = 'tei') then 'style/dynaXML/docFormatter/tei/teiDocFormatter.xsl'
+         else if ($fileType = 'book') then 'style/dynaXML/docFormatter/bookreader/bookDocFormatter.xsl'
          else                             'style/dynaXML/docFormatter/default/docFormatter.xsl'}"/>
       
       <!-- ==================================================================

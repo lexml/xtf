@@ -51,12 +51,14 @@ import net.sf.saxon.Configuration;
 import net.sf.saxon.Controller;
 import net.sf.saxon.instruct.Executable;
 import net.sf.saxon.om.NamePool;
+import net.sf.saxon.trace.TraceListener;
 import net.sf.saxon.trans.KeyManager;
 import net.sf.saxon.tree.TreeBuilder;
 
 import org.cdlib.xtf.servletBase.RedirectException;
 import org.cdlib.xtf.servletBase.TextConfig;
 import org.cdlib.xtf.servletBase.TextServlet;
+import org.cdlib.xtf.servletBase.StylesheetCache;
 import org.cdlib.xtf.textEngine.IndexUtil;
 import org.cdlib.xtf.textEngine.QueryRequestParser;
 import org.cdlib.xtf.util.AttribList;
@@ -74,6 +76,7 @@ import org.cdlib.xtf.lazyTree.LazyDocument;
 import org.cdlib.xtf.lazyTree.LazyKeyManager;
 import org.cdlib.xtf.lazyTree.LazyTreeBuilder;
 import org.cdlib.xtf.lazyTree.PersistentTree;
+import org.cdlib.xtf.lazyTree.LazyProfilingListener;
 import org.cdlib.xtf.lazyTree.SearchTree;
 
 /**
@@ -96,9 +99,6 @@ public class DynaXML extends TextServlet
 
   /** Locator used to find lazy and non-lazy document files */
   private DocLocator docLocator = createDocLocator();
-
-  /** Set to only allow lazy documents (set by TestableDynaXML only) */
-  protected static boolean forceLazy = false;
 
   /**
    * Called by the superclass to find out the name of our specific config
@@ -210,7 +210,15 @@ public class DynaXML extends TextServlet
       // If profiling is enabled, we have to notify the stylesheet
       // cache.
       //
-      stylesheetCache.enableProfiling(config.stylesheetProfiling);
+      StylesheetCache.TraceListenerFactory tlf = null;
+      if (config.stylesheetProfiling) {
+        tlf = new StylesheetCache.TraceListenerFactory() {
+          public TraceListener createListener() {
+            return new LazyProfilingListener();
+          }
+        };
+      }
+      stylesheetCache.enableProfiling(tlf);
 
       // Set the default output content type
       res.setContentType("text/html");
@@ -530,7 +538,7 @@ public class DynaXML extends TextServlet
         ((PersistentTree)sourceDoc).close();
     }
   } // apply()
-
+  
   /**
    * Does the work of locating and loading the source document. Handles
    * fetching a file from a URL, lazy file, or a plain XML file on disk.
@@ -588,12 +596,6 @@ public class DynaXML extends TextServlet
       //
       if (docReq.query != null)
         throw new UnsupportedQueryException();
-
-      // If we're required to use a lazy store, throw an exception since
-      // we couldn't find one.
-      //
-      if (forceLazy)
-        throw new InvalidDocumentException();
 
       // Can't find a lazy store... does the original source file exist?
       if (!docReq.source.startsWith("http://")) {

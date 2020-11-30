@@ -49,7 +49,6 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.spelt.SpellReader;
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.FSDirectory;
 import org.cdlib.xtf.textIndexer.TextIndexer;
 import org.cdlib.xtf.util.CharMap;
 import org.cdlib.xtf.util.Path;
@@ -75,8 +74,11 @@ public class XtfSearcher
   /** Last time we checked for out-of-date */
   private long lastCheckTime;
 
-  /** Version number of the index last time we checked */
+  /** Version number of the index in memory */
   private long curVersion;
+
+  /** Version number of index on disk */
+  private long newVersion;
 
   /** Reader used to access the index */
   private IndexReader indexReader;
@@ -120,12 +122,38 @@ public class XtfSearcher
   public XtfSearcher(String indexPath, int updateCheckSeconds)
     throws IOException 
   {
+    this(indexPath, NativeFSDirectory.getDirectory(indexPath), updateCheckSeconds);
+  } // XtfSearcher
+
+  /**
+   * Construct a searcher set on the given directory.
+   *
+   * @param indexPath             Path to index directory
+   * @param dir                   Lucene version of the index directory
+   * @param updateCheckSeconds    How often to check for an updated index
+   */
+  public XtfSearcher(String indexPath, Directory dir, int updateCheckSeconds)
+    throws IOException 
+  {
     this.indexPath = indexPath;
-    directory = FSDirectory.getDirectory(indexPath);
+    this.directory = dir;
     curVersion = -99;
     updatePeriod = ((long)updateCheckSeconds) * 1000;
     update();
   } // XtfSearcher
+
+  /**
+   * Check if the version we have in memory is up-to-date relative to that
+   * on disk.
+   */
+  public boolean isUpToDate() throws IOException
+  {
+    // Get the version on disk. If it's the same as the one we have in
+    // memory, no problem.
+    //
+    newVersion = IndexReader.getCurrentVersion(directory);
+    return (newVersion == curVersion);
+  }
 
   /**
    * Ensures that this searcher is up-to-date with regards to the index on
@@ -147,8 +175,11 @@ public class XtfSearcher
     // Get the version on disk. If it's the same as the one we have in
     // memory, no problem.
     //
-    long ver = IndexReader.getCurrentVersion(directory);
-    if (ver == curVersion)
+    if (isUpToDate())
+      return;
+    
+    // If we've been requested to never re-update, forget it.
+    if (curVersion >= 0 && updatePeriod == 0)
       return;
 
     // Okay, better re-open to get the fresh data.
@@ -188,16 +219,6 @@ public class XtfSearcher
     if (stopWords != null && stopWords.length() > 0)
       stopSet = BigramQueryRewriter.makeStopSet(stopWords);
 
-    // If there's a plural map specified, load it.
-    String pluralMapName = doc.get("pluralMap");
-    if (pluralMapName != null && pluralMapName.length() > 0) {
-      File pluralFile = new File(indexPath, pluralMapName);
-      InputStream stream = new FileInputStream(pluralFile);
-      if (pluralMapName.endsWith(".gz"))
-        stream = new GZIPInputStream(stream);
-      pluralMap = new WordMap(stream);
-    }
-
     // If there's an accent map specified, load it.
     String accentMapName = doc.get("accentMap");
     if (accentMapName != null && accentMapName.length() > 0) {
@@ -206,6 +227,19 @@ public class XtfSearcher
       if (accentMapName.endsWith(".gz"))
         stream = new GZIPInputStream(stream);
       accentMap = new CharMap(stream);
+    }
+
+    // If there's a plural map specified, load it. Be sure to apply
+    // the accent map, if any, so that plural words get mapped
+    // whether they're accented or not.
+    //
+    String pluralMapName = doc.get("pluralMap");
+    if (pluralMapName != null && pluralMapName.length() > 0) {
+      File pluralFile = new File(indexPath, pluralMapName);
+      InputStream stream = new FileInputStream(pluralFile);
+      if (pluralMapName.endsWith(".gz"))
+        stream = new GZIPInputStream(stream);
+      pluralMap = new WordMap(stream, accentMap);
     }
 
     // If there's a spelling correction dictionary, attach to it.
@@ -232,8 +266,8 @@ public class XtfSearcher
     // Determine which fields are tokenized.
     tokenizedFields = readTokenizedFields(indexPath, indexReader);
 
-    // Remember the version that we've checked.
-    curVersion = ver;
+    // Remember the version that's now in memory.
+    curVersion = newVersion;
   } // update()
 
   /**
@@ -273,6 +307,9 @@ public class XtfSearcher
     
     // Of course, the "text" field is always tokenized.
     tokenizedFields.add("text");
+    
+    // Also of interest: the "sectionType" special field is always tokenized.
+    tokenizedFields.add("sectionType");
 
     // All done.
     return tokenizedFields;

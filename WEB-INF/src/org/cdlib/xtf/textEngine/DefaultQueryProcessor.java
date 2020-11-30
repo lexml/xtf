@@ -118,6 +118,9 @@ public class DefaultQueryProcessor extends QueryProcessor
   /** Whether the index is "sparse" (i.e. more than 5 chunks per doc) */
   private boolean isSparse;
 
+  /** Names of fields that are tokenized in this index */
+  private Set tokFields;
+
   /** Total number of documents hit (not just those that scored high) */
   private int nDocsHit;
 
@@ -127,11 +130,22 @@ public class DefaultQueryProcessor extends QueryProcessor
   /** Document normalization factor (calculated from {@link #maxDocScore}) */
   private float docScoreNorm;
 
+  /** Used to warm up indexes prior to use */
+  private IndexWarmer indexWarmer;
+
   /** Comparator used for sorting strings in "sparse" indexes */
   private static final SparseStringComparator sparseStringComparator = new SparseStringComparator();
 
   /** Comparator used for sorting strings in "compact" indexes */
   private static final FlippableStringComparator compactStringComparator = new FlippableStringComparator();
+  
+  /** Comparator used to sort by total number of hits */
+  private static final TotalHitsComparator totalHitsComparator = new TotalHitsComparator();
+  
+  /** Record an index warmer to use for background warming. */
+  public void setIndexWarmer(IndexWarmer warmer) {
+    indexWarmer = warmer;
+  }
 
   /**
    * This is main entry point. Takes a pre-parsed query request and handles
@@ -156,13 +170,13 @@ public class DefaultQueryProcessor extends QueryProcessor
     //
     Vector hitVec = new Vector(10);
 
-    String indexPath = req.indexPath;
-
-    XtfSearcher xtfSearcher = getXtfSearcher(indexPath);
+    if (indexWarmer == null)
+      throw new IOException("Fatal: must call setIndexWarmer() before DefaultQueryProcessor.processRequest()");
 
     // Get a reader, searcher, and document number map that will all be
     // consistent with each other and up-to-date.
     //
+    XtfSearcher xtfSearcher = indexWarmer.getSearcher(req.indexPath);
     synchronized (xtfSearcher) {
       xtfSearcher.update();
       indexReader = xtfSearcher.indexReader();
@@ -174,6 +188,7 @@ public class DefaultQueryProcessor extends QueryProcessor
       accentMap = xtfSearcher.accentMap();
       spellReader = xtfSearcher.spellReader();
       isSparse = xtfSearcher.isSparse();
+      tokFields = xtfSearcher.tokenizedFields();
     }
 
     // Apply a work limit to the query if we were requested to. If no
@@ -219,20 +234,21 @@ public class DefaultQueryProcessor extends QueryProcessor
     // Perform standard tokenization tasks: change words to lowercase,
     // remove apostrophes, etc.
     //
-    Set tokFields = xtfSearcher.tokenizedFields();
     query = new StdTermRewriter(tokFields).rewriteQuery(query);
 
     // Normaliza números e datas
     query = new NumberQueryRewriter(tokFields).rewriteQuery(query);
+    
+    // Normalize all Unicode encoding to normalized form C (NFC)
+    query = new UnicodeNormalizingRewriter(tokFields).rewriteQuery(query);
 
     // If an accent map is present, remove diacritics.
     if (accentMap != null)
       query = new AccentFoldingRewriter(accentMap, tokFields).rewriteQuery(query);
 
     // If a plural map is present, change plural words to non-plural.
-    if (pluralMap != null) {
-        query = new PluralFoldingRewriter(pluralMap, tokFields).rewriteQuery(query);
-    }
+    if (pluralMap != null)
+      query = new PluralFoldingRewriter(pluralMap, tokFields).rewriteQuery(query);
 
     // Rewrite the query for bigrams (if we have stop-words to deal with.)
     if (stopSet != null)
@@ -352,8 +368,10 @@ public class DefaultQueryProcessor extends QueryProcessor
                                                  stopSet,
                                                  pluralMap,
                                                  accentMap,
+                                                 tokFields,
                                                  req.maxContext,
-                                                 req.termMode);
+                                                 req.termMode,
+                                                 req.returnMetaFields);
     for (int i = req.startDoc; i < nFound; i++) 
     {
       if (req.explainScores) {
@@ -402,25 +420,6 @@ public class DefaultQueryProcessor extends QueryProcessor
     // All done.
     return result;
   } // processReq()
-
-  /**
-   * Get the XtfSearcher, which holds a reference to the Lucene index reader,
-   * cached chunk info, etc.
-   */
-  public static XtfSearcher getXtfSearcher(String indexPath)
-    throws IOException 
-  {
-    XtfSearcher xtfSearcher = null;
-    synchronized (searchers) 
-    {
-      xtfSearcher = (XtfSearcher)searchers.get(indexPath);
-      if (xtfSearcher == null) {
-        xtfSearcher = new XtfSearcher(indexPath, 30); // 30-sec update chk
-        searchers.put(indexPath, xtfSearcher);
-      }
-    }
-    return xtfSearcher;
-  }
 
   /**
    * Checks spelling of query terms, if spelling suggestion is enabled and
@@ -793,7 +792,7 @@ public class DefaultQueryProcessor extends QueryProcessor
     }
 
     // Initialize the new instance, and we're done.
-    dynData.init(indexReader, params);
+    dynData.init(indexReader, tokFields, params);
     return dynData;
   } // createDynamicGroup()
 
@@ -997,6 +996,8 @@ public class DefaultQueryProcessor extends QueryProcessor
               throw new RuntimeException("Illegal modifier on sortDocsBy 'score'");
             fields[i] = SortField.FIELD_SCORE;
           }
+          else if (name.equals("totalHits"))
+            fields[i] = new SortField(finalName, totalHitsComparator, reverse);
           else if (isSparse)
             fields[i] = new SortField(finalName, sparseStringComparator, reverse);
           else
@@ -1046,18 +1047,24 @@ public class DefaultQueryProcessor extends QueryProcessor
 
     public final boolean insertInto(PriorityQueue queue) 
     {
-      boolean justMade = false;
-      if (docHit == null) {
+      if (docHit == null)
         docHit = new DocHitImpl(doc, score);
-        justMade = true;
+
+      try 
+      {
+        docHit.setSpanSource(spanSrc);
+        boolean inserted = queue.insert(docHit);
+        
+        // If we're keeping this hit, make sure spans have been grabbed. 
+        if (inserted)
+          docHit.totalSnippets();
+        
+        return inserted;
+      }
+      finally {
+        docHit.setSpanSource(null); // prevent memory leaks
       }
 
-      boolean inserted = queue.insert(docHit);
-
-      if (inserted && justMade)
-        docHit.setSpans(spanSrc.getSpans(doc));
-
-      return inserted;
     }
   } // class DocHitMaker
 

@@ -1,5 +1,7 @@
 package org.cdlib.xtf.textIndexer;
 
+import java.util.ArrayList;
+
 
 /**
  * Copyright (c) 2004, Regents of the University of California
@@ -56,14 +58,29 @@ public class IndexInfo
   public String indexName;
 
   /** Name of a sub-directory to index, or null to index everything */
-  public String subDir;
+  public ArrayList<String> subDirs;
 
   /** Name of the path to the current index's Lucene database. */
   public String indexPath;
+  
+  /** Whether index rotation is enabled */
+  public boolean rotate = false;
 
   /** Path to the source text for the current index. */
   public String sourcePath;
-
+  
+  /** 
+   * True to scan all dirs, false for pruned (e.g. stop at first data).
+   * Defaults to false for backward compatibility.
+   */
+  public boolean scanAllDirs = false;
+  
+  /**
+   * True to make a clone of the data in index/dataClone. Useful so that
+   * dynaXML can always get to files that match the index.
+   */
+  public boolean cloneData = false;
+  
   /** Path to stylesheet used to determine which documents to index */
   public String docSelectorPath;
 
@@ -124,6 +141,16 @@ public class IndexInfo
    *  followed by "|", then the 4-digit hex code for the unaccented form.
    */
   public String accentMapPath;
+
+  /** Path to a set of validation specifications for this index. This is
+   *  essentially a list of URLs, with specifications on how many hits
+   *  should be returned by each one. Validation is applied at index time
+   *  to determine if the index is valid (and before rotating), and is
+   *  also applied by the servlets before rotating in a new index.
+   *
+   *  The file should be XML in the defined format.
+   */
+  public String validationPath;
 
   /** Whether to create a spellcheck dictionary for this index */
   public boolean createSpellcheckDict = false;

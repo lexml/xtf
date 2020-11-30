@@ -41,6 +41,12 @@
    -->
    
    <!-- ====================================================================== -->
+   <!-- Import Stylesheets                                                     -->
+   <!-- ====================================================================== -->
+   
+   <xsl:import href="../../../xtfCommon/xtfCommon.xsl"/>
+   
+   <!-- ====================================================================== -->
    <!-- Global Keys                                                            -->
    <!-- ====================================================================== -->
    
@@ -59,7 +65,7 @@
    <xsl:param name="dynaxmlPath" select="if (matches($servlet.path, 'org.cdlib.xtf.crossQuery.CrossQuery')) then 'org.cdlib.xtf.dynaXML.DynaXML' else 'view'"/>
    
    <xsl:param name="docId"/>
-   <xsl:param name="docPath" select="replace($docId, '[A-Za-z0-9]+\.xml$', '')"/>
+   <xsl:param name="docPath" select="replace($docId, '[^/]+\.xml$', '')"/>
    
    <!-- If an external 'source' document was specified, include it in the
       query string of links we generate. -->
@@ -153,64 +159,72 @@
    <!-- WARNING: Inclusion of 'Wget' is for testing only, please remove before going into production -->
    <xsl:param name="robots" select="'Googlebot|Slurp|msnbot|Teoma|Wget'"/>
    
-   
    <!-- ====================================================================== -->
    <!-- Button Bar Templates                                                   -->
    <!-- ====================================================================== -->
    
    <xsl:template name="bbar">
-      <html xml:lang="en" lang="en">
-         <head>
-            <title>
-               <xsl:value-of select="$doc.title"/>
-            </title>
-            <link rel="stylesheet" type="text/css" href="{$css.path}bbar.css"/>
-         </head>
-         <body>
-            <div class="bbar">
-               <table border="0" cellpadding="0" cellspacing="0">
-                  <tr>
-                     <td colspan="3" align="center">
-                        <xsl:copy-of select="$brand.header"/>
-                     </td>
-                  </tr>
-                  <tr>
-                     <td class="left">
-                        <a href="{$xtfURL}search" target="_top">Home</a><xsl:text> | </xsl:text>
-                        <xsl:choose>
-                           <xsl:when test="session:getData('queryURL')">
-                              <a href="{session:getData('queryURL')}" target="_top">Return to Search Results</a>
-                           </xsl:when>
-                           <xsl:otherwise>
-                              <span class="notActive">Return to Search Results</span>
-                           </xsl:otherwise>
-                        </xsl:choose>
-                     </td>
-                     <td width="34%" class="center">
-                        <form action="{$xtfURL}{$dynaxmlPath}" target="_top" method="get">
-                           <input name="query" type="text" size="15"/>
-                           <input type="hidden" name="docId" value="{$docId}"/>
-                           <input type="hidden" name="chunk.id" value="{$chunk.id}"/>
-                           <input type="submit" value="Search this Book"/>
-                        </form>
-                     </td>
-                     <td class="right">
-                        <a>
-                           <xsl:attribute name="href">javascript://</xsl:attribute>
-                           <xsl:attribute name="onclick">
-                              <xsl:text>javascript:window.open('</xsl:text><xsl:value-of select="$xtfURL"/><xsl:value-of select="$dynaxmlPath"/><xsl:text>?docId=</xsl:text><xsl:value-of
-                                 select="$docId"/><xsl:text>;doc.view=citation</xsl:text><xsl:text>','popup','width=800,height=400,resizable=yes,scrollbars=no')</xsl:text>
-                           </xsl:attribute>
-                           <xsl:text>Citation</xsl:text>
-                        </a>
-                        <xsl:text> | </xsl:text>
-                        <a href="{$doc.path}&#038;doc.view=print;chunk.id={$chunk.id}" target="_top">Print View</a>
-                     </td>
-                  </tr>
-               </table>
-            </div>
-         </body>
-      </html>
+      <xsl:call-template name="translate">
+         <xsl:with-param name="resultTree">
+            <html xml:lang="en" lang="en">
+               <head>
+                  <title>
+                     <xsl:value-of select="$doc.title"/>
+                  </title>
+                  <link rel="stylesheet" type="text/css" href="{$css.path}bbar.css"/>
+                  <link rel="shortcut icon" href="icons/default/favicon.ico" />
+
+
+               </head>
+               <body>
+                  <div class="bbar">
+                     <table border="0" cellpadding="0" cellspacing="0">
+                        <tr>
+                           <td colspan="3" align="center">
+                              <xsl:copy-of select="$brand.header"/>
+                           </td>
+                        </tr>
+                        <tr>
+                           <td class="left">
+                              <a href="{$xtfURL}search" target="_top">Home</a><xsl:text> | </xsl:text>
+                              <xsl:choose>
+                                 <xsl:when test="session:getData('queryURL')">
+                                    <a href="{session:getData('queryURL')}" target="_top">Return to Search Results</a>
+                                 </xsl:when>
+                                 <xsl:otherwise>
+                                    <span class="notActive">Return to Search Results</span>
+                                 </xsl:otherwise>
+                              </xsl:choose>
+                           </td>
+                           <td width="34%" class="center">
+                              <form action="{$xtfURL}{$dynaxmlPath}" target="_top" method="get">
+                                 <input name="query" type="text" size="15"/>
+                                 <input type="hidden" name="docId" value="{$docId}"/>
+                                 <input type="hidden" name="chunk.id" value="{$chunk.id}"/>
+                                 <input type="submit" value="Search this Item"/>
+                              </form>
+                           </td>
+                           <td class="right">
+                              <a>
+                                 <xsl:attribute name="href">javascript://</xsl:attribute>
+                                 <xsl:attribute name="onclick">
+                                    <xsl:text>javascript:window.open('</xsl:text><xsl:value-of select="$xtfURL"/><xsl:value-of select="$dynaxmlPath"/><xsl:text>?docId=</xsl:text><xsl:value-of
+                                       select="$docId"/><xsl:text>;doc.view=citation</xsl:text><xsl:text>','popup','width=800,height=400,resizable=yes,scrollbars=no')</xsl:text>
+                                 </xsl:attribute>
+                                 <xsl:text>Citation</xsl:text>
+                              </a>
+                              <xsl:text> | </xsl:text>
+                              <a href="{$doc.path}&#038;doc.view=print;chunk.id={$chunk.id}" target="_top">Print View</a>
+                              <xsl:text> | </xsl:text>
+                              <a href="javascript://" onclick="javascript:window.open('/xtf/search?smode=getLang','popup','width=500,height=200,resizable=no,scrollbars=no')">Choose Language</a>
+                           </td>
+                        </tr>
+                     </table>
+                  </div>
+               </body>
+            </html>
+         </xsl:with-param>
+      </xsl:call-template>
    </xsl:template>
    
    <!-- ====================================================================== -->
@@ -225,15 +239,17 @@
                <xsl:value-of select="$doc.title"/>
             </title>
             <link rel="stylesheet" type="text/css" href="{$css.path}bbar.css"/>
+            <link rel="shortcut icon" href="icons/default/favicon.ico" />
+
          </head>
          <body>
             <xsl:copy-of select="$brand.header"/>
             <div class="container">
                <h2>Citation</h2>
                <div class="citation">
-                  <p><xsl:value-of select="/*/*[local-name()='meta']/*[local-name()='creator'][1]"/>. 
-                     <xsl:value-of select="/*/*[local-name()='meta']/*[local-name()='title'][1]"/>. 
-                     <xsl:value-of select="/*/*[local-name()='meta']/*[local-name()='year'][1]"/>.<br/>
+                  <p><xsl:value-of select="/*/*:meta/*:creator[1]"/>. 
+                     <xsl:value-of select="/*/*:meta/*:title[1]"/>. 
+                     <xsl:value-of select="/*/*:meta/*:year[1]"/>.<br/>
                      [<xsl:value-of select="concat($xtfURL,$dynaxmlPath,'?docId=',$docId)"/>]</p>
                   <a>
                      <xsl:attribute name="href">javascript://</xsl:attribute>
@@ -258,6 +274,8 @@
          <head>
             <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
             <title><xsl:value-of select="//xtf:meta/title[1]"/></title>
+            <link rel="shortcut icon" href="icons/default/favicon.ico" />
+
          </head>
          <body>
             <div>

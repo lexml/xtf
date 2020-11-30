@@ -97,7 +97,10 @@
                   </xsl:when>
                   <xsl:when test="$sort='publisher'">
                      <xsl:value-of select="'sort-publisher,sort-title,sort-year'"/>
-                  </xsl:when>              
+                  </xsl:when>     
+                  <xsl:when test="$sort='rss'">
+                     <xsl:value-of select="'-sort-date,sort-title'"/>
+                  </xsl:when>         
                </xsl:choose>
             </xsl:attribute>
          </xsl:if>
@@ -130,14 +133,14 @@
          <xsl:if test="//param[@name='browse-title']">
             <xsl:variable name="page" select="//param[@name='browse-title']/@value"/>
             <xsl:variable name="pageSel" select="if ($page = 'first') then '*[1]' else $page"/>
-            <facet field="browse-title" sortGroupsBy="value" select="{concat('*|',$pageSel,'#all')}"/>
+            <facet field="browse-title" sortGroupsBy="value" sortDocsBy="sort-title,sort-creator,sort-publisher,sort-year" select="{concat('*|',$pageSel,'#all')}"/>
          </xsl:if>
          
          <!-- to support author browse pages -->
          <xsl:if test="//param[matches(@name,'browse-creator')]">
             <xsl:variable name="page" select="//param[matches(@name,'browse-creator')]/@value"/> 
             <xsl:variable name="pageSel" select="if ($page = 'first') then '*[1]' else $page"/>
-            <facet field="browse-creator" sortGroupsBy="value" select="{concat('*|',$pageSel,'#all')}"/>
+            <facet field="browse-creator" sortGroupsBy="value" sortDocsBy="sort-creator,sort-title,sort-publisher,sort-year" select="{concat('*|',$pageSel,'#all')}"/>
          </xsl:if>
          
          <!-- process query -->
@@ -236,14 +239,28 @@
          <xsl:value-of select="if ($expand = $plainName) then '*' else $topGroups"/>
          <!-- For each chosen facet value -->
          <xsl:for-each select="//param[matches(@name, concat('f[0-9]+-',$plainName))]">
+            <!-- Quote parts of the value that have special meaning in facet language -->
+            <xsl:variable name="escapedValue">
+               <xsl:variable name="pieces">
+                  <xsl:for-each select="tokenize(@value, '::')">
+                     <piece str="{if (matches(., '[#:|*()\\=\[\]&quot;&lt;&gt;&amp;]')) 
+                                  then concat(
+                                         '&quot;', 
+                                         replace(string(.), '&quot;', '\\&quot;'), 
+                                        '&quot;')
+                                  else string(.)}"/>
+                  </xsl:for-each>
+               </xsl:variable>
+               <xsl:value-of select="string-join($pieces/piece/@str, '::')"/>
+            </xsl:variable>
             <!-- Select the value itself -->
-            <xsl:value-of select="concat('|', @value)"/>
+            <xsl:value-of select="concat('|', $escapedValue)"/>
             <!-- And select its immediate children -->
-            <xsl:value-of select="concat('|', @value, '::*')"/>
+            <xsl:value-of select="concat('|', $escapedValue, '::*')"/>
             <!-- And select its siblings, if any -->
-            <xsl:value-of select="concat('|', @value, '[siblings]')"/>
+            <xsl:value-of select="concat('|', $escapedValue, '[siblings]')"/>
             <!-- If only one child, expand it (and its single child, etc.) -->
-            <xsl:value-of select="concat('|', @value, '::**[singleton]::*')"/>
+            <xsl:value-of select="concat('|', $escapedValue, '::**[singleton]::*')"/>
          </xsl:for-each>
       </xsl:variable>
       
@@ -256,4 +273,5 @@
                              else $sort }">
       </facet>
    </xsl:template>
+   
 </xsl:stylesheet>

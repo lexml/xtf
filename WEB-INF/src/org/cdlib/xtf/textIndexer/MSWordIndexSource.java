@@ -43,9 +43,9 @@ import java.util.StringTokenizer;
 
 import javax.xml.transform.Templates;
 
-import org.apache.lucene.util.StringUtil;
 import org.cdlib.xtf.util.StructuredStore;
-import org.textmining.text.extraction.WordExtractor;
+import org.textmining.extraction.TextExtractor;
+import org.textmining.extraction.word.WordTextExtractorFactory;
 import org.xml.sax.InputSource;
 
 /**
@@ -75,8 +75,8 @@ public class MSWordIndexSource extends XMLIndexSource
     try 
     {
       // Try to extract the text.
-      WordExtractor extractor = new WordExtractor();
-      String str = extractor.extractText(inStream);
+      TextExtractor extractor = new WordTextExtractorFactory().textExtractor(inStream);
+      String str = extractor.getText();
 
       // Break it up into paragraphs.
       StringBuffer outBuf = new StringBuffer((int) msWordFile.length());
@@ -84,7 +84,8 @@ public class MSWordIndexSource extends XMLIndexSource
       StringTokenizer st = new StringTokenizer(str, "\r\t", false);
       while (st.hasMoreTokens()) {
         String para = st.nextToken().trim();
-        para = StringUtil.escapeHTMLChars(para);
+        // Remove invalid Unicode chars, escape ampersands & stuff.
+        para = normalize(para);
         if (para.length() > 0) {
           outBuf.append("  <p>" + para + "</p>\n");
         }

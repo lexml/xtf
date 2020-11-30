@@ -275,7 +275,6 @@ public class MoreLikeThisQuery extends Query
 
     // Exclude the original document in the result set.
     Query ret = new MoreLikeWrapper(this, rawQuery);
-    Trace.info("More-like query: " + ret);
     if (Trace.getOutputLevel() >= Trace.debug)
       Trace.debug("More-like query: " + ret);
 
@@ -334,6 +333,13 @@ public class MoreLikeThisQuery extends Query
       // Boost if necessary.
       if (fieldBoosts != null)
         fieldQuery.setBoost(fieldBoosts[i]);
+      
+      // We currently don't support more-like-this queries on the full text.
+      // It would involve de-chunking, and also fancier logic to pick the
+      // "most interesting" terms in the first place.
+      //
+      if (fieldNames[i].equals("text"))
+        throw new RuntimeException("MoreLikeThisQuery does not support 'text' field.");
 
       // And add to the main query.
       query.add(fieldQuery, BooleanClause.Occur.SHOULD);

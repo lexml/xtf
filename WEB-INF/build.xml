@@ -15,7 +15,7 @@
   <property name="doc"     location="javadoc"/>
   <property name="lucene-jar" location="${lib}/lucene-core-2.1.0.jar"/>
   <property name="saxon-jar" location="${lib}/saxonb-8.9.jar"/>
-  <property name="libs"    value="${lucene-jar}:${saxon-jar}:${lib}/servlet.jar:${lib}/PDFBox-0.7.3.jar:${lib}/log4j-1.2.9.jar:${lib}/Tidy.jar:${lib}/cql-java.jar:${lib}/marc4j.jar:${lib}/activation.jar:${lib}/mail.jar:${lib}/tm-extractors-0.4.jar"/>
+  <property name="libs"    value="${lucene-jar}:${saxon-jar}:${lib}/servlet.jar:${lib}/pdfBox.jar:${lib}/fontBox.jar:${lib}/log4j-1.2.9.jar:${lib}/Tidy.jar:${lib}/cql-java.jar:${lib}/marc4j.jar:${lib}/activation.jar:${lib}/mail.jar:${lib}/tm-extractors-1.0.jar:${lib}/poi-3.0.2-FINAL.jar:${lib}/fop-core-0.94.jar:${lib}/fop-libs-0.94.jar:${lib}/iText.jar"/>
 
   <target name="init">
     <!-- Create the time stamp -->
@@ -33,7 +33,7 @@
            debug="true"
            classpath="${libs}"
            encoding="UTF-8"
-           excludes="**/.sf/**/*,**/.cdl/**/*"
+           excludes="**/.*/**/*"
            destdir="${classes}">
       <src path="${src1}"/>
       <src path="${src2}"/>
@@ -126,7 +126,6 @@
         <exclude name="**/.*"/>
         <exclude name="**/.*/**/*"/>
         <exclude name="**/CVS/**/*"/>
-        <exclude name="**/.DS_Store"/>
         <exclude name="style/crossQuery/complexQueryParser.xsl"/>
 
         <include name="bin/classpath.pl"/>
@@ -140,7 +139,7 @@
 
         <include name="conf/**/*"/>
 
-        <include name="css/default/**/*"/>
+        <include name="css/**/*"/>
 
         <include name="icons/default/**/*"/>
 
@@ -161,6 +160,7 @@
 
         <include name="WEB-INF/build.xml"/>
         <include name="WEB-INF/web.xml"/>
+        <include name="WEB-INF/lib/versions.txt"/>
         <include name="WEB-INF/lib/*.jar"/>
         <exclude name="WEB-INF/lib/servlet.jar"/> <!-- only needed in src.zip -->
         <exclude name="WEB-INF/lib/lucene-*.jar"/> <!-- Included in xtf.jar -->
@@ -223,8 +223,7 @@
 
       <packageset dir="${src1}">
         <include name="**"/>
-        <exclude name="**/.sf/**"/>
-        <exclude name="**/.cdl/**"/>
+        <exclude name="**/.*/**"/>
 
         <!-- Exclude the generated code because it has javadoc warnings
              we can't fix.
@@ -234,8 +233,7 @@
 
       <packageset dir="${src2}">
         <include name="**"/>
-        <exclude name="**/.sf/**"/>
-        <exclude name="**/.cdl/**"/>
+        <exclude name="**/.*/**"/>
       </packageset>
 
     </javadoc>

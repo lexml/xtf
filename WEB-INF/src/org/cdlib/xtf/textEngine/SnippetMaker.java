@@ -31,6 +31,8 @@ package org.cdlib.xtf.textEngine;
  */
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 import org.apache.lucene.analysis.Analyzer;
@@ -87,11 +89,22 @@ public class SnippetMaker
   /** Accented chars to remove diacritics from */
   private CharMap accentMap;
 
+  /** 
+   * The fields that were specified as tokenized at index time. Not exactly
+   * the same as field.isTokenized() because facet values, while tokenized
+   * from Lucene's point of view, are not tokenized from the XTF point of
+   * view.
+   */
+  private Set tokFields;
+  
   /** Target # of characters to include in the snippet. */
   private int maxContext;
 
   /** Where to mark terms (all, only in spans, etc.) */
   private int termMode;
+
+  /** List of metadata fields to return in the doc hits, or null for all */
+  private Set<String> returnMetaFields;
 
   // Precompiled patterns for quickly matching common chars special to XML
   private static final Pattern ampPattern = Pattern.compile("&");
@@ -109,10 +122,11 @@ public class SnippetMaker
    * @param accentMap     Accented chars to remove diacritics from
    * @param maxContext    Target # chars for hit + context
    * @param termMode      Where to mark terms (all, only in spans, etc.)
+   * @param returnMetaFields  Optional comma-delimited subset of fields to return (instead of all by default). 
    */
   public SnippetMaker(IndexReader reader, DocNumMap docNumMap, Set stopSet,
-                      WordMap pluralMap, CharMap accentMap, int maxContext,
-                      int termMode) 
+                      WordMap pluralMap, CharMap accentMap, Set tokFields,
+                      int maxContext, int termMode, String returnMetaFields) 
   {
     this.reader = reader;
     this.docNumMap = docNumMap;
@@ -121,8 +135,14 @@ public class SnippetMaker
     this.stopSet = stopSet;
     this.pluralMap = pluralMap;
     this.accentMap = accentMap;
+    this.tokFields = tokFields;
     this.maxContext = maxContext;
     this.termMode = termMode;
+    
+    if (returnMetaFields != null)
+      this.returnMetaFields = new HashSet(Arrays.asList(returnMetaFields.split("[, ]+")));
+    else
+      this.returnMetaFields = null;
 
     // Use the indexer's actual analyzer, so that our results always
     // agree (especially the positions which are critical.)
@@ -155,6 +175,16 @@ public class SnippetMaker
   /** Obtain the document number map used to make snippets */
   public DocNumMap docNumMap() {
     return docNumMap;
+  }
+  
+  /** Obtain the set of tokenized fields */
+  public Set tokFields() {
+    return tokFields;
+  }
+  
+  /** Obtain the set of fields that should be returned in doc hits (null for all) */
+  public Set returnMetaFields() {
+    return returnMetaFields;
   }
 
   /**

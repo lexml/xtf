@@ -42,16 +42,17 @@ import java.io.PrintStream;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
+import java.net.SocketException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 import java.util.StringTokenizer;
+
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
@@ -79,12 +80,15 @@ import org.apache.lucene.limit.TermLimitException;
 import org.cdlib.xtf.saxonExt.sql.SQLConnect;
 import org.cdlib.xtf.textEngine.DefaultQueryProcessor;
 import org.cdlib.xtf.textEngine.IndexUtil;
+import org.cdlib.xtf.textEngine.IndexWarmer;
 import org.cdlib.xtf.textEngine.QueryProcessor;
 import org.cdlib.xtf.textIndexer.tokenizer.XTFTokenizer;
 import org.cdlib.xtf.util.Attrib;
 import org.cdlib.xtf.util.AttribList;
 import org.cdlib.xtf.util.ConfigFile;
 import org.cdlib.xtf.util.EasyNode;
+import org.cdlib.xtf.util.FastStringReader;
+import org.cdlib.xtf.util.FastTokenizer;
 import org.cdlib.xtf.util.GeneralException;
 import org.cdlib.xtf.util.Path;
 import org.cdlib.xtf.util.ThreadWatcher;
@@ -131,6 +135,9 @@ public abstract class TextServlet extends HttpServlet
 
   /** Keeps track, per thread, of the HTTP servlet response */
   private static ThreadLocal curResponse = new ThreadLocal();
+
+  /** Used for warming up indexes in the background */
+  private static HashMap<String,IndexWarmer> indexWarmers = new HashMap();
 
   /**
    * During tokenization, the '*' wildcard has to be changed to a word
@@ -239,6 +246,21 @@ public abstract class TextServlet extends HttpServlet
   public static HttpServletResponse getCurResponse() {
     return (HttpServletResponse)curResponse.get();
   }
+  
+  /** 
+   * Called by the servlet container to indicate this servlet is being taken
+   * out of service. We clean up all resources we can.
+   */
+  @Override
+  public void destroy()
+  {
+    // Close down any index warmers we have created
+    synchronized (indexWarmers) {
+      for (IndexWarmer w : indexWarmers.values())
+        w.close();
+      indexWarmers.clear();
+    }
+  }
 
   /**
    * Ensures that the servlet has been properly initialized. If init()
@@ -290,26 +312,10 @@ public abstract class TextServlet extends HttpServlet
       // Read in the configuration file.
       TextConfig config = readConfig(configPath);
 
-      // Set up the Trace facility. We want timestamps.
-      Trace.printTimestamps(true);
-
-      // Make sure output lines get flushed immediately, since we may
-      // be sharing the log file with other servlets.
+      // Set up the trace facility so it prints timestamps. Then print out
+      // trace info that we're restarting the servlet.
       //
-      Trace.setAutoFlush(true);
-
-      // Establish the trace output level.
-      Trace.setOutputLevel(
-          (config.logLevel.equals("silent")) ? Trace.silent
-        : (config.logLevel.equals("errors")) ? Trace.errors
-        : (config.logLevel.equals("warnings")) ? Trace.warnings
-        : (config.logLevel.equals("debug")) ? Trace.debug : Trace.info);
-
-      // And let everyone know the servlet has restarted
-      Trace.error("");
-      Trace.error("*** SERVLET RESTART: " + getServletInfo() + " ***");
-      Trace.error("");
-      Trace.error("Log level: " + config.logLevel);
+      setupTrace(config);
 
       // Create the caches
       stylesheetCache = new StylesheetCache(config.stylesheetCacheSize,
@@ -322,9 +328,41 @@ public abstract class TextServlet extends HttpServlet
   } // firstTimeInit()
 
   /**
+   * Sets up the trace facility for serlvet operation:
+   *   1. Print timestamps with each line
+   *   2. Flush output immediately rather than buffering til end of line
+   *   3. Output level from config
+   *   4. Log a message that we're restarting the servlet
+   */
+  protected void setupTrace(TextConfig config) 
+  {
+    // Set up the Trace facility. We want timestamps.
+    Trace.printTimestamps(true);
+
+    // Make sure output lines get flushed immediately, since we may
+    // be sharing the log file with other servlets.
+    //
+    Trace.setAutoFlush(true);
+
+    // Establish the trace output level.
+    Trace.setOutputLevel(
+        (config.logLevel.equals("silent")) ? Trace.silent
+      : (config.logLevel.equals("errors")) ? Trace.errors
+      : (config.logLevel.equals("warnings")) ? Trace.warnings
+      : (config.logLevel.equals("debug")) ? Trace.debug : Trace.info);
+
+    // And let everyone know the servlet has restarted
+    Trace.error("");
+    Trace.error("*** SERVLET RESTART: " + getServletInfo() + " ***");
+    Trace.error("");
+    Trace.error("Log level: " + config.logLevel);
+  } // setupTrace()
+
+  /**
    * General service method. We set a watch on each request in case it
    * becomes a "runaway", and institute various filters.
    */
+  @SuppressWarnings("unused")
   protected void service(HttpServletRequest req, HttpServletResponse res)
     throws ServletException, IOException 
   {
@@ -390,9 +428,34 @@ public abstract class TextServlet extends HttpServlet
                                  config.runawayNormalTime * 1000,
                                  config.runawayKillTime * 1000);
       }
+      
+      // In general it doesn't make sense to cache pages served by XTF servlets.
+      // This becomes especially evident when the book bag comes into play. So
+      // we need to set HTTP headers so that browsers (and proxies) won't cache
+      // our pages.
+      //
+      if (!config.allowBrowserCaching) 
+      {
+        // Set to expire far in the past.
+        res.setHeader("Expires", "Sat, 6 May 1995 12:00:00 GMT");
+        
+        // The following are not safe and can cause IE7 downloads to fail.
+        // See article http://edn.embarcadero.com/print/39141
+        //
+        if (false) {
+          // Set standard HTTP/1.1 no-cache headers.
+          res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+          // Set IE extended HTTP/1.1 no-cache headers (use addHeader).
+          res.addHeader("Cache-Control", "post-check=0, pre-check=0");
+          // Set standard HTTP/1.0 no-cache header.
+          res.setHeader("Pragma", "no-cache");
+        }
+      }
 
+      // Let the specific servlet serve the request.
       super.service(req, res);
 
+      // And make sure all output gets to the client.
       res.getOutputStream().flush();
     }
     finally {
@@ -424,6 +487,7 @@ public abstract class TextServlet extends HttpServlet
       curServlet.set(null);
       curRequest.set(null);
       curResponse.set(null);
+      XTFSaxonErrorListener.clearThreadErrors();
     } // finally
   } // service()
 
@@ -485,7 +549,20 @@ public abstract class TextServlet extends HttpServlet
    * request. This is a bit tricky since different servlet containers
    * return slightly different info.
    */
-  public static String getRequestURL(HttpServletRequest req) 
+  public static String getRequestURL(HttpServletRequest req)
+  {
+    return getRequestURL(req, false);
+  }
+  
+  /**
+   * Gets the full URL, including query parameters, from an HTTP
+   * request. This is a bit tricky since different servlet containers
+   * return slightly different info.
+   * 
+   * @param raw true to suppress un-escaping of % codes and probable
+   *            utf-8 coding in the URL.
+   */
+  public static String getRequestURL(HttpServletRequest req, boolean raw) 
   {
     // Start with the basics
     String url = req.getRequestURL().toString();
@@ -504,9 +581,11 @@ public abstract class TextServlet extends HttpServlet
     if (url.indexOf("jsessionid") >= 0)
       url = url.replaceAll("[&;]jsessionid=[a-zA-Z0-9]+", "");
 
-    // Translate escaping and UTF coding if necessary
-    url = decodeURL(url);
-    url = convertUTF8inURL(url);
+    // Translate escaping and UTF coding if necessary and requested
+    if (!raw) {
+      url = decodeURL(url);
+      url = convertUTF8inURL(url);
+    }
 
     // All done.
     return url;
@@ -620,6 +699,7 @@ public abstract class TextServlet extends HttpServlet
     //
     Enumeration i = req.getHeaderNames();
     trans.setParameter("http.URL", getRequestURL(req));
+    trans.setParameter("http.rawURL", getRequestURL(req, true));
     while (i.hasMoreElements()) {
       String name = (String)i.nextElement();
       String value = req.getHeader(name);
@@ -861,7 +941,7 @@ public abstract class TextServlet extends HttpServlet
    * supplied implementation. If not, a {@link DefaultQueryProcessor} is
    * created.
    */
-  public static QueryProcessor createQueryProcessor() 
+  public QueryProcessor createQueryProcessor() 
   {
     // Check the system property.
     final String propName = "org.cdlib.xtf.QueryProcessorClass";
@@ -872,7 +952,22 @@ public abstract class TextServlet extends HttpServlet
       // Try to create an object of the correct class.
       if (className != null)
         theClass = Class.forName(className);
-      return (QueryProcessor)theClass.newInstance();
+      QueryProcessor processor = (QueryProcessor)theClass.newInstance();
+      
+      // Enable background index warming
+      IndexWarmer warmer = null;
+      synchronized (indexWarmers) {
+        String xtfHome = Path.normalizePath(TextServlet.getCurServlet().getRealPath(""));
+        warmer = indexWarmers.get(xtfHome);
+        if (warmer == null) {
+          warmer = new IndexWarmer(xtfHome, 60); // TODO: Make interval configurable
+          indexWarmers.put(xtfHome, warmer);
+        }
+      }
+      processor.setIndexWarmer(warmer);
+      
+      // And we're done.
+      return processor;
     }
     catch (ClassCastException e) {
       Trace.error(
@@ -1216,11 +1311,23 @@ public abstract class TextServlet extends HttpServlet
     try 
     {
       XTFTokenizer toks = new XTFTokenizer(new StringReader(str));
+      FastTokenizer ftoks = new FastTokenizer(new FastStringReader(str));
       int prevEnd = 0;
       while (true) {
         Token tok = toks.next();
         if (tok == null)
           break;
+        
+        // Ensure that FastTokenizer produces *exactly* the same results. If it doesn't,
+        // that means our index is probably messed up. This way we'll catch these problems
+        // pro-actively instead of relying on end users to realize that there's some
+        // nefarious reason their queries come back with nothing.
+        //
+        Token ftok = ftoks.next();
+        assert ftok != null && ftok.termText().equals(tok.termText()) :
+               "Internal XTF bug: FastTokenizer isn't functioning the same as XTFTokenizer. " +
+               "Please report this problem to the xtf-user group, along with your query.";
+        
         if (tok.startOffset() > prevEnd)
           addToken(fmt, str.substring(prevEnd, tok.startOffset()), false);
         prevEnd = tok.endOffset();
@@ -1329,21 +1436,24 @@ public abstract class TextServlet extends HttpServlet
   protected void genErrorPage(HttpServletRequest req, HttpServletResponse res,
                               Exception exc) 
   {
-    // Contort to obtain a string version of the stack trace.
-    ByteArrayOutputStream traceStream = new ByteArrayOutputStream();
-    exc.printStackTrace(new PrintStream(traceStream));
-    String strStackTrace = traceStream.toString();
-    
-    // If Saxon errors occurred, put those at the top of the trace.
+    // If Saxon errors occurred, use those as the stack trace.
+    String strStackTrace;
     String[] saxonErrors = XTFSaxonErrorListener.getThreadErrors();
     if (saxonErrors != null) {
       StringBuffer buf = new StringBuffer();
       for (String s : saxonErrors)
         buf.append(s + "\n");
       buf.append("\n");
-      strStackTrace = buf.toString() + strStackTrace;
+      strStackTrace = buf.toString();
     }
-
+    else
+    {
+      // Contort to obtain a string version of the Java stack trace.
+      ByteArrayOutputStream traceStream = new ByteArrayOutputStream();
+      exc.printStackTrace(new PrintStream(traceStream));
+      strStackTrace = traceStream.toString();
+    }
+    
     String htmlStackTrace = makeHtmlString(strStackTrace);
 
     try 
@@ -1386,9 +1496,8 @@ public abstract class TextServlet extends HttpServlet
       }
 
       // Figure out just the last part of the exception class name.
-      String className = exc.getClass().getName().replaceAll(".*\\.", "").replaceAll(
-        ".*\\$",
-        "").replaceAll("Exception", "").replaceAll("Error", "");
+      String className = exc.getClass().getName().replaceAll(".*\\.", "").
+        replaceAll(".*\\$", "").replaceAll("Exception", "").replaceAll("Error", "");
 
       // Now make a document that the stylesheet can parse. Inside it
       // we'll put the exception info.
@@ -1419,32 +1528,60 @@ public abstract class TextServlet extends HttpServlet
         }
       }
 
+      // Socket exceptions are pretty common (clients disconnect all the time before
+      // they finish downloading a page or file), so work extra hard to identify those.
+      //
+      boolean isSocketExc = false;
+      HashSet<Object> alreadyTraversed = new HashSet();
+      for (Throwable t = exc; !isSocketExc && t != null && !alreadyTraversed.contains(t); )
+      {
+        // Avoid infinite loops
+        alreadyTraversed.add(t);
+        
+        // This is what you would expect
+        if (t instanceof SocketException)
+          isSocketExc = true;
+        
+        // But this is actually what happens in Tomcat
+        else if (t.getClass().getName().contains("ClientAbortException"))
+          isSocketExc = true;
+        
+        // Unwrap things
+        else if (t instanceof TransformerException && ((TransformerException)t).getException() != null)
+          t = ((TransformerException)t).getException();
+        else if (t.getCause() != null)
+          t = t.getCause();
+      }
+      
       // Give the stack trace, but only if this is *not* a normal
       // servlet exception. (The normal ones happen normally, and
       // thus don't need stack traces for debugging.)
       //
-      if (!(exc instanceof ExcessiveWorkException) &&
-          !(exc instanceof TermLimitException) &&
-          (!(exc instanceof GeneralException) ||
-          ((GeneralException)exc).isSevere())) 
-      {
+      boolean isNormalException = isSocketExc ||
+          exc instanceof ExcessiveWorkException ||
+          exc instanceof TermLimitException ||
+          exc instanceof SocketException ||
+          (exc instanceof GeneralException && !((GeneralException)exc).isSevere());
+      
+      if (!isNormalException) {
         doc.append("<stackTrace>\n" + htmlStackTrace + "</stackTrace>\n");
         trans.setParameter("stackTrace", new StringValue(htmlStackTrace));
       }
 
       doc.append("</" + className + ">\n");
 
-      // If this is a severe problem, log it.
-      if (!(exc instanceof GeneralException) ||
-          ((GeneralException)exc).isSevere()) 
-      {
+      // If this is a socket exception or a severe problem, log it.
+      if (isSocketExc)
+        Trace.warning("Warning (socket exception): " + msg.toString());
+      else if (!isNormalException)
         Trace.error("Error: " + doc.toString().replaceAll("<br/>\n", ""));
-      }
 
-      // Now produce the error page.
-      StreamSource src = new StreamSource(new StringReader(doc.toString()));
-      StreamResult dst = new StreamResult(out);
-      trans.transform(src, dst);
+      // If the response hasn't been committed, send back the formatted error page.
+      if (!res.isCommitted()) {
+        StreamSource src = new StreamSource(new StringReader(doc.toString()));
+        StreamResult dst = new StreamResult(out);
+        trans.transform(src, dst);
+      }
     }
     catch (Exception e) {
       // For some reason, we couldn't load or run the error generator.
@@ -1453,18 +1590,21 @@ public abstract class TextServlet extends HttpServlet
       try 
       {
         Trace.error(
-          "Unable to generate error page because: " + e.getMessage() + "\n" +
-          "Original problem: " + exc.getMessage() + "\n" + strStackTrace);
+          "Unable to generate error page because: " + e.toString() + "\n" +
+          "Original problem: " + exc.toString() + "\n" + strStackTrace);
 
-        ServletOutputStream out = res.getOutputStream();
-
-        out.println("<HTML><BODY>");
-        out.println("<B>Servlet configuration error:</B><br/>");
-        out.println("Unable to generate error page: " + e.getMessage() +
-                    "<br>");
-        out.println("Caused by: " + exc.getMessage() + "<br/>" +
-                    htmlStackTrace);
-        out.println("</BODY></HTML>");
+        // The output stream is only writable if not already commited.
+        if (!res.isCommitted()) {
+          ServletOutputStream out = res.getOutputStream();
+  
+          out.println("<HTML><BODY>");
+          out.println("<B>Servlet configuration error:</B><br/>");
+          out.println("Unable to generate error page: " + e.toString() +
+                      "<br>");
+          out.println("Caused by: " + exc.toString() + "<br/>" +
+                      htmlStackTrace);
+          out.println("</BODY></HTML>");
+        }
       }
       catch (IOException e2) {
         // We couldn't even write to the output stream. Give up.
@@ -1516,54 +1656,190 @@ public abstract class TextServlet extends HttpServlet
       this.inReq = inReq;
     }
 
+    ArrayList<String> paramNames;
     HashMap<String, ArrayList<String>> params;
-
+    
     private void init() 
     {
       if (params != null)
         return;
 
-      params = new HashMap<String, ArrayList<String>>();
+      paramNames = new ArrayList();
+      params = new HashMap();
       
       Enumeration paramNames = inReq.getParameterNames();
       while (paramNames.hasMoreElements()) 
       {
-        String name = (String)paramNames.nextElement();
-        String[] vals = inReq.getParameterValues(name);
+        String paramName = (String)paramNames.nextElement();
+        String[] vals = inReq.getParameterValues(paramName);
 
         for (String val : vals)
         {
+          // If no semicolon, there's no need for special processing.
           if (val.indexOf(';') < 0) 
           {
-            if (!name.equals("jsessionid"))
-              addParam(name, val);
+            if (!paramName.equals("jsessionid"))
+              addParam(paramName, val);
             continue;
           }
-  
+          
+          // We need to know if any semicolons or equal signs here were actually escaped
+          // in the URL. This is a complex routine and if it fails it could really bring 
+          // down a production system. So fall back if necessary to printing a warning
+          // and just going on the old way.
+          //
+          try {
+            val = protectChars(paramName, val);
+          }
+          catch (Throwable t) {
+            Trace.warning("Warning: unexpected error protecting URL escape codes: " + t.toString());
+          }
+          
+          // Break up semicolon separated things.
           StringTokenizer tokenizer = new StringTokenizer(val, ";");
+          String name = paramName;
+          StringBuffer valbuf = new StringBuffer();
           while (tokenizer.hasMoreTokens()) 
           {
             String tok = tokenizer.nextToken();
-            int equalPos = tok.indexOf('=');
-            if (equalPos >= 0) {
-              name = tok.substring(0, equalPos);
-              val = tok.substring(equalPos + 1);
+
+            // Locate the first equal sign (outside of quotes)
+            int equalPos = -1;
+            boolean inQuote = false;
+            for (int i=0; i<tok.length() && equalPos < 0; i++) {
+              if (tok.charAt(i) == '"')
+                inQuote = !inQuote;
+              else if (!inQuote && tok.charAt(i) == '=')
+                equalPos = i;
             }
-            else
-              val = tok;
-  
-            if (name != null && !name.equals("jsessionid"))
-              addParam(name, val);
-            name = null;
+            equalPos = tok.indexOf('=');
+            
+            // If there is one, that means we have a parameter here
+            if (equalPos >= 0) {
+              if (!name.equals("jsessionid"))
+                addParam(name,valbuf.toString());
+              valbuf.setLength(0);
+              name = unprotectChars(tok.substring(0, equalPos));
+              valbuf.append(unprotectChars(tok.substring(equalPos + 1)));
+            }
+            else {
+              if (valbuf.length() > 0)
+                valbuf.append(";"); // put back
+              valbuf.append(unprotectChars(tok));
+            }
           } // while
-        }
-      }
+          
+          if (!name.equals("jsessionid"))
+            addParam(name, valbuf.toString());
+        } // for
+      } // while
     } // init()
+
+    /** Special code to protect semicolons in protectChars() */
+    private char semiChar = '\uE010';
     
+    /** Special code to protect equal signs in protectChars() */
+    private char equalChar = '\uE012';
+    
+    private char[] hexChars = "0123456789ABCDEF".toCharArray();
+
+    /**
+     * Protect '=' and ';' characters that were actually escaped with % codes in
+     * the original URL. Escaping indicates that the user wanted to query for
+     * these, so we should not use them as parameter separators. 
+     * 
+     * @param paramName Name of the parameter we're working on
+     * @param val       Unescaped value to protect
+     * @return          Value with % coded '=' or ';' translated to
+     *                  equalChar or semiChar respectively.
+     */
+    private String protectChars(String paramName, String val)
+    {
+      // Unfortunately, the servlet container has already un-escaped the
+      // % codes for us. So we need to refer to the original raw URL to
+      // see if they were there. Originally the idea was to form a great
+      // big regular expression to match the relevant part of the URL 
+      // and extract the parts that are '=' or ';'. However, Java gets
+      // pretty inefficient on such a complicated regex, so we have to
+      // roll our own.
+      //
+      String origUrl = TextServlet.getRequestURL(inReq, true);
+      int start = 0;
+      char[] origChars = origUrl.toCharArray();
+      char[] valChars = val.toCharArray();
+      String lookFor = paramName + "=";
+      while (true) 
+      {
+        StringBuilder newVal = new StringBuilder(val.length());
+        int origPos = origUrl.indexOf(lookFor, start);
+        if (origPos < 0) {
+          Trace.warning("Warning: failed to match escape codes for param '" + paramName + "' in URL '" + origUrl + "'");
+          return val;
+        }
+        
+        int sp = origPos + lookFor.length();
+        int i;
+        for (i=0; i<valChars.length; i++) {
+          char ch = valChars[i];
+          boolean pctMatch = matchHex(origChars, sp, origChars.length, ch);
+          if (pctMatch) 
+          {
+            if (ch == ';')
+              newVal.append(semiChar);
+            else if (ch == '=')
+              newVal.append(equalChar);
+            else
+              newVal.append(ch);
+            sp += 3;
+          }
+          else if (origChars[sp] == ch) {
+            newVal.append(ch);
+            ++sp;
+          }
+          else
+            break;
+        }
+        if (i == valChars.length)
+          return newVal.toString();
+        start = sp+1;
+      }
+    }
+
+    /** See if there's a '%XX' hex code at the given position for the value. */
+    private boolean matchHex(char[] src, int sp, int max, int val)
+    {
+      if (max - sp < 3)
+        return false;
+      if (val > 255)
+        return false;
+      if (src[sp] != '%')
+        return false;
+      if (Character.toUpperCase(src[sp+1]) != hexChars[val >> 4])
+        return false;
+      if (Character.toUpperCase(src[sp+2]) != hexChars[val & 0xF])
+        return false;
+      return true;
+    }
+    
+    /**
+     * Translates protected '=' and ';' characters from protectChars above
+     * back into regular characters.
+     * 
+     * @param val       Value possibly containing protected characters.
+     * @return          Same value but with unprotected characters.
+     */
+    private String unprotectChars(String val)
+    {
+      val = val.replace(semiChar, ';');
+      val = val.replace(equalChar, '=');
+      return val;
+    }
+      
     private void addParam(String name, String val)
     {
       ArrayList<String> vals = params.get(name);
       if (vals == null) {
+        paramNames.add(name);
         vals = new ArrayList<String>();
         params.put(name, vals);
       }
@@ -1574,12 +1850,7 @@ public abstract class TextServlet extends HttpServlet
     public Enumeration getParameterNames() 
     {
       init();
-      
-      Set keys = params.keySet();
-      ArrayList<String> keyColl = new ArrayList<String>(keys);
-      Collections.sort(keyColl);
-      final Iterator iter = keyColl.iterator();
-      
+      final Iterator iter = paramNames.iterator();
       return new Enumeration() {
         public boolean hasMoreElements() { return iter.hasNext(); } 
         public Object nextElement() { return iter.next(); }

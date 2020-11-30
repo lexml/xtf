@@ -51,6 +51,7 @@ import net.sf.saxon.instruct.TailCall;
 import net.sf.saxon.om.Item;
 import net.sf.saxon.om.SequenceIterator;
 import net.sf.saxon.pattern.EmptySequenceTest;
+import net.sf.saxon.trans.DynamicError;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.type.ItemType;
 import net.sf.saxon.type.TypeHierarchy;
@@ -84,6 +85,34 @@ public abstract class InstructionWithContent extends Instruction
     for (Expression exp : attribs.values())
       adoptChildExpression(exp);
     adoptChildExpression(content);
+  }
+  
+  // XTF convenience functions
+  public String getAttribStr(String attrName, XPathContext context) 
+    throws XPathException 
+  {
+    return getAttribStr(attrName, context, null);
+  }
+  
+  public String getAttribStr(String attrName, XPathContext context, String defaultVal) 
+    throws XPathException
+  {
+    if (!attribs.containsKey(attrName))
+      return defaultVal;
+    return attribs.get(attrName).evaluateAsString(context);
+  }
+  
+  public boolean getAttribBool(String attrName, XPathContext context, boolean defaultVal) 
+    throws XPathException
+  {
+    String str = getAttribStr(attrName, context);
+    if (str == null)
+      return defaultVal;
+    if (str.toLowerCase().matches("1|yes|true"))
+      return true;
+    if (str.toLowerCase().matches("0|no|false"))
+      return false;
+    return defaultVal;
   }
 
   /**
@@ -251,4 +280,15 @@ public abstract class InstructionWithContent extends Instruction
   {
       out.println(ExpressionTool.indent(level) + name);
   }
+  
+  /** Special version of dynamicError that includes a cause with the exception. **/
+  protected void dynamicError(Throwable cause, String message, String code, XPathContext context) 
+    throws DynamicError 
+  {
+    DynamicError err = new DynamicError(message, getSourceLocator(), cause);
+    err.setXPathContext(context);
+    err.setErrorCode(code);
+    throw err;
+  }
+
 }
