@@ -32,11 +32,14 @@ package org.cdlib.xtf.textIndexer;
 import java.io.Reader;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Matcher;
+
 import org.apache.lucene.analysis.*;
 import org.apache.lucene.analysis.standard.*;
 import org.apache.lucene.bigram.BigramStopFilter;
 import org.apache.lucene.spelt.SpellWriter;
 import org.cdlib.xtf.textEngine.Constants;
+import org.cdlib.xtf.textIndexer.rewriter.NumberRewriteFilter;
 import org.cdlib.xtf.util.CharMap;
 import org.cdlib.xtf.util.FastStringReader;
 import org.cdlib.xtf.util.FastTokenizer;
@@ -293,6 +296,9 @@ public class XTFTextAnalyzer extends Analyzer
     // Normalize everything to be lowercase.
     result = new LowerCaseFilter(result);
 
+    // Normalize Unicode characters
+    result = new UnicodeNormalizationFilter(result);
+
     // If adding to a spelling dictionary, put an adder in the chain.
     if (spellWriter != null && !misspelledFields.contains(fieldName))
       result = new SpellWritingFilter(result, spellWriter);
@@ -306,6 +312,13 @@ public class XTFTextAnalyzer extends Analyzer
     //
     if (accentMap != null)
       result = new AccentFoldingFilter(result, accentMap);
+
+    // If a plural map was specified, fold plural and singular words together.
+    if (pluralMap != null)
+      result = new PluralFoldingFilter(result, pluralMap);
+
+    // Aplica regras de reescrita
+    result = new NumberRewriteFilter(result);
 
     // Convert stop-words to bi-grams (if any stop words were specified). We must
     // do this after XtfSpecialTokensFilter to ensure that special tokens don't

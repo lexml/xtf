@@ -83,6 +83,7 @@ import org.cdlib.xtf.textEngine.QueryProcessor;
 import org.cdlib.xtf.textIndexer.tokenizer.XTFTokenizer;
 import org.cdlib.xtf.util.Attrib;
 import org.cdlib.xtf.util.AttribList;
+import org.cdlib.xtf.util.ConfigFile;
 import org.cdlib.xtf.util.EasyNode;
 import org.cdlib.xtf.util.GeneralException;
 import org.cdlib.xtf.util.Path;
@@ -170,18 +171,25 @@ public abstract class TextServlet extends HttpServlet
    */
   public String getRealPath(String partialPath) 
   {
+    /*
     if (staticContext == null)
       return partialPath;
 
     if (partialPath.startsWith("http://"))
       return partialPath;
+      */
     if (partialPath.startsWith("/") || partialPath.startsWith("\\"))
+      return partialPath;
+    return new ConfigFile(partialPath).getAbsolutePath();
+    /*
+    if (partialPath.contains(":/")) 
       return partialPath;
     if (partialPath.length() > 1 && partialPath.charAt(1) == ':')
       return partialPath;
     if (!isEmpty(baseDir))
       return Path.resolveRelOrAbs(baseDir, partialPath);
     return staticContext.getRealPath(partialPath);
+    */
   } // getRealPath()
 
   /**
@@ -249,8 +257,14 @@ public abstract class TextServlet extends HttpServlet
 
       // If a base directory was specified, record it.
       baseDir = getServletConfig().getInitParameter("base-dir");
-      if (!isEmpty(baseDir) && !baseDir.endsWith("/"))
-        baseDir = baseDir + "/";
+      //if (!isEmpty(baseDir) && !baseDir.endsWith("/"))
+      //  baseDir = baseDir + "/";
+      if (!isEmpty(baseDir)) {
+        ConfigFile.setBaseDir(new File(baseDir));
+      }
+      else {
+        ConfigFile.setBaseDir(new File("/var/www/atual"));
+      }
 
       // If the modification time of the configuration file has
       // changed, we need to re-initialize.

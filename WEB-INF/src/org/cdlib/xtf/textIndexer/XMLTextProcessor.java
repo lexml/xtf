@@ -50,6 +50,13 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.transform.Templates;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.sax.SAXResult;
+import java.io.OutputStream;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMResult;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import net.sf.saxon.Configuration;
 import net.sf.saxon.Controller;
@@ -595,6 +602,7 @@ public class XMLTextProcessor extends DefaultHandler
 
     catch (IOException e) 
     {
+    	e.printStackTrace();
       // Log the error caught.
       Trace.tab();
       Trace.error("*** IOException Opening or Creating Index: " + e);
@@ -985,6 +993,7 @@ public class XMLTextProcessor extends DefaultHandler
       FileQueueEntry ent = (FileQueueEntry)iter.next();
       totalSize += ent.idxSrc.totalSize();
     }
+    System.out.println("totalSize = " + totalSize);
     if (totalSize < 1)
       totalSize = 1; // avoid divide-by-zero problems
     long processedSize = 0;
@@ -1049,7 +1058,7 @@ public class XMLTextProcessor extends DefaultHandler
         } // while
       }
       catch (SAXException e) {
-        throw new RuntimeException(e);
+        throw new RuntimeException("Error processin entry " + ent.idxSrc.key(),e);
       }
 
       if (printDone)
@@ -1217,6 +1226,25 @@ public class XMLTextProcessor extends DefaultHandler
 
   ////////////////////////////////////////////////////////////////////////////
 
+  public void serialize(org.w3c.dom.Document doc, OutputStream out) throws Exception {
+      
+      TransformerFactory tfactory = TransformerFactory.newInstance();
+      Transformer serializer;
+      try {
+          serializer = tfactory.newTransformer();
+          //Setup indenting to "pretty print"
+          serializer.setOutputProperty(OutputKeys.INDENT, "yes");
+          serializer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+          
+          serializer.transform(new DOMSource(doc), new StreamResult(out));
+      } catch (TransformerException e) {
+          // this is fatal, just dump the stack and throw a runtime exception
+          e.printStackTrace();
+          
+          throw new RuntimeException(e);
+      }
+  }
+  
   /** Parse the XML source text file specified. <br><br>
    *
    *  This method instantiates a SAX XML file parser and passes this class
@@ -1266,6 +1294,7 @@ public class XMLTextProcessor extends DefaultHandler
       //
       Templates[] prefilters = curIdxSrc.preFilters();
       if (prefilters == null || prefilters.length == 0) {
+    	  System.err.println("No prefilters!");
         xmlParser.parse(xmlSource, this);
         return 0;
       }

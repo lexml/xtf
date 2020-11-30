@@ -89,7 +89,9 @@ public class IdxTreeCuller
   public void cullIndex(File xtfHome, IndexInfo idxInfo)
     throws Exception 
   {
+	  System.err.println("Esta versão está com a remoção de arquivos desativada.");
     // Start with no Path fields encountered, and no documents culled.
+    /*
     int docCount = 0;
     int cullCount = 0;
 
@@ -267,6 +269,7 @@ public class IdxTreeCuller
       // Pass the exception on.
       throw e;
     }
+    */
   } // cullIndex()
 
   ////////////////////////////////////////////////////////////////////////////

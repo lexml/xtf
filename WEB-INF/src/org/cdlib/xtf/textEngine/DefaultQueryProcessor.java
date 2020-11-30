@@ -222,13 +222,17 @@ public class DefaultQueryProcessor extends QueryProcessor
     Set tokFields = xtfSearcher.tokenizedFields();
     query = new StdTermRewriter(tokFields).rewriteQuery(query);
 
-    // If a plural map is present, change plural words to non-plural.
-    if (pluralMap != null)
-      query = new PluralFoldingRewriter(pluralMap, tokFields).rewriteQuery(query);
+    // Normaliza números e datas
+    query = new NumberQueryRewriter(tokFields).rewriteQuery(query);
 
     // If an accent map is present, remove diacritics.
     if (accentMap != null)
       query = new AccentFoldingRewriter(accentMap, tokFields).rewriteQuery(query);
+
+    // If a plural map is present, change plural words to non-plural.
+    if (pluralMap != null) {
+        query = new PluralFoldingRewriter(pluralMap, tokFields).rewriteQuery(query);
+    }
 
     // Rewrite the query for bigrams (if we have stop-words to deal with.)
     if (stopSet != null)
@@ -949,6 +953,10 @@ public class DefaultQueryProcessor extends QueryProcessor
               emptyLast = true;
             else
               throw new IOException("Unknown sort modifier: '" + parts[j] + "'");
+            }
+            else {
+                throw new IOException("Unknown sort modifier: '" + parts[j] + "'");
+            }
           }
           
           // Check for conflicting modifiers.

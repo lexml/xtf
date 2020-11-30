@@ -328,19 +328,21 @@ public class TextIndexer
           srcTreeProcessor.open(cfgInfo);
           srcTreeProcessor.processDir(new File(srcRootDir), 0);
           srcTreeProcessor.close();
+          
+          System.err.println("AVISO: Esta versão não suporta remoção de registros do índice!");
 
           // Cull files which are present in the index but missing
           // from the filesystem.
           //
-          IdxTreeCuller culler = new IdxTreeCuller();
+        //  IdxTreeCuller culler = new IdxTreeCuller();
 
-          Trace.info("Removing Missing Documents From Index:");
-          Trace.tab();
+          //Trace.info("Removing Missing Documents From Index:");
+          //Trace.tab();
 
-          culler.cullIndex(new File(cfgInfo.xtfHomePath), cfgInfo.indexInfo);
+          //culler.cullIndex(new File(cfgInfo.xtfHomePath), cfgInfo.indexInfo);
 
-          Trace.untab();
-          Trace.info("Done.");
+          //Trace.untab();
+          //Trace.info("Done.");
         }
 
         Trace.untab();
