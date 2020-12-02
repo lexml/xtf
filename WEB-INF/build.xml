@@ -157,6 +157,8 @@
         <include name="CHANGES"/>
 
         <include name="docs/**/*"/>
+	
+	<include name="static/**/*"/>
 
         <include name="WEB-INF/build.xml"/>
         <include name="WEB-INF/web.xml"/>
@@ -166,7 +168,7 @@
         <exclude name="WEB-INF/lib/lucene-*.jar"/> <!-- Included in xtf.jar -->
         <exclude name="WEB-INF/lib/saxon*.jar"/> <!-- Included in xtf.jar -->
 
-      </fileset>
+	</fileset>
     </copy>
 
     <!-- Now make the main distribution WAR file -->
