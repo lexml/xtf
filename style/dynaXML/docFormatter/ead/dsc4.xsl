@@ -29,7 +29,9 @@
    <!--Formats dsc/head and makes it a link target.-->
    <xsl:template match="dsc/head">
       <h3>
-         <xsl:apply-templates/>
+         <a name="{xtf:make-id(.)}">
+            <xsl:apply-templates/>
+         </a>
       </h3>
    </xsl:template>
    
@@ -184,103 +186,6 @@
                </xsl:for-each><!--Closes c04-->
             </xsl:for-each><!--Closes c03-->
          </xsl:for-each><!--Closes c02-->
-      </table>
-   </xsl:template>
-   
-   <!-- ...............Section 3B.............................. -->
-   <!--This section of the stylesheet creates an HTML table for a
-       top-level c02 only. Based on the template above and used
-       only for chunked EADs.
-       
-      It then recursively processes each child component of the
-      c01 by calling a named template specific to that component level.
-      The named templates are in section 4.-->
-   
-   <xsl:template match="c02">
-      
-      <table width="100%">
-         <tr>
-            <td width="8%"> </td>
-            <td width="8%"> </td>
-            <td width="8%"> </td>
-            <td width="8%"> </td>
-            <td width="8%"> </td>
-            <td width="8%"> </td>
-            <td width="8%"> </td>
-            <td width="8%"> </td>
-            <td width="8%"> </td>
-            <td width="8%"> </td>
-            <td width="8%"> </td>
-            <td width="12%"> </td>
-         </tr>
-         <!--Grab the title of the parent c01.-->
-         <xsl:for-each select="parent::c01">
-            <xsl:for-each select="did">
-               <tr>
-                  <td colspan="12">
-                     <b>
-                        <a>
-                           <xsl:attribute name="name">
-                              <xsl:text>series</xsl:text><xsl:number from="dsc" count="c01 "/>
-                           </xsl:attribute>
-                           <xsl:call-template name="component-did"/>
-                        </a>
-                     </b>
-                  </td>
-               </tr>
-            </xsl:for-each><!--Closes the did.-->
-         </xsl:for-each>
-         
-         <!--<xsl:apply-templates select="thead"/>-->
-         <xsl:choose>
-            <xsl:when test="@level='subseries' or @level='series'">
-               <xsl:call-template name="c02-level-subseries"/>	
-            </xsl:when>
-            <xsl:otherwise>
-               <xsl:call-template name="c02-level-container"/>	
-            </xsl:otherwise>	
-         </xsl:choose>
-         <!--<xsl:apply-templates select="thead"/>-->
-         <xsl:for-each select="c03">
-            <xsl:call-template name="c03-level"/>	
-            
-            <!--<xsl:apply-templates select="thead"/>-->
-            <xsl:for-each select="c04">
-               <xsl:call-template name="c04-level"/>	
-               
-               <!--<xsl:apply-templates select="thead"/>-->
-               <xsl:for-each select="c05">
-                  <xsl:call-template name="c05-level"/>	
-                  
-                  <!--<xsl:apply-templates select="thead"/>-->
-                  <xsl:for-each select="c06">
-                     <xsl:call-template name="c06-level"/>	
-                     
-                     <!--<xsl:apply-templates select="thead"/>-->
-                     <xsl:for-each select="c07">
-                        <xsl:call-template name="c07-level"/>	
-                        
-                        <!--<xsl:apply-templates select="thead"/>-->
-                        <xsl:for-each select="c08">
-                           <xsl:call-template name="c08-level"/>	
-                           
-                           <!--<xsl:apply-templates select="thead"/>-->
-                           <xsl:for-each select="c09">
-                              <xsl:call-template name="c09-level"/>	
-                              
-                              <!--<xsl:apply-templates select="thead"/>-->
-                              <xsl:for-each select="c10">
-                                 <xsl:call-template name="c10-level"/>	
-                                 
-                                 <!--<xsl:apply-templates select="thead"/>-->
-                              </xsl:for-each><!--Closes c10-->
-                           </xsl:for-each><!--Closes c09-->
-                        </xsl:for-each><!--Closes c08-->
-                     </xsl:for-each><!--Closes c07-->
-                  </xsl:for-each><!--Closes c06-->
-               </xsl:for-each><!--Closes c05-->
-            </xsl:for-each><!--Closes c04-->
-         </xsl:for-each><!--Closes c03-->
       </table>
    </xsl:template>
    
@@ -456,6 +361,13 @@
          <tr>
             <td valign="top"></td>
             <td valign="top" colspan="11">
+               <!-- for sheila -->
+               <a>
+                  <xsl:attribute name="name">
+                     <xsl:text>subseries</xsl:text><xsl:value-of select="count(preceding::c02[@level='subseries'])+1"/>
+                  </xsl:attribute>
+               </a>
+               <!-- end for sheila -->
                <b>
                   <xsl:call-template name="component-did"/>
                </b>

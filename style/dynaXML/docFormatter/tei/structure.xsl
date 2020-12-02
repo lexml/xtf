@@ -33,29 +33,29 @@
       POSSIBILITY OF SUCH DAMAGE.
    -->
    
-   <xsl:template match="*:TEI.2">
+   <xsl:template match="*[local-name()='TEI.2']">
       <xsl:apply-templates/>
    </xsl:template>
    
-   <xsl:template match="*:teiHeader"/>
+   <xsl:template match="*[local-name()='teiHeader']"/>
    
-   <xsl:template match="*:text">
+   <xsl:template match="*[local-name()='text']">
       <xsl:apply-templates/>
    </xsl:template>
    
-   <xsl:template match="*:front">
+   <xsl:template match="*[local-name()='front']">
       <xsl:apply-templates/>
    </xsl:template>
    
-   <xsl:template match="*:body">
+   <xsl:template match="*[local-name()='body']">
       <xsl:apply-templates/>
    </xsl:template>
    
-   <xsl:template match="*:back">
+   <xsl:template match="*[local-name()='back']">
       <xsl:apply-templates/>
    </xsl:template>
    
-   <xsl:template match="*:div1[@type='dedication']"/>
+   <xsl:template match="*[local-name()='div1'][@type='dedication']"/>
    
    <!-- all div elements -->
    <xsl:template match="*[matches(local-name(),'^div')]">
@@ -85,7 +85,7 @@
       <xsl:apply-templates/>
    </xsl:template>
    
-   <xsl:template match="*:ab">
+   <xsl:template match="*[local-name()='ab']">
       
       <xsl:variable name="class">
          <xsl:choose>

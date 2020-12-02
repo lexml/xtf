@@ -1,0 +1,103 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="pt-BR" lang="pt-BR">
+<head>
+<title>LexML Brasil: Rede de Informação Legislativa e Jurídica</title>
+<link rel="icon" href="lexml16x16.png" />
+<link rel="shortcut icon" href="lexml32x32.png" />
+<link rel="apple-touch-icon" href="lexml114x114.png"/>
+<link rel="apple-touch-icon-precomposed" href="lexml96x96.png"/> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<style type="text/css">
+* {
+  padding: 1px;
+  margin: 1px;
+}
+body {
+  font-family: arial;
+  font-size: 0.8em;
+}
+#outer {
+  height: 400px;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+#outer[id] {
+  display: table;
+  position: static;
+}
+#middle {
+  position: absolute;
+  top: 50%;
+  width: 100%;
+  text-align: center;
+} /* for explorer only*/
+#middle[id] {
+  display: table-cell;
+  vertical-align: middle;
+  position: static;
+}
+#inner {
+  position: relative;
+  top: -50%;
+  text-align: center;
+} /* for explorer only */
+#inner {
+  width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+} /* for all browsers*/
+div.greenBorder {
+  border: 0px solid green;
+  background-color: white;
+}
+</style>
+</head>
+<body link="#0000cc" vlink="#551a8b" alink="#ff0000" style="height: 450px" onload="document.forms[0].elements[0].focus()">
+<script type="text/javascript">
+<!--
+function stringReplace(form) {
+  var replaceStr = form.keyword.value;
+  var pattern = /\;/g;
+  form.keyword.value = replaceStr.replace(pattern, " ");
+  if (trim(form.keyword.value, " ").length == 0 && document.getElementById("c1").checked == true ) {
+    window.location.href = "/busca/search?browse-all=yes";
+    return false;
+  }
+}
+function trim(str, chars) {
+  return ltrim(rtrim(str, chars), chars);
+}
+function ltrim(str, chars) {
+  chars = chars || "\\s";
+  return str.replace(new RegExp("^[" + chars + "]+", "g"), "");
+}
+function rtrim(str, chars) {
+  chars = chars || "\\s";
+  return str.replace(new RegExp("[" + chars + "]+$", "g"), "");
+}
+-->
+</script>
+<div id="outer" class="greenBorder">
+  <div id="middle">
+    <div id="inner" class="greenBorder">
+      <a href="http://www.lexml.gov.br/"><img src="/busca/icons/default/logo3sf.gif" border="0" alt="Rede de Informação Legislativa e Jurídica" /></a>
+      <br /><br />
+      <form method="get" action="/busca/search">
+        <input type="text" name="keyword" size="45" value="" />
+        <input onclick="return stringReplace(form)"  type="submit" value="Encontrar" /><br />
+	<div style="padding-top:10px">
+        <input id="c1" type="radio" name="f1-tipoDocumento" value="" checked="checked" /><label for="c1">Tudo</label>&nbsp;&nbsp;<input id="c2" type="radio" name="f1-tipoDocumento" value="Legislação" /><label for="c2">Legislação</label>&nbsp;&nbsp;<input id="c3" type="radio" name="f1-tipoDocumento" value="Jurisprudência" /><label for="c3">Jurisprudência</label>&nbsp;&nbsp;<input id="c4" type="radio" name="f1-tipoDocumento" value="Proposições&nbsp;Legislativas" /><label for="c4">Proposições&nbsp;Legislativas</label>&nbsp;&nbsp;<input id="c5" type="radio" name="f1-tipoDocumento" value="Doutrina"/><label for="c5">Doutrina</label>
+	</div>
+      </form>
+      <br />
+      <a href="/busca/search?smode=advanced">Pesquisa Avançada</a> | <a href="/desc_acervo.html">Acervo</a> | <a href="http://projeto.lexml.gov.br/">Sobre o LexML</a> (<a href="http://projeto.lexml.gov.br/documentacao/resumo-em-ingles">English</a>, <a href="http://projeto.lexml.gov.br/documentacao/resumo-em-frances">Français</a>, <a href="http://projeto.lexml.gov.br/documentacao/resumo-em-espanhol">Español</a>) | <a href="http://projeto.lexml.gov.br/documentacao/faq-do-portal-lexml">FAQ</a> | <a href="http://projeto.lexml.gov.br/documentacao/ManualPesquisaWeb.pdf">Manual</a><sup><span style="font-size:10px; color:red; font-weight: bold; padding: 0;">(Novo!)</span></sup>
+    </div>
+  </div>
+</div>
+<script type="text/javascript" src="http://www.google-analytics.com/urchin.js" />
+<script type="text/javascript">
+_uacct = "UA-1056349-4";
+urchinTracker();
+</script>
+</body>
+</html>

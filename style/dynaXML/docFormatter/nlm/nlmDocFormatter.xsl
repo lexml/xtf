@@ -145,7 +145,6 @@
                <title>
                   <xsl:value-of select="$doc.title"/>
                </title>
-               <link rel="shortcut icon" href="icons/default/favicon.ico" />
             </head>
             <frameset rows="120,*">
                <frame frameborder="1" scrolling="no" title="Navigation Bar">
@@ -205,28 +204,22 @@
    <!-- ====================================================================== -->
    
    <xsl:template name="toc">
-      <xsl:call-template name="translate">
-         <xsl:with-param name="resultTree">
-            <html xml:lang="en" lang="en">
-               <head>
-                  <title>
-                     <xsl:value-of select="$doc.title"/>
-                  </title>
-                  <link rel="stylesheet" type="text/css" href="{$css.path}toc.css"/>
-                  <link rel="shortcut icon" href="icons/default/favicon.ico" />
-
-               </head>
-               <body>
-                  <div class="toc">
-                     <h4><xsl:value-of select="$doc.title"/></h4>
-                     <hr/>
-                     <xsl:apply-templates select="/article/body/sec" mode="toc"/>
-                     <hr/>
-                  </div>
-               </body>
-            </html>
-         </xsl:with-param>
-      </xsl:call-template>
+      <html xml:lang="en" lang="en">
+         <head>
+            <title>
+               <xsl:value-of select="$doc.title"/>
+            </title>
+            <link rel="stylesheet" type="text/css" href="{$css.path}toc.css"/>
+         </head>
+         <body>
+            <div class="toc">
+               <h4><xsl:value-of select="$doc.title"/></h4>
+               <hr/>
+               <xsl:apply-templates select="/article/body/sec" mode="toc"/>
+               <hr/>
+            </div>
+         </body>
+      </html>
    </xsl:template>
    
    <xsl:template match="sec" mode="toc">
@@ -279,8 +272,6 @@
                <xsl:value-of select="$doc.title"/>
             </title>
             <link rel="stylesheet" type="text/css" href="{$css.path}{$content.css}"/>
-            <link rel="shortcut icon" href="icons/default/favicon.ico" />
-
          </head>
          <body>
             
@@ -357,8 +348,6 @@
                <xsl:value-of select="$doc.title"/>
             </title>
             <link rel="stylesheet" type="text/css" href="{$css.path}{$content.css}"/>
-            <link rel="shortcut icon" href="icons/default/favicon.ico" />
-
          </head>
          <body bgcolor="white">
             <hr class="hr-title"/>

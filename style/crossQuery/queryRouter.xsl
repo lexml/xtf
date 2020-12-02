@@ -53,7 +53,6 @@
    <!-- ====================================================================== -->
    
    <xsl:param name="http.URL"/>
-   <xsl:param name="smode"/>
    
    <xsl:template match="/">
       
@@ -61,12 +60,13 @@
          <xsl:choose>
             <!-- oai -->
             <xsl:when test="matches($http.URL,'oai\?')">
+               <!-- using the redirect extension mechanism to support the OAI resumptionToken -->
+               <xsl:if test="matches($http.URL,'resumptionToken=http://')">
+                  <xsl:variable name="newURL" select="replace(replace($http.URL,'.+resumptionToken=(.+)','$1'),'::',';resumptionToken=')"/>
+                  <redirect:send url="{$newURL}" xmlns:redirect="java:/org.cdlib.xtf.saxonExt.Redirect" xsl:extension-element-prefixes="redirect"/>
+               </xsl:if>
                <queryParser path="style/crossQuery/queryParser/oai/queryParser.xsl"/>
                <errorGen path="style/crossQuery/oaiErrorGen.xsl"/>
-            </xsl:when>
-            <!-- sitemap -->
-            <xsl:when test="matches($smode,'siteMap')">
-               <queryParser path="style/crossQuery/queryParser/siteMap/queryParser.xsl"/>
             </xsl:when>
             <!-- default -->
             <xsl:otherwise>

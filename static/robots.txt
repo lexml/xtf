@@ -1,0 +1,10 @@
+User-Agent: *
+Allow: /*******************.js
+Allow: /*******************.css
+Allow: /*******************.jpg
+Allow: /*******************.ico
+Allow: /*******************.png
+Allow: /*******************.txt
+Disallow: /busca/
+Disallow: /doc/
+Disallow: /linker/

@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
    version="2.0">
    
@@ -112,10 +113,10 @@
    <xsl:variable name="reason">
       <xsl:choose>
          <xsl:when test="//QueryFormat">
-            <xsl:text>crossQuery Error: Query Format</xsl:text>
+            <xsl:text>crossQuery Erro: Query Format</xsl:text>
          </xsl:when>
          <xsl:otherwise>
-            <xsl:text>crossQuery Error: Servlet Error</xsl:text>
+            <xsl:text>crossQuery Erro: Servlet Error</xsl:text>
          </xsl:otherwise>
       </xsl:choose>
    </xsl:variable>
@@ -158,26 +159,35 @@
    
    <!-- For a QueryFormat exception, the message is relevant. -->
    <xsl:template match="QueryFormat">
-      <h1>Query format error</h1>
-      <p>Your query was not understood.</p>
+      <!-- <h1>Query format error</h1>
+      <p>Your query was not understood.</p> -->
+      <h1>Erro nos parâmetros de pesquisa</h1>
+      <p>Seus argumentos de pesquisa não foram entendidos.</p>
       <xsl:apply-templates/>
    </xsl:template>
    
    
    <!-- For a TermLimit exception, the message contains the first 50 matches. -->
    <xsl:template match="TermLimit">
-      <h1>Term limit exceeded</h1>
+      <!-- <h1>Term limit exceeded</h1>
       <p>Your query matched too many terms. Try using a smaller range, 
-         eliminating wildcards, or making them more specific.</p>
+         eliminating wildcards, or making them more specific.</p> -->
+      <h1>Excedeu a quantidade limite de termos a pesquisar</h1>
+      <p>Os argumentos informados geraram mais de 1000 termos a serem pesquisados.
+	   Tente utilizar um intervalo menor, eliminar os caracteres curinga, ou utilizar termos mais específicos.
+      </p>
       <xsl:apply-templates/>
    </xsl:template>
    
    
    <!-- For a ExcessiveWork exception, the message is not relevant. -->
    <xsl:template match="ExcessiveWork">
-      <h1>Vague Query</h1>
+      <!-- <h1>Vague Query</h1>
       <p>Your query was too vague and produced only low-quality matches.
-         Try making it more specific.</p>
+         Try making it more specific.</p> -->
+      <h1>Pesquisa Vaga</h1>
+      <p>Sua pesquisa produziu resultados de baixa qualidade.
+         Tente ser mais específico.</p>
    </xsl:template>
    
    
@@ -186,12 +196,16 @@
       <h1>Servlet Error: <xsl:value-of select="name()"/></h1>
       <h3>An unexpected servlet error has occurred.</h3>
       <xsl:apply-templates/>
+      <p>
+         If you have questions, need further technical assistance, or believe that you have 
+         reached this page in error, send email to the CDL 
+         (<a href="{concat('mailto:cdl@www.cdlib.org?subject=Access%20denied%20-%20', encode-for-uri($reason))}">cdl@www.cdlib.org</a>) or call the CDL Helpline (510.987.0555). Be sure to include the above message and/or stack trace in your communication.</p>
    </xsl:template>
    
    
    <!-- If a message was passed in, format it. -->
    <xsl:template match="message">
-      <p><b>Message:</b><br/><br/><span style="font-family: Courier"><xsl:apply-templates/></span></p>
+      <p><!--<b>Message:</b>--><b>Mensagem:</b><br/><br/><span style="font-family: Courier"><xsl:apply-templates/></span></p>
    </xsl:template>
    
    

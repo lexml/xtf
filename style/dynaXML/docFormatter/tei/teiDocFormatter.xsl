@@ -86,12 +86,12 @@
    <!-- Define Keys                                                            -->
    <!-- ====================================================================== -->
    
-   <xsl:key name="pb-id" match="*[matches(name(),'^pb$|^milestone$')]" use="@*:id"/>
-   <xsl:key name="ref-id" match="*[matches(name(),'^ref$')]" use="@*:id"/>
-   <xsl:key name="fnote-id" match="*[matches(name(),'^note$')][@type='footnote' or @place='foot']" use="@*:id"/>
-   <xsl:key name="endnote-id" match="*[matches(name(),'^note$')][@type='endnote' or @place='end']" use="@*:id"/>
-   <xsl:key name="div-id" match="*[matches(name(),'^div')]" use="@*:id"/>
-   <xsl:key name="generic-id" match="*[matches(name(),'^note$')][not(@type='footnote' or @place='foot' or @type='endnote' or @place='end')]|*[matches(name(),'^figure$|^bibl$|^table$')]" use="@*:id"/>
+   <xsl:key name="pb-id" match="*[matches(name(),'^pb$|^milestone$')]" use="@*[local-name()='id']"/>
+   <xsl:key name="ref-id" match="*[matches(name(),'^ref$')]" use="@*[local-name()='id']"/>
+   <xsl:key name="fnote-id" match="*[matches(name(),'^note$')][@type='footnote' or @place='foot']" use="@*[local-name()='id']"/>
+   <xsl:key name="endnote-id" match="*[matches(name(),'^note$')][@type='endnote' or @place='end']" use="@*[local-name()='id']"/>
+   <xsl:key name="div-id" match="*[matches(name(),'^div')]" use="@*[local-name()='id']"/>
+   <xsl:key name="generic-id" match="*[matches(name(),'^note$')][not(@type='footnote' or @place='foot' or @type='endnote' or @place='end')]|*[matches(name(),'^figure$|^bibl$|^table$')]" use="@*[local-name()='id']"/>
    
    <!-- ====================================================================== -->
    <!-- TEI-specific parameters                                                -->
@@ -115,7 +115,7 @@
    <xsl:param name="chunk.id">
       <xsl:choose>
          <xsl:when test="$hit.rank != '0' and key('hit-rank-dynamic', $hit.rank)/ancestor::*[matches(name(),'^div')]">
-            <xsl:value-of select="key('hit-rank-dynamic', $hit.rank)/ancestor::*[matches(local-name(),'^div')][1]/@*:id"/>
+            <xsl:value-of select="key('hit-rank-dynamic', $hit.rank)/ancestor::*[matches(name(),'^div')][1]/@*[local-name()='id']"/>
          </xsl:when>
          <xsl:otherwise>
             <xsl:value-of select="'0'"/>
@@ -126,7 +126,7 @@
    <xsl:param name="toc.id">
       <xsl:choose>
          <xsl:when test="$hit.rank != '0' and key('hit-rank-dynamic', $hit.rank)/ancestor::*[matches(name(),'^div')]">
-            <xsl:value-of select="key('hit-rank-dynamic', $hit.rank)/ancestor::*[matches(local-name(),'^div')][1]/parent::*/@*:id"/>
+            <xsl:value-of select="key('hit-rank-dynamic', $hit.rank)/ancestor::*[matches(name(),'^div')][1]/parent::*/@*[local-name()='id']"/>
          </xsl:when>
          <xsl:otherwise>
             <xsl:value-of select="'0'"/>
@@ -184,7 +184,6 @@
                <title>
                   <xsl:value-of select="$doc.title"/>
                </title>
-               <link rel="shortcut icon" href="icons/default/favicon.ico" />
             </head>
             <frameset rows="120,*">
                <frame frameborder="1" scrolling="no" title="Navigation Bar">
@@ -217,13 +216,11 @@
    
    <xsl:template name="create.anchor">
       <xsl:choose>
-         <!-- First so it takes precedence over computed hit.rank -->
-         <xsl:when test="($query != '0' and $query != '') and $set.anchor != '0'">
-            <xsl:text>#</xsl:text><xsl:value-of select="$set.anchor"/>
-         </xsl:when>
-         <!-- Next is hit.rank -->
          <xsl:when test="($query != '0' and $query != '') and $hit.rank != '0'">
             <xsl:text>#</xsl:text><xsl:value-of select="key('hit-rank-dynamic', $hit.rank)/@hitNum"/>
+         </xsl:when>
+         <xsl:when test="($query != '0' and $query != '') and $set.anchor != '0'">
+            <xsl:text>#</xsl:text><xsl:value-of select="$set.anchor"/>
          </xsl:when>
          <xsl:when test="($query != '0' and $query != '') and $chunk.id != '0'">
             <xsl:text>#</xsl:text><xsl:value-of select="key('div-id', $chunk.id)/@xtf:firstHit"/>
@@ -239,25 +236,19 @@
    <!-- ====================================================================== -->
    
    <xsl:template name="toc" exclude-result-prefixes="#all">
-      <xsl:call-template name="translate">
-         <xsl:with-param name="resultTree">
-            <html xml:lang="en" lang="en">
-               <head>
-                  <title>
-                     <xsl:value-of select="$doc.title"/>
-                  </title>
-                  <link rel="stylesheet" type="text/css" href="{$css.path}toc.css"/>
-                  <link rel="shortcut icon" href="icons/default/favicon.ico" />
-
-               </head>
-               <body>
-                  <div class="toc">
-                     <xsl:call-template name="book.autotoc"/>
-                  </div>
-               </body>
-            </html>
-         </xsl:with-param>
-      </xsl:call-template>
+      <html xml:lang="en" lang="en">
+         <head>
+            <title>
+               <xsl:value-of select="$doc.title"/>
+            </title>
+            <link rel="stylesheet" type="text/css" href="{$css.path}toc.css"/>
+         </head>
+         <body>
+            <div class="toc">
+               <xsl:call-template name="book.autotoc"/>
+            </div>
+         </body>
+      </html>
    </xsl:template>
    
    <!-- ====================================================================== -->
@@ -276,8 +267,6 @@
                <xsl:value-of select="$doc.title"/> "<xsl:value-of select="$chunk.id"/>"
             </title>
             <link rel="stylesheet" type="text/css" href="{$css.path}{$content.css}"/>
-            <link rel="shortcut icon" href="icons/default/favicon.ico" />
-
          </head>
          <body>
             
@@ -313,7 +302,7 @@
                         <!-- BEGIN CONTENT -->
                         <xsl:choose>
                            <xsl:when test="$chunk.id = '0'">
-                              <xsl:apply-templates select="/*/*:text/*:front/*:titlePage"/>
+                              <xsl:apply-templates select="/*/*[local-name()='text']/*[local-name()='front']/*[local-name()='titlePage']"/>
                            </xsl:when>
                            <xsl:otherwise>
                               <xsl:apply-templates select="key('div-id', $chunk.id)"/>          
@@ -363,8 +352,6 @@
                <xsl:value-of select="$doc.title"/>
             </title>
             <link rel="stylesheet" type="text/css" href="{$css.path}{$content.css}"/>
-            <link rel="shortcut icon" href="icons/default/favicon.ico" />
-
          </head>
          <body bgcolor="white">
             <hr class="hr-title"/>
@@ -377,7 +364,7 @@
                               <xsl:apply-templates select="key('div-id', $chunk.id)"/>
                            </xsl:when>
                            <xsl:otherwise>
-                              <xsl:apply-templates select="/*/*:text/*"/>
+                              <xsl:apply-templates select="/*/*[local-name()='text']/*"/>
                            </xsl:otherwise>
                         </xsl:choose>
                      </td>
@@ -419,8 +406,6 @@
                </xsl:choose>
             </title>
             <link rel="stylesheet" type="text/css" href="{$css.path}{$content.css}"/>
-            <link rel="shortcut icon" href="icons/default/favicon.ico" />
- 
          </head>
          <body>
             <div class="content">
@@ -464,16 +449,16 @@
       <xsl:variable name="prev">
          <xsl:choose>
             <!-- preceding div sibling -->
-            <xsl:when test="key('div-id', $chunk.id)/preceding-sibling::*[*:head][@*:id]">
-               <xsl:value-of select="key('div-id', $chunk.id)/preceding-sibling::*[*:head][@*:id][1]/@*:id"/>
+            <xsl:when test="key('div-id', $chunk.id)/preceding-sibling::*[*[local-name()='head']][@*[local-name()='id']]">
+               <xsl:value-of select="key('div-id', $chunk.id)/preceding-sibling::*[*[local-name()='head']][@*[local-name()='id']][1]/@*[local-name()='id']"/>
             </xsl:when>
             <!-- last div node in preceding div sibling of parent -->
-            <xsl:when test="key('div-id', $chunk.id)/parent::*/preceding-sibling::*[*:head][@*:id]">
-               <xsl:value-of select="key('div-id', $chunk.id)/parent::*/preceding-sibling::*[*:head][@*:id][1]/@*:id"/>
+            <xsl:when test="key('div-id', $chunk.id)/parent::*/preceding-sibling::*[*[local-name()='head']][@*[local-name()='id']]">
+               <xsl:value-of select="key('div-id', $chunk.id)/parent::*/preceding-sibling::*[*[local-name()='head']][@*[local-name()='id']][1]/@*[local-name()='id']"/>
             </xsl:when>
             <!-- last div node in any preceding structure-->
-            <xsl:when test="key('div-id', $chunk.id)/ancestor::*/preceding-sibling::*/*[*:head][@*:id]">
-               <xsl:value-of select="(key('div-id', $chunk.id)/ancestor::*/preceding-sibling::*[1]/*[*:head][@*:id][position()=last()]/@*:id)[last()]"/>
+            <xsl:when test="key('div-id', $chunk.id)/ancestor::*/preceding-sibling::*/*[*[local-name()='head']][@*[local-name()='id']]">
+               <xsl:value-of select="key('div-id', $chunk.id)/ancestor::*/preceding-sibling::*[1]/*[*[local-name()='head']][@*[local-name()='id']][position()=last()]/@*[local-name()='id']"/>
             </xsl:when>
             <!-- top of tree -->
             <xsl:otherwise>
@@ -484,11 +469,11 @@
       
       <xsl:variable name="prev_toc">
          <xsl:choose>
-            <xsl:when test="key('div-id', $prev)/*[*:head][@*:id]">
-               <xsl:value-of select="key('div-id', $prev)/@*:id"/>
+            <xsl:when test="key('div-id', $prev)/*[*[local-name()='head']][@*[local-name()='id']]">
+               <xsl:value-of select="key('div-id', $prev)/@*[local-name()='id']"/>
             </xsl:when>
             <xsl:otherwise>
-               <xsl:value-of select="key('div-id', $prev)/parent::*[*:head][@*:id]/@*:id"/>
+               <xsl:value-of select="key('div-id', $prev)/parent::*[*[local-name()='head']][@*[local-name()='id']]/@*[local-name()='id']"/>
             </xsl:otherwise>
          </xsl:choose>
       </xsl:variable>
@@ -496,20 +481,20 @@
       <xsl:variable name="next">
          <xsl:choose>
             <!-- following div sibling -->
-            <xsl:when test="key('div-id', $chunk.id)/following-sibling::*[*:head][@*:id]">
-               <xsl:value-of select="key('div-id', $chunk.id)/following-sibling::*[*:head][@*:id][1]/@*:id"/>
+            <xsl:when test="key('div-id', $chunk.id)/following-sibling::*[*[local-name()='head']][@*[local-name()='id']]">
+               <xsl:value-of select="key('div-id', $chunk.id)/following-sibling::*[*[local-name()='head']][@*[local-name()='id']][1]/@*[local-name()='id']"/>
             </xsl:when>
             <!-- first div node in following div sibling of parent -->
-            <xsl:when test="key('div-id', $chunk.id)/parent::*/following-sibling::*[*:head][@*:id]">
-               <xsl:value-of select="key('div-id', $chunk.id)/parent::*/following-sibling::*[*:head][@*:id][1]/@*:id"/>
+            <xsl:when test="key('div-id', $chunk.id)/parent::*/following-sibling::*[*[local-name()='head']][@*[local-name()='id']]">
+               <xsl:value-of select="key('div-id', $chunk.id)/parent::*/following-sibling::*[*[local-name()='head']][@*[local-name()='id']][1]/@*[local-name()='id']"/>
             </xsl:when>
             <!-- first div node in any following structure -->
-            <xsl:when test="key('div-id', $chunk.id)/ancestor::*/following-sibling::*/*[*:head][@*:id]">
-               <xsl:value-of select="(key('div-id', $chunk.id)/ancestor::*/following-sibling::*[1]/*[*:head][@*:id][1]/@*:id)[1]"/>
+            <xsl:when test="key('div-id', $chunk.id)/ancestor::*/following-sibling::*/*[*[local-name()='head']][@*[local-name()='id']]">
+               <xsl:value-of select="key('div-id', $chunk.id)/ancestor::*/following-sibling::*[1]/*[*[local-name()='head']][@*[local-name()='id']][1]/@*[local-name()='id']"/>
             </xsl:when>
             <!-- no previous $chunk.id (i.e. titlePage) -->
             <xsl:when test="$chunk.id='0'">
-               <xsl:value-of select="/*/*:text/*[*[*:head][@*:id]][1]/*[*:head][@*:id][1]/@*:id"/>
+               <xsl:value-of select="/*/*[local-name()='text']/*[*[*[local-name()='head']][@*[local-name()='id']]][1]/*[*[local-name()='head']][@*[local-name()='id']][1]/@*[local-name()='id']"/>
             </xsl:when>
             <!-- bottom of tree -->
             <xsl:otherwise>
@@ -520,11 +505,11 @@
       
       <xsl:variable name="next_toc">
          <xsl:choose>
-            <xsl:when test="key('div-id', $next)/*[*:head][@*:id]">
-               <xsl:value-of select="key('div-id', $next)/@*:id"/>
+            <xsl:when test="key('div-id', $next)/*[*[local-name()='head']][@*[local-name()='id']]">
+               <xsl:value-of select="key('div-id', $next)/@*[local-name()='id']"/>
             </xsl:when>
             <xsl:otherwise>
-               <xsl:value-of select="key('div-id', $next)/parent::*[*:head][@*:id]/@*:id"/>
+               <xsl:value-of select="key('div-id', $next)/parent::*[*[local-name()='head']][@*[local-name()='id']]/@*[local-name()='id']"/>
             </xsl:otherwise>
          </xsl:choose>
       </xsl:variable>
@@ -556,7 +541,7 @@
          </td>
          <td width="50%" align="center">
             <span class="chapter-text">
-               <xsl:value-of select="key('div-id', $chunk.id)/ancestor-or-self::*[matches(@*:type,'fmsec|chapter|bmsec')][1]/*:head[1]"/>
+               <xsl:value-of select="key('div-id', $chunk.id)/ancestor-or-self::*[matches(@*[local-name()='type'],'fmsec|chapter|bmsec')][1]/*[local-name()='head'][1]"/>
             </span>
          </td>
          <td width="25%" align="right">

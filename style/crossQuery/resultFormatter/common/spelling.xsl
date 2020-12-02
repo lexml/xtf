@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
    xmlns:cdl="http://cdlib.org" 
    xmlns="http://www.w3.org/1999/xhtml"
@@ -53,7 +54,7 @@
       <xsl:param name="spelling"/>
       
       <xsl:variable name="newURL" select="cdl:replace-misspellings($baseURL, $spelling/*)"/>
-      <b>Did you mean to search for
+      <b>Você quis dizer:	
          <a href="{$newURL}">
             <xsl:apply-templates select="query" mode="spelling"/>
          </a>

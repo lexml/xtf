@@ -54,6 +54,7 @@
    
    <!-- facet expand mode -->
    <xsl:param name="expand"/>  
+   <xsl:param name="expandGroup"/>
    
    <!-- result mode -->
    <xsl:param name="rmode"/>  
@@ -104,6 +105,8 @@
    <!-- ====================================================================== -->
    
    <xsl:template match="param[@name = 'keyword']">
+      <xsl:variable name="exclude" select="//param[@name='keyword-exclude']"/>
+	  <and>
       <or>
          <and fields="{replace($fieldList, 'text ?', '')}"
               slop="10"
@@ -115,8 +118,31 @@
             <xsl:apply-templates/>
          </and>
       </or>
+		     <xsl:if test="$exclude/@value != ''">
+			 <!-- text title autoridade description urn apelido acronimo oculto -->
+		           <not field="title">
+		              <xsl:apply-templates select="$exclude/*"/>
+				   </not>
+		           <not field="description">
+		              <xsl:apply-templates select="$exclude/*"/>
+				   </not>
+		           <not field="autoridade">
+		              <xsl:apply-templates select="$exclude/*"/>
+				   </not>
+		           <not field="urn">
+		              <xsl:apply-templates select="$exclude/*"/>
+				   </not>
+		           <not field="apelido">
+		              <xsl:apply-templates select="$exclude/*"/>
+				   </not>
+		           <not field="acronimo">
+		              <xsl:apply-templates select="$exclude/*"/>
+				   </not>
+		     </xsl:if>
+	  
+	  </and>
    </xsl:template>
-      
+   
    <!-- ====================================================================== -->
    <!-- Single-field parameter template                                        -->
    <!--                                                                        -->

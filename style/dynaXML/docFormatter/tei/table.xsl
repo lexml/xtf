@@ -34,9 +34,9 @@
    -->
    
    
-   <xsl:template match="*:table">
+   <xsl:template match="*[local-name()='table']">
       
-      <xsl:if test="$anchor.id=@*:id">
+      <xsl:if test="$anchor.id=@*[local-name()='id']">
          <a name="X"></a>
       </xsl:if>
       
@@ -55,7 +55,7 @@
    
    <!-- TEI table model -->
    
-   <xsl:template match="*:row">
+   <xsl:template match="*[local-name()='row']">
       <xsl:element name="tr">
          <xsl:copy-of select="@*"/>
          <xsl:apply-templates/>
@@ -63,7 +63,7 @@
       </xsl:element>
    </xsl:template>
    
-   <xsl:template match="*:cell">
+   <xsl:template match="*[local-name()='cell']">
       <xsl:element name="td">
          <xsl:copy-of select="@*[not(name()='cols' and name()='rows')]"/>
          <xsl:if test="@cols">
@@ -79,7 +79,7 @@
    
    <!-- HTML Table Model -->
    
-   <xsl:template match="*:caption[ancestor::*:table]">
+   <xsl:template match="*[local-name()='caption'][ancestor::*[local-name()='table']]">
       <xsl:element name="caption">
          <xsl:copy-of select="@*"/>
          <xsl:apply-templates/>
@@ -87,7 +87,7 @@
       </xsl:element>
    </xsl:template>
    
-   <xsl:template match="*:thead">
+   <xsl:template match="*[local-name()='thead']">
       <xsl:element name="thead">
          <xsl:copy-of select="@*"/>
          <xsl:apply-templates/>
@@ -95,7 +95,7 @@
       </xsl:element>
    </xsl:template>
    
-   <xsl:template match="*:tfoot">
+   <xsl:template match="*[local-name()='tfoot']">
       <xsl:element name="tfoot">
          <xsl:copy-of select="@*"/>
          <xsl:apply-templates/>
@@ -103,7 +103,7 @@
       </xsl:element>
    </xsl:template>
    
-   <xsl:template match="*:tbody">
+   <xsl:template match="*[local-name()='tbody']">
       <xsl:element name="tbody">
          <xsl:copy-of select="@*"/>
          <xsl:apply-templates/>
@@ -111,7 +111,7 @@
       </xsl:element>
    </xsl:template>
    
-   <xsl:template match="*:colgroup">
+   <xsl:template match="*[local-name()='colgroup']">
       <xsl:element name="colgroup">
          <xsl:copy-of select="@*"/>
          <xsl:apply-templates/>
@@ -119,7 +119,7 @@
       </xsl:element>
    </xsl:template>
    
-   <xsl:template match="*:col">
+   <xsl:template match="*[local-name()='col']">
       <xsl:element name="col">
          <xsl:copy-of select="@*"/>
          <xsl:apply-templates/>
@@ -127,7 +127,7 @@
       </xsl:element>
    </xsl:template>
    
-   <xsl:template match="*:tr">
+   <xsl:template match="*[local-name()='tr']">
       <xsl:element name="tr">
          <xsl:copy-of select="@*"/>
          <xsl:apply-templates/>
@@ -135,7 +135,7 @@
       </xsl:element>
    </xsl:template>
    
-   <xsl:template match="*:th">
+   <xsl:template match="*[local-name()='th']">
       <xsl:element name="th">
          <xsl:copy-of select="@*"/>
          <xsl:apply-templates/>
@@ -143,7 +143,7 @@
       </xsl:element>
    </xsl:template>
    
-   <xsl:template match="*:td">
+   <xsl:template match="*[local-name()='td']">
       <xsl:element name="td">
          <xsl:copy-of select="@*"/>
          <xsl:apply-templates/>

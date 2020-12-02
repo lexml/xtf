@@ -1,0 +1,477 @@
+/* crossQuery RESULTS stylesheet */
+
+body {
+   	font:normal 80% Arial, sans-serif;
+   	background-color: silver;
+	color: #333;
+	margin:16px;
+}
+
+form {
+	display: inline;
+}
+
+.clear {
+	clear: both;
+}
+
+#container {
+	background:#f5f5f5;
+	border:1px solid #909090;
+	
+}
+
+
+div.header {
+	 width: 99%;
+	 height:60px;
+	 margin: 0 auto;
+}
+
+div #header-esquerdo {
+	float:left;
+	margin: 10px 0 10px 15px;
+}
+div #header-direito {
+	float:right;
+	padding:35px 20px 0 0;
+}
+
+
+/* Forms */
+
+
+div.searchPage {
+   margin: 0 auto;
+	 background-color: #fff;
+	 width: 99%;
+	 border-right: 1px solid #666;
+	 border-left: 1px solid #666;
+	 border-top: 1px solid #999;
+	 border-bottom: 1px solid #666;
+}
+
+div.forms {
+	min-height: 500px;
+}
+
+div.forms table {
+   width: 100%;
+}
+
+div.forms table,
+div.forms table td {
+	/*border: 1px solid #ccc;*/
+}
+
+div.forms table td.tab,
+div.forms table td.tab-select {
+	width: 25%;
+	text-align: center;
+	padding: 0.5em;
+}
+
+div.forms table td.tab {
+   border: 1px solid #999;
+	 background-color: #E8EBF1;
+}
+
+div.forms table td.tab-select {
+   border: 1px solid #999;
+	 border-bottom: 0;
+}
+
+div.forms table td.tab a {
+	text-decoration: none;
+	color: #333;
+}
+
+div.forms table td.tab a:hover {
+	text-decoration: underline;
+}
+
+div.forms table td.tab-select a {
+	color: #424F8D;
+}
+
+div.form {
+   width: 99%;
+	 margin: 20px 0 10px 10px;
+	 text-align: center;
+}
+
+div.form table {
+	margin: 0 auto;
+}
+
+div.form table.top_table {
+	width: 85%;
+	margin: 0 auto;
+}
+
+div.form table.left_table {
+	border-right: 1px solid #ccc;
+	text-align: left;
+	margin-right: 40px;
+	width: 90%;
+}
+
+div.form table.right_table {
+	margin: 0 25px;
+}
+
+div.form table.right_table td.col_label {
+    text-align: right;
+	padding: 0.5em;
+}
+
+div.form table h4 {
+	margin: 0 0 10px 0;
+}
+
+div.form table,
+div.form table td {
+	/*border: 1px solid #ccc;*/
+}
+
+div.form table td {
+	vertical-align: top;
+	text-align: left;
+}
+
+div.form table td table td {
+	vertical-align: middle;
+}
+
+div.form table td.indent {
+   width: 2px;
+}
+
+
+
+
+
+div.pubs table td.tab-select {
+   border: 1px solid red;
+   text-align: left;	
+   padding: 0.5em;
+	 border-bottom: 0;
+}
+
+div.pubs table td.col1 {
+   width: 180px;
+   text-align: right;	
+   padding-right: 0.5em;
+   vertical-align: top;
+}
+
+div.pubs table td.col2 {
+   width: 70px;
+   text-align: right;	
+   vertical-align: top;
+}
+
+div.pubs table.box	 {
+   border: 1px solid green;
+   padding: 0.5em;
+   width: 80%;
+}
+
+table.sampleTable {
+	margin-top: 20px;
+}
+
+table.sampleTable td {
+	padding: 5px;
+}
+
+table td.sampleQuery {
+   font-family: courier, serif;
+   border-style: solid;
+   border-color: black;
+   border-width: 1px 1px 1px 1px;
+}
+
+table td.sampleDescrip {
+    font-style: italic;
+}
+
+/* Results */
+
+/*
+div.resultsHeader {
+   width: 99%;
+	 border-right: 1px solid #666;
+	 border-left: 1px solid #666;
+	 border-top: 1px solid #999;
+	 border-bottom: 1px solid #999;
+	 background-color: #dededf;
+	 margin-left: auto;
+	 margin-right: auto;
+}
+*/
+div.resultsHeader table {
+   width: 100%;
+}
+
+div.resultsHeader table td {
+	padding: 2px 5px;
+}
+
+td.right {
+   text-align: right;
+}
+
+td.left {
+   text-align: left;
+}
+
+td.center {
+   text-align: center;
+	 padding: 10px;
+}
+
+div.query {
+   width: 80%;
+	 float: left;
+}
+
+div.label {
+   float: left;
+}
+
+div.resultsHeader .subQuery {
+	float: left;
+}
+
+fieldset.results {
+	border:1px solid gray;
+	margin:15px;
+	padding-top:10px;
+	height:auto !important;
+	background:#fff;
+}
+
+legend.aba_results {
+	border:1px solid #333;
+	border-top-color: silver;
+	border-left-color: silver;
+	width:15em;
+	font-weight:bold;
+	line-height:2em;
+	text-align:center;
+	vertical-align:middle;
+	background:#FcFcFc;
+	margin-bottom:8px;
+	padding:2px 10px 2px 10px;
+}
+
+div.result_col1 {
+	float:left;
+	text-align:right;
+	font-weight:bold;
+	width:17%;
+	line-height:1.5em;
+}
+div.result_col2 {
+	float:left;
+	padding-left:1em;
+	width:63%;
+	line-height:1.5em;
+}
+div.result_col3 {
+	float:right;
+	padding-left:1em;
+	width:10%;
+	line-height:1.6em;
+}
+
+
+/* --- somente para a versão B */
+div.result_col22 {
+	float:left;
+	padding-left:1em;
+	width:10%;
+	line-height:1.5em;
+	/*border:1px solid silver;
+	vertical-align:top;*/
+}
+div.result_col23 {
+	float:right;
+	padding-left:1em;
+	width:70%;
+	line-height:1.6em;
+}
+/* --- FIM somente para a versão B */
+
+
+
+
+
+
+
+
+
+
+
+div.facetGroup {
+	font-size: 95%;	
+}
+
+
+
+div.docHit {
+	background-color: #FAFAFB;
+	border: 1px solid #ccc;
+	margin: 10px 0 10px 0;
+	padding: 10px;
+}
+
+div.docHit table td {
+	/* border: 1px solid red; */
+}
+
+div#main_2, div#main_4, div#main_6, div#main_8, div#main_10, div#main_12 {
+	
+}
+
+div.docHit table td.col1{
+   width: 4%;
+   text-align: left;
+}
+
+div.docHit table td.col2{
+   width: 10%;
+   text-align: right;
+}
+
+div.docHit table td.col3{
+   width: auto;
+   text-align: left;
+}
+
+div.docHit table td.col4{
+   width: 10%;
+   text-align: right;
+}
+
+div.docHit .typeIcon {
+	vertical-align: text-top;
+	margin-left: 1px;
+}
+
+.hit {
+   color: #FD8239;
+   font-weight: bold;
+}
+
+.subhit {
+   color: #FD8239;
+   font-weight: bold;
+	 margin-left: 5px;
+}
+
+.hitsection {
+   background-color: #D6DCE5;
+}
+
+div.facetName {
+  font-weight: bold;
+	margin: 10px 0;
+	font-size: 95%;
+}
+
+div.facet table {
+   border-style: none;
+}
+
+div.facet table td.col1 {
+   width: 12px;
+   text-align: center;
+   vertical-align: middle;
+   padding-right: 0.5em;
+	 color: #6699CC;
+}
+
+div.facet table td.col2 {
+   padding-bottom: 0.1em;
+   padding-top: 0.1em;
+}
+
+div.facet table td.col3 {
+   text-align: right;
+}
+
+div.facetMore {
+   margin-top: 0.5em;
+   margin-left: 2em;
+}
+
+div.facetLess {
+   margin-left: 2em;
+   margin-bottom: 0.5em;
+}
+
+div.getAddress {
+	width: 95%;
+	margin: 0 auto;
+	background-color: #fff;
+	border: 1px solid #666;
+	border-top: 0;
+	padding: 10px;
+}
+
+div.getAddress h2 {
+	margin: 0 0 10px 0;
+	font-size: 120%;
+}
+
+
+
+/*=======================================
+/*- Menu Abas--------------------------- */
+#abas {
+  float:left;
+  width:100%;
+  background:#F4F4F4;
+  font-size:100%;
+  line-height:normal;
+  border-bottom:1px solid #24618E;
+  font: bold 0.75em/1.5em Arial;
+  }
+#abas ul {
+  margin:0;
+  padding:10px 10px 0 50px;
+  list-style:none;
+  }
+#abas li {
+  display:inline;
+  margin:0;
+  padding:0;
+  }
+#abas a {
+  float:left;
+  background:url("img/abaEsquerda.gif") no-repeat left top;
+  margin:0;
+  padding:0 0 0 5px;
+  text-decoration:none;
+  }
+#abas a span {
+  float:left;
+  display:block;
+  background:url("img/abaDireita.gif") no-repeat right top;
+  padding:5px 15px 4px 6px;
+  color:#24618E;
+  }
+#abas a span {float:none;}
+#abas a:hover, #abas a.ativa {
+  background-position:0% -42px;
+  }
+#abas a:hover span, #abas a.ativa span {
+  background-position:100% -42px; color:#FFF;
+  }
+#abas a.ativa span {
+	color:yellow;
+	cursor:default;
+}
+/*- FIM Menu Abas--------------------------- */

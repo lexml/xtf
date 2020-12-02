@@ -85,7 +85,7 @@
       <xsl:variable name="prev" select="$num - 1"/>
       
       <xsl:choose>
-         <xsl:when test="key('hit-num-dynamic', string($prev))/ancestor::*[@*:id = $chunk.id]">
+         <xsl:when test="key('hit-num-dynamic', string($prev))/ancestor::*[@*[local-name()='id'] = $chunk.id]">
             <a>
                <xsl:attribute name="href">
                   <xsl:text>#</xsl:text><xsl:value-of select="$prev"/>
@@ -94,15 +94,12 @@
             </a>
             <xsl:text>&#160;</xsl:text>
          </xsl:when>
-         <xsl:when test="key('hit-num-dynamic', string($prev))/ancestor::*:div1">
-            <xsl:variable name="targetChunk" select="key('hit-num-dynamic', string($prev))/ancestor::*[matches(local-name(), '^div')][1]/@*:id"/>
+         <xsl:when test="key('hit-num-dynamic', string($prev))/ancestor::*[local-name()='div1']">
             <a>
                <xsl:attribute name="href">
                   <xsl:value-of select="$doc.path"/>
                   <xsl:text>&#038;chunk.id=</xsl:text>
-                  <xsl:value-of select="$targetChunk"/>
-                  <xsl:text>&#038;toc.id=</xsl:text>
-                  <xsl:value-of select="$targetChunk"/>
+                  <xsl:value-of select="key('hit-num-dynamic', string($prev))/ancestor::*[local-name()='div1']/@*[local-name()='id']"/>
                   <xsl:text>&#038;brand=</xsl:text>
                   <xsl:value-of select="$brand"/>
                   <xsl:value-of select="$search"/>
@@ -125,7 +122,7 @@
       <xsl:variable name="next" select="$num + 1"/>
       
       <xsl:choose>
-         <xsl:when test="key('hit-num-dynamic', string($next))/ancestor::*[@*:id = $chunk.id]">
+         <xsl:when test="key('hit-num-dynamic', string($next))/ancestor::*[@*[local-name()='id'] = $chunk.id]">
             <xsl:text>&#160;</xsl:text>
             <a>
                <xsl:attribute name="href">
@@ -134,16 +131,13 @@
                <img src="{$icon.path}b_innext.gif" border="0" alt="next hit"/>
             </a>
          </xsl:when>
-         <xsl:when test="key('hit-num-dynamic', string($next))/ancestor::*[matches(local-name(), '^div')]">
-            <xsl:variable name="targetChunk" select="key('hit-num-dynamic', string($next))/ancestor::*[matches(local-name(), '^div') and @*:id][1]/@*:id"/>
+         <xsl:when test="key('hit-num-dynamic', string($next))/ancestor::*[local-name()='div1']">
             <xsl:text>&#160;</xsl:text>
             <a>
                <xsl:attribute name="href">
                   <xsl:value-of select="$doc.path"/>
                   <xsl:text>&#038;chunk.id=</xsl:text>
-                  <xsl:value-of select="$targetChunk"/>
-                  <xsl:text>&#038;toc.id=</xsl:text>
-                  <xsl:value-of select="$targetChunk"/>
+                  <xsl:value-of select="key('hit-num-dynamic', string($next))/ancestor::*[local-name()='div1']/@*[local-name()='id']"/>
                   <xsl:text>&#038;brand=</xsl:text>
                   <xsl:value-of select="$brand"/>
                   <xsl:value-of select="$search"/>

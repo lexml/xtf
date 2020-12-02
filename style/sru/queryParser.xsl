@@ -75,6 +75,10 @@
   <!-- XCQL query -->
   <xsl:param name="query"/>
   
+  <!-- XCQL sort mode -->
+  <xsl:param name="sortKeys"/>
+  
+  
   <!-- first hit on page -->
   <xsl:param name="startRecord" select='1'/>
   
@@ -269,6 +273,14 @@
        format the results, which document to start on, and how many documents
        to display on this page. -->
     <query indexPath="index" termLimit="1000" workLimit="1000000" style="{$stylesheet}" startDoc="{$startRecord}" maxDocs="{$maximumRecords}">
+    
+             <!-- sort attribute -->
+         <xsl:if test="$sortKeys">
+            <xsl:attribute name="sortMetaFields">
+               <xsl:value-of select="$sortKeys" />
+            </xsl:attribute>
+         </xsl:if>
+    
 
       <!-- process query -->
       <and>
@@ -332,6 +344,13 @@
     
     <xsl:variable name="field">
       <xsl:choose>
+        <xsl:when test="$index = 'urn'   ">urn</xsl:when>
+        <xsl:when test="$index = 'tipoDocumento'   ">tipoDocumento</xsl:when>
+        <xsl:when test="$index = 'localidade'   ">localidade</xsl:when>
+        <xsl:when test="$index = 'autoridade'   ">autoridade</xsl:when>
+        <xsl:when test="$index = 'facet-tipoDocumento'   ">facet-tipoDocumento</xsl:when>
+        <xsl:when test="$index = 'facet-localidade'   ">facet-localidade</xsl:when>
+        <xsl:when test="$index = 'facet-autoridade'   ">facet-autoridade</xsl:when>
         <xsl:when test="$index = 'dc.title'   or $index = 'title'">title</xsl:when>
         <xsl:when test="$index = 'dc.creator' or $index = 'creator'">creator</xsl:when>
         <xsl:when test="$index = 'dc.subject' or $index = 'subject'">subject</xsl:when>

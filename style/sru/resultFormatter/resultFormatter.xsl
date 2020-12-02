@@ -108,11 +108,17 @@
   </xsl:template>
   
   <xsl:template match="meta">
-    <xsl:apply-templates select="title|creator|subject|description|publisher|contributor|date|type|format|identifier|source|language|relation|coverage|rights"/>
+    <xsl:apply-templates select="title|creator|subject|description|publisher|contributor|date|type|format|identifier|source|language|relation|coverage|rights|urn|tipoDocumento|autoridade|localidade|facet-tipoDocumento|facet-autoridade|facet-localidade"/>
   </xsl:template>
   
   <xsl:template match="title|creator|subject|description|publisher|contributor|date|type|format|identifier|source|language|relation|coverage|rights">
     <xsl:element name="{concat('dc:', name())}">
+      <xsl:value-of select="."/>
+    </xsl:element>
+  </xsl:template>
+
+  <xsl:template match="urn|tipoDocumento|autoridade|localidade|facet-tipoDocumento|facet-autoridade|facet-localidade">
+    <xsl:element name="{name()}">
       <xsl:value-of select="."/>
     </xsl:element>
   </xsl:template>

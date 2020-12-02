@@ -1,72 +1,108 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
+<?xml version="1.0" encoding="iso-8859-1"?>
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
    xmlns="http://www.w3.org/1999/xhtml"
    version="2.0">
-   
-   
-   
+
+
+
    <!-- ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
    <!-- Search forms stylesheet                                                -->
    <!-- ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
-   
+
    <!--
       Copyright (c) 2008, Regents of the University of California
       All rights reserved.
-      
-      Redistribution and use in source and binary forms, with or without 
-      modification, are permitted provided that the following conditions are 
+
+      Redistribution and use in source and binary forms, with or without
+      modification, are permitted provided that the following conditions are
       met:
-      
-      - Redistributions of source code must retain the above copyright notice, 
+
+      - Redistributions of source code must retain the above copyright notice,
       this list of conditions and the following disclaimer.
-      - Redistributions in binary form must reproduce the above copyright 
-      notice, this list of conditions and the following disclaimer in the 
+      - Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
       documentation and/or other materials provided with the distribution.
       - Neither the name of the University of California nor the names of its
-      contributors may be used to endorse or promote products derived from 
+      contributors may be used to endorse or promote products derived from
       this software without specific prior written permission.
-      
-      THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
-      AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-      IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-      ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-      LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-      CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-      SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-      INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-      CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-      ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+
+      THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+      AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+      IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+      ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+      LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+      CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+      SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+      INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+      CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+      ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
       POSSIBILITY OF SUCH DAMAGE.
    -->
-   
+
    <!-- ====================================================================== -->
    <!-- Global parameters                                                      -->
    <!-- ====================================================================== -->
-   
+
    <xsl:param name="freeformQuery"/>
-   
+
    <!-- ====================================================================== -->
    <!-- Form Templates                                                         -->
    <!-- ====================================================================== -->
-   
+
    <!-- main form page -->
    <xsl:template match="crossQueryResult" mode="form" exclude-result-prefixes="#all">
       <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
          <head>
-            <title>XTF: Search Form</title>
+            <title>LexML : Formulários de Pesquisa</title>
             <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
             <xsl:copy-of select="$brand.links"/>
          </head>
+
+<script>
+function stringReplace(form) {
+  var replaceStr = form.keyword.value;
+  var pattern = /\;/g;
+  form.keyword.value = replaceStr.replace(pattern, " ");
+
+  if (trim(form.keyword.value, " ").length == 0)	 {
+    window.location.href = "search?browse-all=yes";
+	return false;
+  }
+}
+
+function stringReplace2(form) {
+  var replaceStr = form.keyword.value;
+  var pattern = /\;/g;
+  form.keyword.value = replaceStr.replace(pattern, " ");
+
+}
+
+function trim(str, chars) {
+    return ltrim(rtrim(str, chars), chars);
+}
+
+function ltrim(str, chars) {
+    chars = chars || "\\s";
+    return str.replace(new RegExp("^[" + chars + "]+", "g"), "");
+}
+
+function rtrim(str, chars) {
+    chars = chars || "\\s";
+    return str.replace(new RegExp("[" + chars + "]+$", "g"), "");
+}
+
+
+</script>
          <body>
             <xsl:copy-of select="$brand.header"/>
             <div class="searchPage">
                <div class="forms">
                   <table>
                      <tr>
-                        <td class="{if(matches($smode,'simple')) then 'tab-select' else 'tab'}"><a href="search?smode=simple">Keyword</a></td>
-                        <td class="{if(matches($smode,'advanced')) then 'tab-select' else 'tab'}"><a href="search?smode=advanced">Advanced</a></td>
-                        <td class="{if(matches($smode,'freeform')) then 'tab-select' else 'tab'}"><a href="search?smode=freeform">Freeform</a></td>
-                        <td class="{if(matches($smode,'browse')) then 'tab-select' else 'tab'}"><a href="search?smode=browse">Browse</a></td>
+                        <td class="{if(matches($smode,'simple')) then 'tab-select' else 'tab'}"><a href="search?smode=simple">Palavras e Frases</a></td>
+                        <td class="{if(matches($smode,'advanced')) then 'tab-select' else 'tab'}"><a href="search?smode=advanced">Pesquisa Avançada</a></td>
+                       <!-- <td class="{if(matches($smode,'freeform')) then 'tab-select' else 'tab'}"><a href="search?smode=freeform">Pesquisa Lógica</a></td> -->
+                       <!-- <td class="{if(matches($smode,'browse')) then 'tab-select' else 'tab'}"><a href="search?smode=browse">Visualizar</a></td> -->
                      </tr>
                      <tr>
                         <td colspan="4">
@@ -85,7 +121,7 @@
                                     <table>
                                        <tr>
                                           <td>
-                                             <p>Browse all documents by the available facets, or alphanumerically by author or title:</p>
+                                             <p>Visualizar todos os documentos:</p>
                                           </td>
                                        </tr>
                                        <tr>
@@ -106,7 +142,7 @@
          </body>
       </html>
    </xsl:template>
-   
+
    <!-- simple form -->
    <xsl:template name="simpleForm" exclude-result-prefixes="#all">
       <form method="get" action="{$xtfURL}{$crossqueryPath}">
@@ -115,35 +151,35 @@
                <td>
                   <input type="text" name="keyword" size="40" value="{$keyword}"/>
                   <xsl:text>&#160;</xsl:text>
-                  <input type="submit" value="Search"/>
-                  <input type="reset" onclick="location.href='{$xtfURL}{$crossqueryPath}'" value="Clear"/>
+                  <input onclick="return stringReplace(form)" type="submit" value="Pesquise"/><xsl:text>&#160;&#160;</xsl:text>
+                  <input type="reset" onclick="location.href='{$xtfURL}{$crossqueryPath}'" value="Limpe"/>
                </td>
             </tr>
             <tr>
                <td>
                   <table class="sampleTable">
                      <tr>
-                        <td colspan="2">Examples:</td>                  
+                        <td colspan="2">Exemplos:</td>
                      </tr>
                      <tr>
-                        <td class="sampleQuery">africa</td>
-                        <td class="sampleDescrip">Search keywords (full text and metadata) for 'africa'</td>
+                        <td class="sampleQuery">código</td>
+                        <td class="sampleDescrip">Pesquisa a palavra "código"</td>
                      </tr>
                      <tr>
-                        <td class="sampleQuery">south africa</td>
-                        <td class="sampleDescrip">Search keywords for 'south' AND 'africa'</td>
+                        <td class="sampleQuery">código civil</td>
+                        <td class="sampleDescrip">Pesquisa as palavras "código" e "civil"</td>
                      </tr>
                      <tr>
-                        <td class="sampleQuery">"south africa"</td>
-                        <td class="sampleDescrip">Search keywords for the phrase 'south africa'</td>
+                        <td class="sampleQuery">"código civil"</td>
+                        <td class="sampleDescrip">Pesquisa a frase "código civil"</td>
                      </tr>
                      <tr>
-                        <td class="sampleQuery">africa*</td>
-                        <td class="sampleDescrip">Search keywords for the string 'africa' followed by 0 or more characters</td>
+                        <td class="sampleQuery">imov*</td>
+                        <td class="sampleDescrip">Pesquisa palavras iniciadas pelo radical "imov" (ex.:  "imóvel" e "imóveis").</td>
                      </tr>
                      <tr>
-                        <td class="sampleQuery">africa?</td>
-                        <td class="sampleDescrip">Search keywords for the string 'africa' followed by a single character</td>
+                        <td class="sampleQuery">UF??</td>
+                        <td class="sampleDescrip">Pesquisa palavras iniciadas pelo radical "UF" seguidas de dois caracteres (ex: "UFPB" e "UFMG")</td>
                      </tr>
                   </table>
                </td>
@@ -151,14 +187,14 @@
          </table>
       </form>
    </xsl:template>
-   
+
    <!-- advanced form -->
    <xsl:template name="advancedForm" exclude-result-prefixes="#all">
       <form method="get" action="{$xtfURL}{$crossqueryPath}">
          <table class="top_table">
             <tr>
                <td>
-                  <table class="left_table">
+                  <!-- <table class="left_table" border="1">
                      <tr>
                         <td colspan="3">
                            <h4>Entire Text</h4>
@@ -287,7 +323,7 @@
                            </select>
                            <xsl:text> word(s)</xsl:text>
                         </td>
-                     </tr>           
+                     </tr>
                      <tr>
                         <td class="indent">&#160;</td>
                         <td><b>Section</b></td>
@@ -298,7 +334,7 @@
                                  <input type="radio" name="sectionType" value="head" checked="checked"/><xsl:text> headings </xsl:text><br/>
                                  <input type="radio" name="sectionType" value="citation"/><xsl:text> citations </xsl:text>
                               </xsl:when>
-                              <xsl:when test="$sectionType = 'note'"> 
+                              <xsl:when test="$sectionType = 'note'">
                                  <input type="radio" name="sectionType" value=""/><xsl:text> any </xsl:text><br/>
                                  <input type="radio" name="sectionType" value="head"/><xsl:text> headings </xsl:text><br/>
                                  <input type="radio" name="sectionType" value="citation" checked="checked"/><xsl:text> citations </xsl:text>
@@ -311,47 +347,168 @@
                            </xsl:choose>
                         </td>
                      </tr>
-                  </table>
+                  </table> -->
                </td>
                <td>
-                  <table class="right_table">
-                     <tr>
-                        <td colspan="3"><h4>Metadata</h4></td>
-                     </tr>
+                  <table class="right_table" >
                      <tr>
                         <td class="indent">&#160;</td>
-                        <td><b>Title</b></td>
+                        <td class="col_label"><b>Todos os Campos</b></td>
+						<td>
+                           <input type="text" name="keyword" size="50" value="{$keyword}"/>
+                        </td>
+                     </tr>
+                  <!--   <tr>
+                        <td class="indent">&#160;</td>
+                        <td class="col_label"><b>Excluindo</b></td>
                         <td>
-                           <input type="text" name="title" size="20" value="{$title}"/>
+                           <input type="text" name="keyword-exclude" size="40" value="{$keyword-exclude}"/>
+                        </td>
+                     </tr> -->
+                     <tr>
+                        <td class="indent">&#160;</td>
+                        <td class="col_label"><b>Sigla</b></td>
+                        <td>
+                           <input type="text" name="acronimo" size="30" value="{$acronimo}"/>  exceto <input type="text" name="acronimo-exclude" size="20" value="{$acronimo-exclude}"/>
                         </td>
                      </tr>
                      <tr>
                         <td class="indent">&#160;</td>
-                        <td><b>Author</b></td>
+                        <td class="col_label"><b>Categoria do Documento</b></td>
                         <td>
-                           <input type="text" name="creator" size="20" value="{$creator}"/>
+                          <select name="f1-tipoDocumento">
+                             <option value="">Todas</option>
+                             <option value="Legislação">Legislação</option>
+                             <option value="Jurisprudência">Jurisprudência</option>
+                             <option value="Proposições&#160;Legislativas">Proposições&#160;Legislativas</option>
+                             <option value="Doutrina">Doutrina</option>
+                             <option value="Publicação&#160;Oficial">Publicação&#160;Oficial</option>
+                             <option value="Outras&#160;Manifestações">Outras&#160;Manifestações</option>
+                           </select>
                         </td>
                      </tr>
                      <tr>
                         <td class="indent">&#160;</td>
-                        <td><b>Subject</b></td>
+                        <td class="col_label"><b>Tipo do Documento</b></td>
                         <td>
-                           <input type="text" name="subject" size="20" value="{$subject}"/>
+                           <input type="text" name="tipoDocumento" size="30" value="{$tipoDocumento}"/>  exceto <input type="text" name="tipoDocumento-exclude" size="20" value="{$tipoDocumento-exclude}"/>
                         </td>
                      </tr>
                      <tr>
                         <td class="indent">&#160;</td>
-                        <td><b>Year(s)</b></td>
+                        <td class="col_label"><b>Localidade</b></td>
                         <td>
-                           <xsl:text>From </xsl:text>
+                           <input type="text" name="localidade" size="30" value="{$localidade}"/> exceto <input type="text" name="localidade-exclude" size="20" value="{$localidade-exclude}"/>
+                        </td>
+                     </tr>
+                     <tr>
+                        <td class="indent">&#160;</td>
+                        <td class="col_label"><b>Esfera da Autoridade Emitente</b></td>
+                        <td>
+                          <select name="f2-autoridade">
+                             <option value="">Todas</option>
+                             <option value="Federal">Federal</option>
+                             <option value="Estadual">Estadual</option>
+                             <option value="Distrital">Distrital</option>
+                             <option value="Municipal">Municipal</option>
+                           </select>
+                        </td>
+                     </tr>
+                     <tr>
+                        <td class="indent">&#160;</td>
+                        <td class="col_label"><b>Autoridade Emitente</b></td>
+                        <td>
+                           <input type="text" name="autoridade" size="30" value="{$autoridade}"/>  exceto <input type="text" name="autoridade-exclude" size="20" value="{$autoridade-exclude}"/>
+                        </td>
+                     </tr>
+                     <tr>
+                        <td class="indent">&#160;</td>
+                        <td class="col_label"><b>Número</b></td>
+                        <td>
+                           <input type="text" name="descritor" size="30" value="{$descritor}"/> exceto <input type="text" name="descritor-exclude" size="20" value="{$descritor-exclude}"/>
+                        </td>
+                     </tr>
+                     <tr>
+                        <td class="indent">&#160;</td>
+                        <td class="col_label"><b>Título</b></td>
+                        <td>
+                           <input type="text" name="title" size="30" value="{$title}"/> exceto <input type="text" name="title-exclude" size="20" value="{$title-exclude}"/>
+                        </td>
+                     </tr>
+                     <tr>
+                        <td class="indent">&#160;</td>
+                        <td class="col_label"><b>Apelido / Nome Popular</b></td>
+                        <td>
+                           <input type="text" name="apelido" size="30" value="{$apelido}"/> exceto <input type="text" name="apelido-exclude" size="20" value="{$apelido-exclude}"/>
+                        </td>
+                     </tr>
+                     <tr>
+                        <td class="indent">&#160;</td>
+                        <td class="col_label"><b>Ementa</b></td>
+                        <td>
+                           <input type="text" name="description" size="30" value="{$description}"/>  exceto <input type="text" name="description-exclude" size="20" value="{$description-exclude}"/>
+                        </td>
+                     </tr>
+                     <tr>
+                        <td class="indent">&#160;</td>
+                        <td class="col_label"><b>Assunto / Indexação</b></td>
+                        <td>
+                           <input type="text" name="subject" size="30" value="{$subject}"/>  exceto <input type="text" name="subject-exclude" size="20" value="{$subject-exclude}"/>
+                        </td>
+                     </tr>
+                     <tr>
+                        <td class="indent">&#160;</td>
+                        <td class="col_label"><b>URN</b></td>
+                        <td>
+                           <input type="text" name="urn" size="30" value="{$urn}"/>  exceto <input type="text" name="urn-exclude" size="20" value="{$urn-exclude}"/>
+                        </td>
+                     </tr>
+                     <tr>
+                        <td class="indent">&#160;</td>
+                        <td class="col_label"><b>Do ano</b></td>
+                        <td>
                            <input type="text" name="year" size="4" value="{$year}"/>
-                           <xsl:text> to </xsl:text>
+                           <xsl:text> até </xsl:text>
                            <input type="text" name="year-max" size="4" value="{$year-max}"/>
                         </td>
                      </tr>
+
                      <tr>
                         <td class="indent">&#160;</td>
-                        <td><b>Type</b></td>
+                        <td class="col_label"><b>Doutrina</b></td>
+                        <td>&#160;</td>
+                     </tr>
+                     <tr>
+                        <td class="indent">&#160;</td>
+                        <td class="col_label">Autor</td>
+                        <td>
+                           <input type="text" name="doutrinaAutor" size="30" value="{$doutrinaAutor}"/>  exceto <input type="text" name="doutrinaAutor-exclude" size="20" value="{$doutrinaAutor-exclude}"/>
+                        </td>
+                     </tr>
+                     <tr>
+                        <td class="indent">&#160;</td>
+                        <td class="col_label">Classificação <a href="http://pt.wikipedia.org/wiki/Classifica%C3%A7%C3%A3o_decimal_de_direito">CDDir</a></td>
+                        <td>
+                           <input type="text" name="doutrinaClasse" size="30" value="{$doutrinaClasse}"/>  exceto <input type="text" name="doutrinaClasse-exclude" size="20" value="{$doutrinaClasse-exclude}"/>
+                        </td>
+                     </tr>
+                     <tr>
+                        <td class="indent">&#160;</td>
+                        <td class="col_label">Idioma</td>
+                        <td>
+                           <input type="text" name="doutrinaLingua" size="30" value="{$doutrinaLingua}"/>  exceto <input type="text" name="doutrinaLingua-exclude" size="20" value="{$doutrinaLingua-exclude}"/>
+                        </td>
+                     </tr>
+                     <tr>
+                        <td class="indent">&#160;</td>
+                        <td class="col_label" title="utilize as siglas AGU, CAM, CLD, MJU, MTE, PGR, PRO, SEN, STF, STJ, STM, TCD, TJD e TST">Biblioteca</td>
+                        <td>
+                           <input type="text" name="doutrinaBiblioteca" size="30" value="{$doutrinaBiblioteca}"/>  exceto <input type="text" name="doutrinaBiblioteca-exclude" size="20" value="{$doutrinaBiblioteca-exclude}"/>
+                        </td>
+                     </tr>
+                     <!-- <tr>
+                        <td class="indent">&#160;</td>
+                        <td><b>Tipo</b></td>
                         <td>
                            <select size="1" name="type">
                               <option value="">All</option>
@@ -364,7 +521,7 @@
                               <option value="text">Text</option>
                            </select>
                         </td>
-                     </tr>
+                     </tr> -->
                      <tr>
                         <td colspan="3">&#160;</td>
                      </tr>
@@ -373,18 +530,18 @@
                         <td>&#160;</td>
                         <td>
                            <input type="hidden" name="smode" value="advanced"/>
-                           <input type="submit" value="Search"/>
-                           <input type="reset" onclick="location.href='{$xtfURL}{$crossqueryPath}?smode=advanced'" value="Clear"/>
+                           <input type="submit" onclick="return stringReplace2(form)" value="Pesquise"/><xsl:text>&#160;&#160;</xsl:text>
+                           <input type="reset" onclick="location.href='{$xtfURL}{$crossqueryPath}?smode=advanced'" value="Limpe"/>
                         </td>
                      </tr>
                   </table>
                </td>
             </tr>
-            <tr>
+          <!--  <tr>
                <td colspan="2">
                   <table class="sampleTable">
                      <tr>
-                        <td colspan="3">Examples:</td>                  
+                        <td colspan="3">Exemplos:</td>
                      </tr>
                      <tr>
                         <td/>
@@ -418,11 +575,11 @@
                      </tr>
                   </table>
                </td>
-            </tr>
+            </tr> -->
          </table>
       </form>
    </xsl:template>
-   
+
    <!-- free-form form -->
    <xsl:template name="freeformForm" exclude-result-prefixes="#all">
       <form method="get" action="{$xtfURL}{$crossqueryPath}">
@@ -440,7 +597,7 @@
                <td>
                   <table class="sampleTable">
                      <tr>
-                        <td colspan="2">Examples:</td>                  
+                        <td colspan="2">Examples:</td>
                      </tr>
                      <tr>
                         <td class="sampleQuery">africa</td>
@@ -515,5 +672,5 @@
          </table>
       </form>
    </xsl:template>
-   
+
 </xsl:stylesheet>

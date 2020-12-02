@@ -2,8 +2,7 @@
    xmlns:date="http://exslt.org/dates-and-times"
    xmlns:parse="http://cdlib.org/xtf/parse"
    xmlns:xtf="http://cdlib.org/xtf"
-   xmlns:FileUtils="java:org.cdlib.xtf.xslt.FileUtils"
-   extension-element-prefixes="date FileUtils"
+   extension-element-prefixes="date"
    exclude-result-prefixes="#all">
    
    <!--
@@ -78,7 +77,7 @@
    <!-- ====================================================================== -->
    
    <!-- Ignored Elements. -->
-   <xsl:template match="*:teiHeader">
+   <xsl:template match="*[local-name()='teiHeader']">
       <xsl:copy>
          <xsl:copy-of select="@*"/>
          <xsl:attribute name="xtf:index" select="'no'"/>
@@ -87,7 +86,7 @@
    </xsl:template>
    
    <!-- sectionType Indexing and Element Boosting -->
-   <xsl:template match="*:head[parent::*[matches(local-name(),'^div')]]">
+   <xsl:template match="*[local-name()='head'][parent::*[matches(local-name(),'^div')]]">
       <xsl:copy>
          <xsl:copy-of select="@*"/>
          <xsl:attribute name="xtf:sectionType" select="concat('head ', @type)"/>
@@ -96,7 +95,7 @@
       </xsl:copy>
    </xsl:template>
    
-   <xsl:template match="*:bibl">
+   <xsl:template match="*[local-name()='bibl']">
       <xsl:copy>
          <xsl:copy-of select="@*"/>
          <xsl:attribute name="xtf:sectionType" select="'citation'"/>
@@ -105,7 +104,7 @@
       </xsl:copy>
    </xsl:template>
    
-   <xsl:template match="*:titlePart[ancestor::*:titlePage]">
+   <xsl:template match="*[local-name()='titlePart'][ancestor::*[local-name()='titlePage']]">
       <xsl:copy>
          <xsl:copy-of select="@*"/>
          <xsl:attribute name="xtf:wordBoost" select="100.0"/>
@@ -162,17 +161,17 @@
    <!-- title --> 
    <xsl:template name="get-tei-title">
       <xsl:choose>
-         <xsl:when test="//*:fileDesc/*:titleStmt/*:title">
+         <xsl:when test="//*[local-name()='fileDesc']/*[local-name()='titleStmt']/*[local-name()='title']">
             <title xtf:meta="true">
-               <xsl:value-of select="string(//*:fileDesc/*:titleStmt/*:title[1])"/>
+               <xsl:value-of select="string(//*[local-name()='fileDesc']/*[local-name()='titleStmt']/*[local-name()='title'][1])"/>
             </title>
          </xsl:when>
-         <xsl:when test="//*:titlePage/*:titlePart[@type='main']">
+         <xsl:when test="//*[local-name()='titlePage']/*[local-name()='titlePart'][@type='main']">
             <title xtf:meta="true">
-               <xsl:value-of select="string(//*:titlePage/*:titlePart[@type='main'])"/>
-               <xsl:if test="//*:titlePage/*:titlePart[@type='subtitle']">
+               <xsl:value-of select="string(//*[local-name()='titlePage']/*[local-name()='titlePart'][@type='main'])"/>
+               <xsl:if test="//*[local-name()='titlePage']/*[local-name()='titlePart'][@type='subtitle']">
                   <xsl:text>: </xsl:text>
-                  <xsl:value-of select="string(//*:titlePage/*:titlePart[@type='subtitle'][1])"/>
+                  <xsl:value-of select="string(//*[local-name()='titlePage']/*[local-name()='titlePart'][@type='subtitle'][1])"/>
                </xsl:if>
             </title>
          </xsl:when>
@@ -187,14 +186,14 @@
    <!-- creator --> 
    <xsl:template name="get-tei-creator">
       <xsl:choose>
-         <xsl:when test="//*:fileDesc/*:titleStmt/*:author">
+         <xsl:when test="//*[local-name()='fileDesc']/*[local-name()='titleStmt']/*[local-name()='author']">
             <creator xtf:meta="true">
-               <xsl:value-of select="string(//*:fileDesc/*:titleStmt/*:author[1])"/>
+               <xsl:value-of select="string(//*[local-name()='fileDesc']/*[local-name()='titleStmt']/*[local-name()='author'][1])"/>
             </creator>
          </xsl:when>
-         <xsl:when test="//*:titlePage/*:docAuthor">
+         <xsl:when test="//*[local-name()='titlePage']/*[local-name()='docAuthor']">
             <creator xtf:meta="true">
-               <xsl:value-of select="string(//*:titlePage/*:docAuthor[1])"/>
+               <xsl:value-of select="string(//*[local-name()='titlePage']/*[local-name()='docAuthor'][1])"/>
             </creator>
          </xsl:when>
          <xsl:otherwise>
@@ -208,8 +207,8 @@
    <!-- subject --> 
    <xsl:template name="get-tei-subject">
       <xsl:choose>
-         <xsl:when test="//*:keywords/*:list/*:item">
-            <xsl:for-each select="//*:keywords/*:list/*:item">
+         <xsl:when test="//*[local-name()='keywords']/*[local-name()='list']/*[local-name()='item']">
+            <xsl:for-each select="//*[local-name()='keywords']/*[local-name()='list']/*[local-name()='item']">
                <subject xtf:meta="true">
                   <xsl:value-of select="."/>
                </subject>
@@ -221,9 +220,9 @@
    <!-- description --> 
    <xsl:template name="get-tei-description">
       <xsl:choose>
-         <xsl:when test="//*:text/*:body/*:div1[1]/*:p">
+         <xsl:when test="//*[local-name()='text']/*[local-name()='body']/*[local-name()='div1'][1]/*[local-name()='p']">
             <description xtf:meta="true">
-               <xsl:value-of select="//*:text/*:body/*:div1[1]/*:p[1]"/>
+               <xsl:value-of select="//*[local-name()='text']/*[local-name()='body']/*[local-name()='div1'][1]/*[local-name()='p'][1]"/>
             </description>
          </xsl:when>
       </xsl:choose>
@@ -232,14 +231,14 @@
    <!-- publisher -->
    <xsl:template name="get-tei-publisher">
       <xsl:choose>
-         <xsl:when test="//*:fileDesc/*:publicationStmt/*:publisher">
+         <xsl:when test="//*[local-name()='fileDesc']/*[local-name()='publicationStmt']/*[local-name()='publisher']">
             <publisher xtf:meta="true">
-               <xsl:value-of select="string(//*:fileDesc/*:publicationStmt/*:publisher[1])"/>
+               <xsl:value-of select="string(//*[local-name()='fileDesc']/*[local-name()='publicationStmt']/*[local-name()='publisher'][1])"/>
             </publisher>
          </xsl:when>
-         <xsl:when test="//*:text/*:front/*:titlePage//*:publisher">
+         <xsl:when test="//*[local-name()='text']/*[local-name()='front']/*[local-name()='titlePage']//*[local-name()='publisher']">
             <publisher xtf-meta="true">
-               <xsl:value-of select="string(//*:text/*:front/*:titlePage//*:publisher[1])"/>
+               <xsl:value-of select="string(//*[local-name()='text']/*[local-name()='front']/*[local-name()='titlePage']//*[local-name()='publisher'][1])"/>
             </publisher>
          </xsl:when>
          <xsl:otherwise>
@@ -253,9 +252,9 @@
    <!-- contributor -->
    <xsl:template name="get-tei-contributor">
       <xsl:choose>
-         <xsl:when test="//*:fileDesc/*:respStmt/*:name">
+         <xsl:when test="//*[local-name()='fileDesc']/*[local-name()='respStmt']/*[local-name()='name']">
             <contributor xtf-meta="true">
-               <xsl:value-of select="string(//*:fileDesc/*:respStmt/*:name[1])"/>
+               <xsl:value-of select="string(//*[local-name()='fileDesc']/*[local-name()='respStmt']/*[local-name()='name'][1])"/>
             </contributor>
          </xsl:when>
          <xsl:otherwise>
@@ -269,14 +268,14 @@
    <!-- date --> 
    <xsl:template name="get-tei-date">
       <xsl:choose>
-         <xsl:when test="//*:fileDesc/*:publicationStmt/*:date">
+         <xsl:when test="//*[local-name()='fileDesc']/*[local-name()='publicationStmt']/*[local-name()='date']">
             <date xtf:meta="true">
-               <xsl:value-of select="string(//*:fileDesc/*:publicationStmt/*:date)"/>
+               <xsl:value-of select="string(//*[local-name()='fileDesc']/*[local-name()='publicationStmt']/*[local-name()='date'])"/>
             </date>
          </xsl:when>
-         <xsl:when test="//*:titlePage/*:docImprint/*:docDate">
+         <xsl:when test="//*[local-name()='titlePage']/*[local-name()='docImprint']/*[local-name()='docDate']">
             <date xtf:meta="true">
-               <xsl:value-of select="string(//*:titlePage/*:docImprint/*:docDate)"/>
+               <xsl:value-of select="string(//*[local-name()='titlePage']/*[local-name()='docImprint']/*[local-name()='docDate'])"/>
             </date>
          </xsl:when>
          <xsl:otherwise>
@@ -300,9 +299,9 @@
    <!-- identifier --> 
    <xsl:template name="get-tei-identifier">
       <xsl:choose>
-         <xsl:when test="//*:fileDesc/*:publicationStmt/*:idno">
+         <xsl:when test="//*[local-name()='fileDesc']/*[local-name()='publicationStmt']/*[local-name()='idno']">
             <identifier xtf:meta="true" xtf:tokenize="no">
-               <xsl:value-of select="replace(string(//*:fileDesc/*:publicationStmt/*:idno[1]),'^.+/','')"/>
+               <xsl:value-of select="replace(string(//*[local-name()='fileDesc']/*[local-name()='publicationStmt']/*[local-name()='idno'][1]),'^.+/','')"/>
             </identifier>
          </xsl:when>
          <xsl:otherwise>
@@ -316,9 +315,9 @@
    <!-- source -->
    <xsl:template name="get-tei-source">
       <xsl:choose>
-         <xsl:when test="//*:sourceDesc/*:bibl">
+         <xsl:when test="//*[local-name()='sourceDesc']/*[local-name()='bibl']">
             <source xtf-meta="true">
-               <xsl:value-of select="string(//*:sourceDesc/*:bibl[1])"/>
+               <xsl:value-of select="string(//*[local-name()='sourceDesc']/*[local-name()='bibl'][1])"/>
             </source>
          </xsl:when>
          <xsl:otherwise>
@@ -332,9 +331,9 @@
    <!-- language -->
    <xsl:template name="get-tei-language">
       <xsl:choose>
-         <xsl:when test="//*:profileDesc/*:langUsage/*:language">
+         <xsl:when test="//*[local-name()='profileDesc']/*[local-name()='langUsage']/*[local-name()='language']">
             <language xtf-meta="true">
-               <xsl:value-of select="string((//*:profileDesc/*:langUsage/*:language)[1])"/>
+               <xsl:value-of select="string(//*[local-name()='profileDesc']/*[local-name()='langUsage']/*[local-name()='language'][1])"/>
             </language>
          </xsl:when>
          <xsl:otherwise>
@@ -348,9 +347,9 @@
    <!-- relation -->
    <xsl:template name="get-tei-relation">
       <xsl:choose>
-         <xsl:when test="//*:fileDesc/*:seriesStmt/*:title">
+         <xsl:when test="//*[local-name()='fileDesc']/*[local-name()='seriesStmt']/*[local-name()='title']">
             <relation xtf-meta="true">
-               <xsl:value-of select="string(//*:fileDesc/*:seriesStmt/*:title)"/>
+               <xsl:value-of select="string(//*[local-name()='fileDesc']/*[local-name()='seriesStmt']/*[local-name()='title'])"/>
             </relation>
          </xsl:when>
          <xsl:otherwise>
@@ -376,16 +375,23 @@
    </xsl:template>
    
    <!-- OAI dateStamp -->
-   <xsl:template name="oai-datestamp" xmlns:FileUtils="java:org.cdlib.xtf.xslt.FileUtils">
-      <xsl:variable name="filePath" select="saxon:system-id()" xmlns:saxon="http://saxon.sf.net/"/>
+   <xsl:template name="oai-datestamp">
       <dateStamp xtf:meta="true" xtf:tokenize="no">
-         <xsl:value-of select="FileUtils:lastModified($filePath, 'yyyy-MM-dd')"/>
+         <xsl:choose>
+            <xsl:when test="//*[local-name()='fileDesc']/*[local-name()='publicationStmt']/*[local-name()='date']">
+               <xsl:value-of select="concat(parse:year(string(//*[local-name()='fileDesc']/*[local-name()='publicationStmt']/*[local-name()='date'][1])),'-01-01')"/>
+            </xsl:when>
+            <xsl:otherwise>
+               <!-- I don't know, what would you put? -->
+               <xsl:value-of select="'1950-01-01'"/>
+            </xsl:otherwise>
+         </xsl:choose>
       </dateStamp>
    </xsl:template>
    
    <!-- OAI sets -->
    <xsl:template name="oai-set">
-      <xsl:for-each select="//*:keywords/*:list/*:item">
+      <xsl:for-each select="//*[local-name()='keywords']/*[local-name()='list']/*[local-name()='item']">
          <set xtf:meta="true">
             <xsl:value-of select="."/>
          </set>
