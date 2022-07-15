@@ -1,0 +1,149 @@
+body {
+   	font:normal 80% Arial, sans-serif;
+   	background-color: silver;
+	color: #333;
+	margin:16px;
+}
+
+.clear {
+	clear: both;
+}
+
+#container {
+	background:#f5f5f5;
+	border:1px solid #909090;
+}
+
+#controle {
+    text-align:right;
+}
+
+div.header {
+	 width: 99%;
+	 height:60px;
+	 margin: 0 auto;
+}
+
+div #header-esquerdo {
+	float:left;
+	margin: 10px 0 10px 15px;
+}
+
+div #header-direito {
+	float:right;
+	padding:35px 20px 0 0;
+}
+
+fieldset.results {
+	border:1px solid gray;
+	margin:15px;
+	padding-top:10px;
+	height:auto !important;
+	background:#fff;
+}
+
+legend.aba_results {
+	border:1px solid #333;
+	border-top-color: silver;
+	border-left-color: silver;
+	width:15em;
+	font-weight:bold;
+	line-height:2em;
+	text-align:center;
+	text-align:-khtml-center;
+	vertical-align:middle;
+	background:#fcfcfc;
+	margin-bottom:8px;
+	margin-left:10px;
+	padding:2px 10px 2px 10px;
+}
+
+div.result_col1 {
+	float:left;
+	text-align:right;
+	font-weight:bold;
+	width:17%;
+	line-height:1.5em;
+}
+
+div.result_col2 {
+	float:left;
+	padding-left:1em;
+	width:74%;
+	line-height:1.5em;
+}
+
+div.result_col3 {
+	float:right;
+	padding-left:1em;
+	width:5%;
+	line-height:1.6em;
+}
+
+div.result_col22 {
+	float:left;
+	padding-left:1em;
+	width:8%;
+	line-height:1.5em;
+	/*border:1px solid silver;
+	vertical-align:top;*/
+}
+
+div.result_col23 {
+	float:right;
+	padding-left:1em;
+	width:70%;
+	line-height:1.6em;
+}
+
+.soimprimir {			/* Sugestão: onde houver link sem o endereço explícito incluir o endereço em um span com esta classe. */
+						/* assim o endereço sairá na impressão, mas não será exibido na tela */
+	display:none;
+}
+
+@media print {
+	body {
+		font:normal 80% "Times New Roman", Times, serif;
+   		background-color: #fff;
+		color: #000;
+		margin:16px;
+	}
+	.noprint {
+	    display:none;
+	}
+	#container {
+		background:#fff;
+		border:0;
+
+	}
+	#header-direito {			/* o link para nova pesquisa não deve ser impresso */
+		display:none;
+	}
+	fieldset.results {				/* não imprimir bordas */
+		border:0;
+		margin:10pt;
+		padding-top:5pt;
+	}
+	legend.aba_results {
+		border:0;
+		width:100%;
+		font-weight:bold;
+		line-height:2em;
+		text-align:left;
+		background:#fff;
+		margin-bottom:5pt;
+		font-size:larger;			/* aumenta a fonte para destacar dos rótulos */
+		font-variant:small-caps;  	/* OPCIONAL - mais uma forma de destaque*/
+	}
+	div.result_col22 {
+		width:9%;
+	}
+	div.result_col23 {
+		width:72%;
+	}
+	.soimprimir {					/* elementos com esta classe será impresso, mas não será exibido na tela */
+		display:block;
+		color:#555;
+	}
+
+}

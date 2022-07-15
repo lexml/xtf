@@ -1,0 +1,58 @@
+
+/* Abas */
+.abas {
+        text-align: left;
+        padding: 3px 10px 4px 10px;
+        margin: 10px 0;
+        font-size: 11px;
+        width: 200px;
+        list-style-type: none;
+        border-bottom: 1px solid #999;
+}
+.abas li {
+        display: inline;
+}
+.abas li a {
+        padding: 3px 6px;
+        margin-left: 8px;
+        color: #444;
+        text-decoration: none;
+        font-weight: normal;
+        background: #EEE;
+        border: 1px solid #999;
+        position: relative;
+        top: 1px;
+}
+.abas li a.selected {
+        cursor: default;
+        color: black;
+        background: white;
+        border-bottom: 1px solid white;
+}
+
+/* Intervalo de datas */
+#data_intervalo {
+  font-weight: normal;
+  padding: 5px 0px; 
+}
+
+/* Expandable */
+.expandable-control {
+	margin-left: 15px;
+	padding-bottom: 5px; 
+	display: block;
+}
+
+/* Decoracao */
+.linha {
+	border-bottom: 1px solid #999;
+	width: 200px;
+}
+
+.quadroDoutrina {
+	border: 1px solid #CCCCCC;
+	padding-left: 5px;
+	padding-right: 5px;
+	padding-bottom: 5px;
+	background-color: #FAFAFB;
+}

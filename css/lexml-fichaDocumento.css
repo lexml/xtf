@@ -1,0 +1,75 @@
+/* doutrinaReferenciadaTable */
+
+/*
+#doutrinaReferenciadaTable_filter {
+  text-align:left;
+  margin:10px;
+  padding-left:0;
+}
+*/
+
+.doutrinaRefTabela{
+	width: 99%;
+}
+
+.doutrinaRefColunaAno {
+	width: 100px;
+}
+
+.doutrinaRefColunaAutor {
+}
+
+.doutrinaRefColunaTitulo {
+}
+
+.doutrinaRefColunaResponsabilidade{
+}
+
+.doutrinaRefColunaClasse{
+	width: 65px;
+	text-align:left;
+}
+
+.doutrinaRefColunaDispositivo{
+	width: 85px;
+	text-align:left;
+}
+span.highlight {
+	color: #FD8239;
+	font-weight:bold;
+}
+
+.controlTitleDiv {
+}
+
+.controlTitleDivA {
+	color: #000080;
+}
+
+.controlTitleDivA:hover {
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+.controlTitleDivBib{
+}
+
+.controlTitleDivTable {
+}
+
+.tabelaDispBibAmplo{
+	width: 80%;
+	margin-left: 10px;
+	padding: 5px;
+	border: solid 1px #808080;
+	background: #f5f5f5;
+	text-align: left;
+}
+
+.tabelaDispBibAmplo th:first-child{
+	width:55%;
+}
+
+.tabelaDispBibAmploCima{
+	border-top: solid 1px #a0a0a0;
+}
