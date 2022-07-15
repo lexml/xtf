@@ -28,8 +28,8 @@
   <target name="compile" depends="init"
         description="compile the source " >
     <!-- Compile the java code from ${src} into ${classes} -->
-    <javac target="1.5" 
-           source="1.5" 
+    <javac target="8" 
+           source="6" 
            debug="true"
            classpath="${libs}"
            encoding="UTF-8"
@@ -215,7 +215,7 @@
     <javadoc destdir="${doc}" 
              private="true" 
              breakiterator="yes"
-             source="1.5"
+             source="6"
              encoding="UTF-8"
              classpath="${libs}"
              noqualifier="all">
