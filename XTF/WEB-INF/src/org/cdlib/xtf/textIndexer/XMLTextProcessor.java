@@ -43,10 +43,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.Set;
+import java.util.*;
 import java.util.zip.GZIPInputStream;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -310,7 +307,7 @@ public class XMLTextProcessor extends DefaultHandler
   /** List of files to process. For an explanation of file queuing, see the
    *  {@link XMLTextProcessor#processQueuedTexts() processQueuedTexts()} method.
    */
-  private LinkedList fileQueue = new LinkedList();
+  private List<FileQueueEntry> fileQueue = new LinkedList<>();
 
   /** The location of the XML source text file currently being indexed. For
    *  more information about this structure, see the
@@ -1013,8 +1010,7 @@ public class XMLTextProcessor extends DefaultHandler
 
     // Calculate the total size of files in the queue
     long totalSize = 0;
-    for (Iterator iter = fileQueue.iterator(); iter.hasNext();) {
-      FileQueueEntry ent = (FileQueueEntry)iter.next();
+    for (FileQueueEntry ent : fileQueue) {
       totalSize += ent.idxSrc.totalSize();
     }
     if (totalSize < 1)
@@ -1037,7 +1033,7 @@ public class XMLTextProcessor extends DefaultHandler
       openIdxForWriting();
 
       // Get the next file.
-      FileQueueEntry ent = (FileQueueEntry)fileQueue.removeFirst();
+      FileQueueEntry ent = fileQueue.remove(0);
       IndexSource idxFile = ent.idxSrc;
       assert !ent.deleteFirst; // Should have been processed by batchDelete()
 
@@ -3554,11 +3550,10 @@ public class XMLTextProcessor extends DefaultHandler
     }
 
     // Determine when the file was last modified.
-    File srcPath = curIdxSrc.path();
-    if (srcPath != null) 
-    {
+    final long lastModified = curIdxSrc.lastModified();
+    if (lastModified >= 0L) {
       String fileDateStr = DateTools.timeToString(
-        srcPath.lastModified(), DateTools.Resolution.MILLISECOND);
+        lastModified, DateTools.Resolution.MILLISECOND);
 
       // Add the XML file modification date as a stored, non-indexed, 
       // non-tokenized field.
@@ -3786,9 +3781,8 @@ public class XMLTextProcessor extends DefaultHandler
       String indexDateStr = doc.get("fileDate");
 
       // See what the date is on the actual source file right now.
-      File srcPath = srcInfo.path();
       String fileDateStr = DateTools.timeToString(
-        srcPath.lastModified(), 
+        srcInfo.lastModified(),
         DateTools.Resolution.MILLISECOND);
 
       // If the dates are different (or we're ignoring them)...
@@ -3797,11 +3791,11 @@ public class XMLTextProcessor extends DefaultHandler
         // Delete the old lazy file, if any. Might as well delete any
         // empty parent directories as well.
         //
-        File lazyFile = IndexUtil.calcLazyPath(new File(xtfHomePath),
+        /*File lazyFile = IndexUtil.calcLazyPath(new File(xtfHomePath),
                                                indexInfo,
-                                               srcPath,
+                                               srcInfo.path(),
                                                false);
-        Path.deletePath(lazyFile.toString());
+        Path.deletePath(lazyFile.toString());*/
 
         // And flag that we need to re-add them.
         docInIndex = true;

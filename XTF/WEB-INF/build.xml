@@ -29,7 +29,7 @@
         description="compile the source " >
     <!-- Compile the java code from ${src} into ${classes} -->
     <javac target="8" 
-           source="6" 
+           source="8" 
            debug="true"
            classpath="${libs}"
            encoding="UTF-8"
@@ -215,7 +215,7 @@
     <javadoc destdir="${doc}" 
              private="true" 
              breakiterator="yes"
-             source="6"
+             source="8"
              encoding="UTF-8"
              classpath="${libs}"
              noqualifier="all">

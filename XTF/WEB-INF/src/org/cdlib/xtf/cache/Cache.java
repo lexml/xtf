@@ -32,6 +32,8 @@ package org.cdlib.xtf.cache;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
+
 import org.cdlib.xtf.util.EmbeddedList;
 import org.cdlib.xtf.util.LinkableImpl;
 
@@ -142,11 +144,11 @@ public abstract class Cache<K,V>
    * @return      An iterator that will produce each dependency, or
    *              null if no dependencies.
    */
-  public synchronized Iterator getDependencies(K key) 
+  public synchronized Iterator<Dependency> getDependencies(K key)
   {
     cleanup();
 
-    ListEntry ent = (ListEntry)keyMap.get(key);
+    ListEntry ent = keyMap.get(key);
     return (ent == null) ? new NullIterator() : ent.dependencies.iterator();
   } // getDependencies()
 
@@ -274,7 +276,7 @@ public abstract class Cache<K,V>
     long setTime;
 
     /** Things this entry depends on */
-    LinkedList dependencies = new LinkedList();
+    final List<Dependency> dependencies = new LinkedList<Dependency>();
   } // class ListEntry
 
   /** Maximum number of entries the cache may contain */

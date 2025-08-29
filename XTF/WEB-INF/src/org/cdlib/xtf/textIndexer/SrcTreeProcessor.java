@@ -32,12 +32,8 @@ package org.cdlib.xtf.textIndexer;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Properties;
-import java.util.StringTokenizer;
-import java.util.Vector;
+import java.nio.file.Paths;
+import java.util.*;
 import javax.xml.parsers.SAXParser;
 import javax.xml.transform.Templates;
 import javax.xml.transform.Transformer;
@@ -79,15 +75,18 @@ import org.xml.sax.InputSource;
 public class SrcTreeProcessor 
 {
   private IndexerConfig cfgInfo;
-  private XMLTextProcessor textProcessor;
-  private StylesheetCache stylesheetCache = new StylesheetCache(100, 0, true);
+  // Instantiate a text processor object to use on each XML file
+  // encountered in the file tree.
+  //
+  private final XMLTextProcessor textProcessor = new XMLTextProcessor();
+  private final StylesheetCache stylesheetCache = new StylesheetCache(100, 0, true);
   private Templates docSelector;
   private int nScanned = 0;
-  private StringBuffer docBuf = new StringBuffer(1024);
-  private StringBuffer dirBuf = new StringBuffer(1024);
+  private final StringBuffer docBuf = new StringBuffer(1024);
+  private final StringBuffer dirBuf = new StringBuffer(1024);
   private String docSelPath;
   private File docSelCacheFile;
-  private DocSelCache docSelCache = new DocSelCache();
+  private final DocSelCache docSelCache = new DocSelCache();
 
   ////////////////////////////////////////////////////////////////////////////
 
@@ -98,10 +97,7 @@ public class SrcTreeProcessor
    */
   public SrcTreeProcessor() 
   {
-    // Instantiate a text processor object to use on each XML file
-    // encountered in the file tree.
-    //
-    textProcessor = new XMLTextProcessor();
+
   } // SrcTreeProcessor()
 
   ////////////////////////////////////////////////////////////////////////////
@@ -212,13 +208,11 @@ public class SrcTreeProcessor
     docSelCacheFile = new File(calcIndexPath() + "docSelect.cache");
 
     // Calculate all the file dependencies of the docSelector stylesheet.
-    Iterator iter = stylesheetCache.getDependencies(docSelPath);
-    StringBuffer depBuf = new StringBuffer();
-    while (iter.hasNext()) 
-    {
-      Dependency d = (Dependency)iter.next();
+    StringBuilder depBuf = new StringBuilder();
+    for (Iterator<Dependency> it = stylesheetCache.getDependencies(docSelPath); it.hasNext(); ) {
+      Dependency d = it.next();
       if (d instanceof FileDependency) {
-        depBuf.append(d.toString());
+        depBuf.append(d);
         depBuf.append("\n");
       }
     }
@@ -255,7 +249,6 @@ public class SrcTreeProcessor
       docSelCacheFile.delete();
       docSelCache.clear();
       docSelCache.dependencies = thisDep;
-      return;
     }
   } // loadCache()
 
@@ -307,9 +300,8 @@ public class SrcTreeProcessor
       return;
     }
 
-    ArrayList list = new ArrayList(fileStrs.length);
-    for (int i = 0; i < fileStrs.length; i++)
-      list.add(fileStrs[i]);
+    List<String> list = new ArrayList<>(fileStrs.length);
+    list.addAll(Arrays.asList(fileStrs));
     Collections.sort(list);
 
     // Process all of the non-directory files first. Form a document 
@@ -321,29 +313,27 @@ public class SrcTreeProcessor
     String dirPath = Path.normalizePath(curDir.toString());
     docBuf.append("<directory dirPath=\"" + StringUtil.escapeHTMLChars(dirPath) + "\">\n");
     int nFiles = 0;
-    for (Iterator i = list.iterator(); i.hasNext();) 
-    {
-      File subFile = new File(curDir, (String)i.next());
-      if (!subFile.getAbsoluteFile().isDirectory()) 
-      {
-        docBuf.append("  <file fileName=\"");
-        docBuf.append(StringUtil.escapeHTMLChars(subFile.getName()));
-        docBuf.append("\"/>\n");
+      for (String o : list) {
+          File subFile = new File(curDir, o);
+          if (!subFile.getAbsoluteFile().isDirectory()) {
+              docBuf.append("  <file fileName=\"");
+              docBuf.append(StringUtil.escapeHTMLChars(subFile.getName()));
+              docBuf.append("\"/>\n");
 
-        dirBuf.append(StringUtil.escapeHTMLChars(subFile.getName()));
-        dirBuf.append(':');
-        dirBuf.append(subFile.lastModified());
-        dirBuf.append("\n");
+              dirBuf.append(StringUtil.escapeHTMLChars(subFile.getName()));
+              dirBuf.append(':');
+              dirBuf.append(subFile.lastModified());
+              dirBuf.append("\n");
 
-        ++nFiles;
+              ++nFiles;
 
-        // Print out dots as we process large amounts of files, just so 
-        // the user knows something is happening.
-        //
-        if (((nScanned++) % 200) == 0)
-          Trace.more(Trace.info, ".");
+              // Print out dots as we process large amounts of files, just so
+              // the user knows something is happening.
+              //
+              /*if (((nScanned++) % 200) == 0)
+                  Trace.more(Trace.info, ".");*/
+          }
       }
-    }
     docBuf.append("</directory>\n");
 
     // Now process the document using the docSelector stylesheet.

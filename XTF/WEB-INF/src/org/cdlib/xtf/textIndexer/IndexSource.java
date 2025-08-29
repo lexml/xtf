@@ -37,6 +37,7 @@ package org.cdlib.xtf.textIndexer;
  */
 import java.io.File;
 import java.io.IOException;
+import java.util.Date;
 import javax.xml.transform.Templates;
 import org.xml.sax.SAXException;
 
@@ -48,7 +49,11 @@ import org.xml.sax.SAXException;
 public abstract class IndexSource 
 {
   /** Obtain the path to the file (or null if it's not a local file) */
-  public abstract File path();
+  protected abstract File path();
+
+  public final long lastModified() {
+      return path() == null ? -1L :  path().lastModified();
+  }
 
   /** Obtain a unique key for this input file */
   public abstract String key();
