@@ -32,13 +32,11 @@ package org.cdlib.xtf.textIndexer;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
-import java.nio.file.Paths;
 import java.util.*;
-import javax.xml.parsers.SAXParser;
 import javax.xml.transform.Templates;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.sax.SAXSource;
-import javax.xml.transform.stream.StreamResult;
+
 import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.tree.TreeBuilder;
 import net.sf.saxon.value.StringValue;
@@ -81,24 +79,12 @@ public class SrcTreeProcessor
   private final XMLTextProcessor textProcessor = new XMLTextProcessor();
   private final StylesheetCache stylesheetCache = new StylesheetCache(100, 0, true);
   private Templates docSelector;
-  private int nScanned = 0;
+
   private final StringBuffer docBuf = new StringBuffer(1024);
   private final StringBuffer dirBuf = new StringBuffer(1024);
   private String docSelPath;
   private File docSelCacheFile;
   private final DocSelCache docSelCache = new DocSelCache();
-
-  ////////////////////////////////////////////////////////////////////////////
-
-  /** Default constructor. <br><br>
-   *
-   *  Instantiates the {@link org.cdlib.xtf.textIndexer.XMLTextProcessor}
-   *  used internally to process individual XML source files. <br><br>
-   */
-  public SrcTreeProcessor() 
-  {
-
-  } // SrcTreeProcessor()
 
   ////////////////////////////////////////////////////////////////////////////
 
@@ -652,10 +638,7 @@ public class SrcTreeProcessor
       throw new RuntimeException("Internal error: code missing support for type");
 
     // Now queue up the file.
-    if (cfgInfo.prefilterOnly)
-      outputRaw(srcFile);
-    else
-      textProcessor.checkAndQueueText(srcFile);
+    textProcessor.checkAndQueueText(srcFile);
 
     // Let the caller know we didn't skip the file.
     return true;
@@ -663,37 +646,4 @@ public class SrcTreeProcessor
 
   ////////////////////////////////////////////////////////////////////////////
 
-  /** Dump preprocessed source data to stdout; used in prefilterOnly mode. <br><br>
-   *
-   * @param src       The XML index source to dump <br><br>
-   *
-   */
-  private void outputRaw(IndexSource src)
-    throws Exception 
-  {
-    while (true)
-    {
-      IndexRecord record = src.nextRecord();
-      if (record == null)
-        break;
-
-
-      // Instantiate a new XML parser, being sure to get the right one.
-      SAXParser xmlParser = IndexUtil.createSAXParser();
-
-      // Get the input source from the record.
-      InputSource xmlSource = record.xmlSource();
-
-      // Apply the prefilters and write the result to stderr
-      System.err.println(">>> BEGIN prefiltered " + src.key() + ":" + record.recordNum());
-      Templates[] prefilters = src.preFilters();
-      IndexUtil.applyPreFilters(prefilters != null ? prefilters : new Templates[0],
-                                xmlParser.getXMLReader(),
-                                xmlSource,
-                                cfgInfo.indexInfo.passThroughAttribs,
-                                new StreamResult(System.err));
-      System.err.println("\n>>> END prefiltered " + src.key() + ":" + record.recordNum());
-    }
-  } // outputRaw()
-  
 } // class SrcTreeProcessor
