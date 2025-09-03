@@ -168,7 +168,7 @@ public class XMLTextProcessor extends DefaultHandler
   /** The base directory for the current Lucene database. */
   private String indexPath;
 
-  private final Set<String> tokenizedFields = new HashSet<>();
+
 
 
   /** An Lucene index reader object, used in conjunction with the
@@ -193,6 +193,8 @@ public class XMLTextProcessor extends DefaultHandler
   /** Queues words for spelling dictionary creator */
   private SpellWriter spellWriter;
 
+  private final List<String> tokenizedFields;
+
 
   /** Maximum number of document deletions to do in a single batch */
   private static final int MAX_DELETION_BATCH = 50;
@@ -210,8 +212,11 @@ public class XMLTextProcessor extends DefaultHandler
    */
   private static final String xtfUri = "http://cdlib.org/xtf";
 
+    public XMLTextProcessor(List<String> tokenizedFields) {
+        this.tokenizedFields = tokenizedFields;
+    }
 
-  /**
+    /**
    * Open a TextIndexer (Lucene) index for reading or writing. <br><br>
    *
    * The primary purpose of this method is to open the index identified by the
@@ -372,8 +377,6 @@ public class XMLTextProcessor extends DefaultHandler
 
         pluralMap = new WordMap(stream, accentMap);
       }
-
-        tokenizedFields.addAll(XtfSearcher.readTokenizedFields(indexPath, indexReader));
     } // try
 
     catch (IOException e) 
@@ -476,6 +479,16 @@ public class XMLTextProcessor extends DefaultHandler
       copyDependentFile(indexInfo.pluralMapPath,  "pluralMap", doc);
       copyDependentFile(indexInfo.accentMapPath,  "accentMap", doc);
       copyDependentFile(indexInfo.validationPath, "validation", doc);
+
+      File tokenizedFieldsFile =
+              new File(Path.normalizePath(indexPath) + "tokenizedFields.txt");
+      if(!tokenizedFieldsFile.exists()) {
+          try (PrintWriter pw = new PrintWriter(new FileWriter(tokenizedFieldsFile))) {
+              for(String field : tokenizedFields) {
+                  pw.println(field);
+              }
+          }
+      }
 
       // Copy the stopwords to the index
       String stopWords = indexInfo.stopWords;
@@ -666,6 +679,8 @@ public class XMLTextProcessor extends DefaultHandler
       totalSize = 1; // avoid divide-by-zero problems
     long processedSize = 0;
 
+    final Handler handler = new Handler(indexInfo.stripWhitespace);
+
     // Process each queued file.
     while (!fileQueue.isEmpty()) 
     {
@@ -695,7 +710,7 @@ public class XMLTextProcessor extends DefaultHandler
               Trace.info(msg.toString());
           }
           // Now index this record.
-          processText(idxFile);
+          processText(idxFile, handler);
 
       }
       catch (SAXException e) 
@@ -720,7 +735,7 @@ public class XMLTextProcessor extends DefaultHandler
    * indexed, see the {@link XMLTextProcessor} class description.
    *
    */
-  private void processText(IndexSource file)
+  private void processText(IndexSource file, Handler handler)
     throws SAXException
   {
 
@@ -731,7 +746,7 @@ public class XMLTextProcessor extends DefaultHandler
     curIdxSrc = file;
 
     // Now parse it.
-      parseText();
+      parseText(handler);
   } // processText()
 
   ////////////////////////////////////////////////////////////////////////////
@@ -764,7 +779,7 @@ public class XMLTextProcessor extends DefaultHandler
    * attributes handled by this XML parser, see the {@link XMLTextProcessor}
    * class description. <br><br>
    */
-  private void parseText() //curIdxSrc, indexInfo.passThroughAtttribs, curPrettyKey
+  private void parseText(final Handler handler) //curIdxSrc, indexInfo.passThroughAtttribs, curPrettyKey
   {
     try 
     {
@@ -783,25 +798,14 @@ public class XMLTextProcessor extends DefaultHandler
         return;
       }
 
-      Handler h = new Handler(indexInfo.stripWhitespace,curIdxSrc.key(),curIdxSrc.lastModified());
+
+      handler.init(curIdxSrc.key(),curIdxSrc.lastModified());
       // Apply the prefilters.
       IndexUtil.applyPreFilters(prefilters,
                                 xmlParser.getXMLReader(),
                                 xmlSource,
                                 indexInfo.passThroughAttribs,
-                                new SAXResult(h));
-
-      final List<String> newFields = new LinkedList<>();
-
-      for(String tfield : h.getTokenizedFields()) {
-          if (!tokenizedFields.contains(tfield)) {
-              newFields.add(tfield);
-          }
-      }
-      tokenizedFields.addAll(newFields);
-      if(!newFields.isEmpty()) {
-          addToTokenizedFieldsFile(newFields);
-      }
+                                new SAXResult(handler));
 
       // Get the analyzer that will be used to tokenize fields. Tell it to
       // forget what it knows about facet fields (we'll re-mark them below.)
@@ -809,13 +813,11 @@ public class XMLTextProcessor extends DefaultHandler
       XTFTextAnalyzer analyzer = (XTFTextAnalyzer)indexWriter.getAnalyzer();
       analyzer.clearFacetFields();
 
-      h.getMisspelledFields().forEach(analyzer::addMisspelledField);
-
-      h.getFacetedFields().forEach(analyzer::addFacetField);
+      handler.getFacetedFields().forEach(analyzer::addFacetField);
 
       try {
           // Add the document info block to the index.
-          indexWriter.addDocument(h.getDocument());
+          indexWriter.addDocument(handler.getDocument());
       } catch (Throwable t) {
           // Log the problem.
           Trace.tab();
@@ -915,7 +917,19 @@ public class XMLTextProcessor extends DefaultHandler
 
 
     private static class Handler extends DefaultHandler {
-
+        /**
+         * Map special characters in XML to their entity equivalents.
+         */
+        private static String mapXMLChars(String str)
+        {
+            if (str.indexOf('&') >= 0)
+                str = str.replaceAll("&", "&amp;");
+            if (str.indexOf('<') >= 0)
+                str = str.replaceAll("<", "&lt;");
+            if (str.indexOf('>') >= 0)
+                str = str.replaceAll(">", "&gt;");
+            return str;
+        }
       /** Flag indicating how deeply nested in a meta-data section the current
        *  text/tag being processed is.
        */
@@ -945,27 +959,32 @@ public class XMLTextProcessor extends DefaultHandler
        */
       private int chunkCount = 0;
 
-      private final String key;
+      private String key;
 
-      private final long lastModified;
+      private long lastModified;
 
-      // Make a new document, to which we can add our fields.
-      private final Document doc = new Document();
+      private Document doc = new Document();
 
       private final Set<String> facetedFields = new HashSet<>();
 
-      private final Set<String> misspelledFields = new HashSet<>();
-
       private final Set<String> tokenizedFields = new HashSet<>();
 
-      public Handler(boolean stripWhiteSpace, String key, long lastModified) {
-          // Create an initial unnamed section with depth zero, indexing turned on,
-          // a blank section name, no section bump, a word bump of 1, no word boost,
-          // default sentence bump, blank subdocument name, and empty meta-data.
-          //
-          this.stripWhiteSpace = stripWhiteSpace;
+      public Handler(boolean stripWhiteSpace) {
+        this.stripWhiteSpace = stripWhiteSpace;
+        this.metaBuf.ensureCapacity(65536);
+      }
+
+      public void init(String key, long lastModified) {
+          this.facetedFields.clear();
+          this.tokenizedFields.clear();
+          this.doc = new Document();
           this.key = key;
           this.lastModified = lastModified;
+          this.chunkCount = 0;
+          this.metaFields.clear();
+          this.charBufPos = 0;
+          this.metaBuf.setLength(0);
+          this.inMeta = 0;
       }
 
       public Document getDocument() {
@@ -976,26 +995,10 @@ public class XMLTextProcessor extends DefaultHandler
           return facetedFields;
       }
 
-      public Set<String> getMisspelledFields() {
-          return misspelledFields;
-      }
-
       public Set<String> getTokenizedFields() {
           return tokenizedFields;
       }
-      /**
-       * Map special characters in XML to their entity equivalents.
-       */
-      private static String mapXMLChars(String str)
-      {
-          if (str.indexOf('&') >= 0)
-              str = str.replaceAll("&", "&amp;");
-          if (str.indexOf('<') >= 0)
-              str = str.replaceAll("<", "&lt;");
-          if (str.indexOf('>') >= 0)
-              str = str.replaceAll(">", "&gt;");
-          return str;
-      }
+
 
       ////////////////////////////////////////////////////////////////////////////
 
@@ -1128,17 +1131,6 @@ public class XMLTextProcessor extends DefaultHandler
                       isFacet = true;
               }
 
-              // See if there is a "spell" attribute set for this node. If not,
-              // default to true.
-              //
-              boolean spell = true;
-              tokIdx = atts.getIndex(xtfUri, "spell");
-              if (tokIdx >= 0) {
-                  String tokStr = atts.getValue(tokIdx);
-                  if (tokStr != null && (tokStr.equals("no") || tokStr.equals("false")))
-                      spell = false;
-              }
-
               // See if there is a "wordBoost" attribute for this node. If not,
               // default to 1.0f.
               //
@@ -1161,7 +1153,6 @@ public class XMLTextProcessor extends DefaultHandler
                       index,
                       tokenize,
                       isFacet,
-                      spell,
                       boost);
               assert metaBuf.length() == 0 : "Should have cleared meta-buf";
 
@@ -1494,12 +1485,6 @@ public class XMLTextProcessor extends DefaultHandler
                       metaField.tokenize = true;
                       facetedFields.add(metaField.name); // analyzer.addFacetField(metaField.name);
                   }
-
-                  // If it's marked as misspelled, inform the analyzer so it doesn't
-                  // add the field data to the spelling correction dictionary.
-                  //
-                  if (!metaField.spell && metaField.index)
-                      misspelledFields.add(metaField.name); // analyzer.addMisspelledField(metaField.name);
 
                   // Add it to the document. Store, index, and/or tokenize as
                   // specified by the field.

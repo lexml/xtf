@@ -63,8 +63,7 @@ public abstract class GeneratingCache<K,V> extends Cache<K,V>
     // entry and return it.
     //
     if (has(key)) {
-      ListEntry entry = (ListEntry)keyMap.get(key);
-      return entry.value;
+      return keyMap.get(key).value;
     }
 
     // Otherwise, create an entry and generate a value for it.

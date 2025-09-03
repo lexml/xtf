@@ -40,7 +40,7 @@ object LexMLXTFIndexer:
   def index : Unit =
     val cfgInfo = makeIndexConfig
     val xtfHomeFile = File(cfgInfo.xtfHomePath)
-    val srcTreeProcessor = SrcTreeProcessor(cfgInfo)
+    val srcTreeProcessor = SrcTreeProcessor(cfgInfo,tokenizedFields)
     val srcRootFile = File(cfgInfo.indexInfo.sourcePath)
     val indexFile = File(cfgInfo.indexInfo.indexPath)
     val subDirFilter : SubDirFilter = null
@@ -52,3 +52,54 @@ object LexMLXTFIndexer:
     ellapse("srcTreeProcessor.close") {
       srcTreeProcessor.close()
     }
+   
+  val tokenizedFields : java.util.List[String] = {
+    val l = new java.util.ArrayList[String]
+    l.add("acronimo")
+    l.add("anosDoutrina")
+    l.add("apelido")
+    l.add("autoridade")
+    l.add("dataRepresentativa")
+    l.add("date")
+    l.add("description")
+    l.add("descritor")
+    l.add("doutrinaAutor")
+    l.add("doutrinaBiblioteca")
+    l.add("doutrinaClasse")
+    l.add("doutrinaLingua")
+    l.add("doutrinasReferenciadas")
+    l.add("idDocumento")
+    l.add("idSuperDocumento")
+    l.add("localidade")
+    l.add("oculto")
+    l.add("relacionamentosSucessao")
+    l.add("relacionamentosSucessaoInv")
+    l.add("set")
+    l.add("subject")
+    l.add("text")
+    l.add("textoAnotado")
+    l.add("tipoDocumento")
+    l.add("title")
+    l.add("titleAlternativo")
+    l.add("titleIndexacao")
+    l.add("type")
+    l.add("urn")
+    l.add("year")
+    l
+  }
+  
+  val facetedFields : java.util.List[String] =
+    import scala.jdk.CollectionConverters.SeqHasAsJava
+    Seq[String](
+      "facet-tipoDocumento",
+      "facet-autoridade",
+      "facet-doutrinaAutor",
+      "facet-doutrinaLingua",
+      "facet-doutrinaClasse",
+      "facet-doutrinaBibDigital",
+      "facet-doutrinaBiblioteca",
+      "facet-acronimo",
+      "facet-localidade",
+      "facet-date",
+      "facet-subject"
+    ).asJava

@@ -1,0 +1,11 @@
+facet-tipoDocumento
+facet-autoridade
+facet-doutrinaAutor
+facet-doutrinaLingua
+facet-doutrinaClasse
+facet-doutrinaBibDigital
+facet-doutrinaBiblioteca
+facet-acronimo
+facet-localidade
+facet-date
+facet-subject

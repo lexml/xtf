@@ -35,6 +35,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Collections;
 
 import org.apache.lucene.index.IndexReader;
 import org.cdlib.xtf.textEngine.IndexValidator;
@@ -469,7 +470,7 @@ public class TextIndexer
   private static void doIndexing(IndexerConfig cfgInfo, File xtfHomeFile)
     throws Exception 
   {
-    SrcTreeProcessor srcTreeProcessor = new SrcTreeProcessor(cfgInfo);
+    SrcTreeProcessor srcTreeProcessor = new SrcTreeProcessor(cfgInfo, null); //FIXME
     
     // Start at the root directory specified by the config file. 
     String srcRoot = Path.resolveRelOrAbs(xtfHomeFile,

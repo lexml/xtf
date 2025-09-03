@@ -77,7 +77,7 @@ public class SrcTreeProcessor
   // Instantiate a text processor object to use on each XML file
   // encountered in the file tree.
   //
-  private final XMLTextProcessor textProcessor = new XMLTextProcessor();
+  private final XMLTextProcessor textProcessor;
   private final StylesheetCache stylesheetCache = new StylesheetCache(100, 0, true);
   private final Templates docSelector;
 
@@ -102,9 +102,10 @@ public class SrcTreeProcessor
      *                       {@link org.cdlib.xtf.textIndexer.XMLTextProcessor#open(String, IndexInfo, boolean, boolean) open()}
      *                       method. <br><br>
      */
-  public SrcTreeProcessor(IndexerConfig cfgInfo) throws Exception {
+  public SrcTreeProcessor(IndexerConfig cfgInfo,List<String> tokenizedFields) throws Exception {
       // Hang on to a reference to the config info.
       this.cfgInfo = cfgInfo;
+      this.textProcessor = new XMLTextProcessor(tokenizedFields);
 
       // If no XTF home directory specified, assume it is the same
       // directory as the config file.
