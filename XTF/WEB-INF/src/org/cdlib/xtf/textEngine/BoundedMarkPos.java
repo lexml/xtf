@@ -40,7 +40,7 @@ import org.apache.lucene.mark.MarkPos;
  */
 public class BoundedMarkPos extends BasicMarkPos 
 {
-  private Token[] tokens;
+  private final Token[] tokens;
   private int tokNum;
 
   /** Creates a new mark pos */
@@ -66,7 +66,7 @@ public class BoundedMarkPos extends BasicMarkPos
       for (int i = tokNum; i <= ((BoundedMarkPos)other).tokNum; i++) 
       {
         String term = tokens[i].termText();
-        if (term.length() == 0)
+        if (term.isEmpty())
           continue;
         if (term.charAt(0) == Constants.ELEMENT_MARKER ||
             term.charAt(0) == Constants.ATTRIBUTE_MARKER) 

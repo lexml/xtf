@@ -82,10 +82,10 @@ import net.sf.saxon.trans.XPathException;
 public class FileUtils 
 {
   /** Used to avoid recreating SimpleDateFormat objects all the time */
-  private static HashMap dateFormatCache = new HashMap();
+  private static final HashMap dateFormatCache = new HashMap();
   
   /** Used to track temp files, per thread */
-  private static ThreadLocal<ArrayList<File>> tempFiles =
+  private static final ThreadLocal<ArrayList<File>> tempFiles =
     new ThreadLocal<ArrayList<File>>();
 
   /**

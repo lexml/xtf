@@ -5,8 +5,8 @@ import net.sf.saxon.pattern.NodeTest;
 
 final class DescendantEnumeration extends TreeEnumeration 
 {
-  private NodeImpl root;
-  private boolean includeSelf;
+  private final NodeImpl root;
+  private final boolean includeSelf;
 
   public DescendantEnumeration(NodeImpl node, NodeTest nodeTest,
                                boolean includeSelf) 

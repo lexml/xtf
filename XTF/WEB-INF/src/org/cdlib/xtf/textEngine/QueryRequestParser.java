@@ -99,10 +99,10 @@ public class QueryRequestParser
   private NodeInfo topNode;
 
   /** Global attributes that were actually specified in the query */
-  private HashSet specifiedGlobalAttrs = new HashSet();
+  private final HashSet specifiedGlobalAttrs = new HashSet();
 
   /** Accumulated list of grouping specifications */
-  private Vector groupSpecs = new Vector();
+  private final Vector groupSpecs = new Vector();
 
   /** Default value for maxSnippets, so we can recognize difference between
    *  the default and a user-specified value.
@@ -144,9 +144,9 @@ public class QueryRequestParser
     }
 
     // Convert the grouping specifications to an easy-to-use array.
-    if (groupSpecs.size() > 0) {
+    if (!groupSpecs.isEmpty()) {
       req.facetSpecs = (FacetSpec[])groupSpecs.toArray(
-        new FacetSpec[groupSpecs.size()]);
+              new FacetSpec[0]);
     }
 
     // And we're done.
@@ -336,7 +336,7 @@ public class QueryRequestParser
     } // for i
 
     // Make sure a field name was specified.
-    if (fs.field == null || fs.field.length() == 0)
+    if (fs.field == null || fs.field.isEmpty())
       error("'" + el.name() + "' element requires 'field' attribute");
 
     // If no group selection, put in the default.
@@ -771,9 +771,9 @@ public class QueryRequestParser
 
     // Form the final query.
     SpanQuery[] subQueries = (SpanQuery[])queryList.toArray(
-      new SpanQuery[queryList.size()]);
+            new SpanQuery[0]);
     return createMultiFieldQuery(parent,
-                                 fields.toArray(new String[fields.size()]),
+                                 fields.toArray(new String[0]),
                                  boosts,
                                  subQueries,
                                  notVec,
@@ -1148,10 +1148,10 @@ public class QueryRequestParser
     if (!el.hasAttr("metaField") && !el.hasAttr("field"))
       return parentField;
     String attVal = el.attrValue("field");
-    if (attVal == null || attVal.length() == 0)
+    if (attVal == null || attVal.isEmpty())
       attVal = el.attrValue("metaField");
 
-    if (attVal.length() == 0)
+    if (attVal.isEmpty())
       error("'field' attribute cannot be empty");
     if (attVal.equals("sectionType") &&
         (parentField == null || !parentField.equals("sectionType")))
@@ -1417,13 +1417,13 @@ public class QueryRequestParser
       }
     }
 
-    if (terms.size() == 0)
+    if (terms.isEmpty())
       error("'" + parent.name() + "' element requires at " + "least one term");
 
     // Handle 'exact' queries specially.
     SpanQuery q;
     SpanQuery[] termQueries = (SpanQuery[])terms.toArray(
-      new SpanQuery[terms.size()]);
+            new SpanQuery[0]);
     if (slop < 0)
       q = new SpanExactQuery(termQueries);
 
@@ -1533,8 +1533,8 @@ public class QueryRequestParser
     ArrayList list = new ArrayList();
     while (tok.hasMoreTokens())
       list.add(tok.nextToken());
-    if (list.size() > 0)
-      return (String[])list.toArray(new String[list.size()]);
+    if (!list.isEmpty())
+      return (String[])list.toArray(new String[0]);
     else
       return null;
   } // parseFieldNames()
@@ -1562,7 +1562,7 @@ public class QueryRequestParser
         error("Each value for 'boosts' must be a valid floating-point number");
       }
     }
-    if (list.size() > 0)
+    if (!list.isEmpty())
       return list.toArray();
     else
       return null;
@@ -1590,7 +1590,7 @@ public class QueryRequestParser
         "'");
 
     String termText = getText(parent);
-    if (termText == null || termText.length() == 0)
+    if (termText == null || termText.isEmpty())
       error("Missing term text in element '" + parent.name() + "'");
 
     // Make a term out of the field and the text.
@@ -1950,7 +1950,7 @@ public class QueryRequestParser
           "' attribute");
       return defaultVal;
     }
-    else if (str.length() == 0) {
+    else if (str.isEmpty()) {
       if (!useDefault)
         error(
           "'" + elName + "' element specified empty '" + attribName +
@@ -1964,7 +1964,7 @@ public class QueryRequestParser
   /**
    * Exception class used to report errors from the query generator.
    */
-  public class QueryFormatError extends GeneralException 
+  public static class QueryFormatError extends GeneralException
   {
     public QueryFormatError(String message) {
       super(message);
@@ -1978,9 +1978,9 @@ public class QueryRequestParser
   /** Keeps track of all the queries for a given field */
   private static class QueryEntry 
   {
-    public Vector queries = new Vector();
-    public Vector nots = new Vector();
-    public String field;
+    public final Vector queries = new Vector();
+    public final Vector nots = new Vector();
+    public final String field;
 
     public QueryEntry(String field) {
       this.field = field;

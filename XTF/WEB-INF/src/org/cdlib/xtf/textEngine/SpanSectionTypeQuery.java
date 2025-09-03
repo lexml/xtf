@@ -97,9 +97,9 @@ public class SpanSectionTypeQuery extends SpanQuery
   {
     return new Spans() 
     {
-      private Spans typeSpans = typeQuery.getSpans(reader, searcher);
+      private final Spans typeSpans = typeQuery.getSpans(reader, searcher);
       private boolean moreType = true;
-      private Spans textSpans = textQuery.getSpans(reader, searcher);
+      private final Spans textSpans = textQuery.getSpans(reader, searcher);
       private boolean moreText = true;
       private boolean firstTime = true;
 

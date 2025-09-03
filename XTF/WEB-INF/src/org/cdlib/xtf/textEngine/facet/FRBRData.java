@@ -56,7 +56,7 @@ import org.cdlib.xtf.util.Trace;
 public class FRBRData 
 {
   /** Cached data. If the reader goes away, our cache will too. */
-  private static WeakHashMap cache = new WeakHashMap();
+  private static final WeakHashMap cache = new WeakHashMap();
   public static final int FIRST_TYPE = 1;
   public static final int TYPE_TITLE = 1;
   public static final int TYPE_AUTHOR = 2;

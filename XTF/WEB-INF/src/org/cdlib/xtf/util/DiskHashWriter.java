@@ -46,7 +46,7 @@ import org.apache.lucene.util.Prime;
 public class DiskHashWriter 
 {
   /** Keeps track of entries in memory until we're ready to write to disk */
-  private HashMap memMap = new HashMap(100);
+  private final HashMap memMap = new HashMap(100);
 
   /**
    * Add a new key/value pair to the hash.
@@ -56,7 +56,7 @@ public class DiskHashWriter
     // We don't allow zero-length strings, because that's how an empty
     // hash slot is denoted.
     //
-    if (key.length() == 0)
+    if (key.isEmpty())
       key = " ";
 
     PackedByteBuf cloned = (PackedByteBuf) val.clone();

@@ -45,10 +45,10 @@ class SubFileWriter extends SubStoreWriter
   private RandomAccessFile file;
 
   /** The structured file that owns this Subfile */
-  private StructuredFile parent;
+  private final StructuredFile parent;
 
   /** Absolute file position for the subfile's start */
-  private long segOffset;
+  private final long segOffset;
 
   /** Current write position within the subfile */
   private long writtenPos = 0;
@@ -57,7 +57,7 @@ class SubFileWriter extends SubStoreWriter
   private static final int BUF_SIZE = 32768;
 
   /** Buffered data (cuts down access to the physical file) */
-  private byte[] buf = new byte[BUF_SIZE];
+  private final byte[] buf = new byte[BUF_SIZE];
 
   /** Amount of data buffered */
   private int bufTop = 0;

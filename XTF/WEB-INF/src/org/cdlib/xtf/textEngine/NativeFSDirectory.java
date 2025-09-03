@@ -39,7 +39,7 @@ import org.apache.lucene.store.NativeFSLockFactory;
 
 public class NativeFSDirectory extends FSDirectory
 {
-  private static HashMap<File, LockFactory> lockFactories = new HashMap();
+  private static final HashMap<File, LockFactory> lockFactories = new HashMap();
   
   /** Returns the directory instance for the named location.
    * @param path the path to the directory.

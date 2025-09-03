@@ -72,10 +72,10 @@ import net.sf.saxon.trans.XPathException;
 public class XMLFormatter 
 {
   /** Buffer to accumulate the results in */
-  private StringBuffer buf = new StringBuffer();
+  private final StringBuffer buf = new StringBuffer();
 
   /** Default amount to indent when {@link #tab()} is called. */
-  public int defaultTabSize = 2;
+  public final int defaultTabSize = 2;
 
   //////////////////////////////////////////////////////////////////////////////
 
@@ -177,7 +177,7 @@ public class XMLFormatter
     closeTagStart();
 
     // If no tag name was specified, simply return.
-    if (tagName == null || tagName.length() == 0)
+    if (tagName == null || tagName.isEmpty())
       return;
 
     // Indent, and write the begin tag name between angle brackets.
@@ -269,13 +269,13 @@ public class XMLFormatter
     closeTagStart();
 
     // If no tag name was specified, simply return.
-    if (tagName == null || tagName.length() == 0)
+    if (tagName == null || tagName.isEmpty())
       return;
 
     // If the tag attributes string is empty, have the simple beginTag()
     // function do the work.
     //
-    if (tagAtts == null || tagAtts.length() == 0) {
+    if (tagAtts == null || tagAtts.isEmpty()) {
       beginTag(tagName);
       return;
     }
@@ -409,7 +409,7 @@ public class XMLFormatter
     closeTagStart();
 
     // If no text was passed by the caller, simply return.
-    if (str == null || str.length() == 0)
+    if (str == null || str.isEmpty())
       return;
 
     // Escape any special characters.
@@ -703,7 +703,7 @@ public class XMLFormatter
                                          "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
 
   /** Stack of current tag nestings */
-  private LinkedList tagStack = new LinkedList();
+  private final LinkedList tagStack = new LinkedList();
 
   /** Current tab level for this thread */
   private int tabCount = 0;

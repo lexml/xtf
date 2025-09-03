@@ -177,7 +177,7 @@ public class TextIndexer
 
       // Make sure the XTF_HOME environment variable is specified.
       cfgInfo.xtfHomePath = System.getProperty("xtf.home");
-      if (cfgInfo.xtfHomePath == null || cfgInfo.xtfHomePath.length() == 0) {
+      if (cfgInfo.xtfHomePath == null || cfgInfo.xtfHomePath.isEmpty()) {
         Trace.error("Error: xtf.home property not found");
         System.exit(1);
       }
@@ -392,7 +392,7 @@ public class TextIndexer
       
       // Validate the index if specified.
       if (cfgInfo.indexInfo.validationPath != null &&
-          cfgInfo.indexInfo.validationPath.length() > 0)
+              !cfgInfo.indexInfo.validationPath.isEmpty())
       {
         Trace.info("");
         if (cfgInfo.validate)
@@ -458,7 +458,6 @@ public class TextIndexer
     }
 
     // Exit successfully.
-    return;
   } // main()
 
   
@@ -470,8 +469,7 @@ public class TextIndexer
   private static void doIndexing(IndexerConfig cfgInfo, File xtfHomeFile)
     throws Exception 
   {
-    SrcTreeProcessor srcTreeProcessor = new SrcTreeProcessor();
-    srcTreeProcessor.open(cfgInfo);
+    SrcTreeProcessor srcTreeProcessor = new SrcTreeProcessor(cfgInfo);
     
     // Start at the root directory specified by the config file. 
     String srcRoot = Path.resolveRelOrAbs(xtfHomeFile,

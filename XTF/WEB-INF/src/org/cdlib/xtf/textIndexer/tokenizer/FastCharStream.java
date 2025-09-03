@@ -32,7 +32,7 @@ public final class FastCharStream implements CharStream {
   int tokenStart = 0;                 // offset in buffer
   int bufferStart = 0;                // position in file of buffer
 
-  Reader input;                   // source of chars
+  final Reader input;                   // source of chars
 
   /** Constructs from a Reader. */
   public FastCharStream(Reader r) {

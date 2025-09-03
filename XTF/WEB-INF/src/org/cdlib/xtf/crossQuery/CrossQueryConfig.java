@@ -66,8 +66,8 @@ public class CrossQueryConfig extends TextConfig
     super.read("crossQuery-config", path);
 
     // Make sure required things were specified.
-    if (queryRouterSheet == null || queryRouterSheet.length() == 0) {
-      if (queryParserSheet == null || queryParserSheet.length() == 0)
+    if (queryRouterSheet == null || queryRouterSheet.isEmpty()) {
+      if (queryParserSheet == null || queryParserSheet.isEmpty())
         requireOrElse(queryRouterSheet,
                       "Config file error: queryRouter path not specified");
     }

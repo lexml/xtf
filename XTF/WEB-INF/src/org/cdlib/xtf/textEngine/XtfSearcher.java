@@ -63,13 +63,13 @@ import org.cdlib.xtf.util.WordMap;
 public class XtfSearcher 
 {
   /** Path to the index directory */
-  private String indexPath;
+  private final String indexPath;
 
   /** The index directory to read from */
-  private Directory directory;
+  private final Directory directory;
 
   /** How often to check for an out-of-date directory */
-  private long updatePeriod;
+  private final long updatePeriod;
 
   /** Last time we checked for out-of-date */
   private long lastCheckTime;
@@ -96,7 +96,7 @@ public class XtfSearcher
   private int chunkOverlap;
 
   /** Stop-words associated with the index (e.g. "the", "a", "and", etc.) */
-  private Set stopSet;
+  private Set<String> stopSet;
 
   /** Map of plural words to singular words */
   private WordMap pluralMap;
@@ -104,11 +104,8 @@ public class XtfSearcher
   /** Map of accented chars to remove diacritics from */
   private CharMap accentMap;
 
-  /** Set of all indexed fields in the index */
-  private Set indexedFields;
-
   /** Set of all fields which are tokenized in the index */
-  private Set tokenizedFields;
+  private Set<String> tokenizedFields;
 
   /** Whether this index is "sparse" (i.e. more than 5 chunks per doc) */
   private boolean isSparse;
@@ -185,6 +182,7 @@ public class XtfSearcher
     // Okay, better re-open to get the fresh data.
     close();
     indexReader = IndexReader.open(directory);
+    assert indexReader != null;
 
     // Fetch the index information chunk.
     Hits match = new IndexSearcher(indexReader).search(
@@ -216,12 +214,12 @@ public class XtfSearcher
     // Get the stop-word set.
     String stopWords = doc.get("stopWords");
     stopSet = null;
-    if (stopWords != null && stopWords.length() > 0)
+    if (stopWords != null && !stopWords.isEmpty())
       stopSet = BigramQueryRewriter.makeStopSet(stopWords);
 
     // If there's an accent map specified, load it.
     String accentMapName = doc.get("accentMap");
-    if (accentMapName != null && accentMapName.length() > 0) {
+    if (accentMapName != null && !accentMapName.isEmpty()) {
       File accentFile = new File(indexPath, accentMapName);
       InputStream stream = new FileInputStream(accentFile);
       if (accentMapName.endsWith(".gz"))
@@ -234,7 +232,7 @@ public class XtfSearcher
     // whether they're accented or not.
     //
     String pluralMapName = doc.get("pluralMap");
-    if (pluralMapName != null && pluralMapName.length() > 0) {
+    if (pluralMapName != null && !pluralMapName.isEmpty()) {
       File pluralFile = new File(indexPath, pluralMapName);
       InputStream stream = new FileInputStream(pluralFile);
       if (pluralMapName.endsWith(".gz"))
@@ -259,10 +257,6 @@ public class XtfSearcher
     int nChunks = indexReader.maxDoc();
     isSparse = nChunks > (nDocs * 5);
 
-    // Determine the list of all fields.
-    indexedFields = new LinkedHashSet(
-      indexReader.getFieldNames(IndexReader.FieldOption.ALL));
-
     // Determine which fields are tokenized.
     tokenizedFields = readTokenizedFields(indexPath, indexReader);
 
@@ -273,11 +267,11 @@ public class XtfSearcher
   /**
    * Read in the list of fields that are tokenized in this index.
    */
-  public static LinkedHashSet readTokenizedFields(String indexPath, 
+  public static LinkedHashSet<String> readTokenizedFields(String indexPath,
                                                   IndexReader indexReader) 
     throws IOException
   {
-    LinkedHashSet tokenizedFields = new LinkedHashSet();
+    LinkedHashSet<String> tokenizedFields = new LinkedHashSet<>();
     
     // Read in the the file listing all the tokenized fields (if any).
     File tokFieldsFile = new File(
@@ -318,7 +312,7 @@ public class XtfSearcher
   /**
    * Get the list of all tokenized fields.
    */
-  public Set tokenizedFields() {
+  public Set<String> tokenizedFields() {
     return tokenizedFields;
   }
 
@@ -327,13 +321,6 @@ public class XtfSearcher
    */
   public IndexReader indexReader() {
     return indexReader;
-  }
-
-  /**
-   * Gets the set of all fields that have been indexed.
-   */
-  public Set indexedFields() {
-    return indexedFields;
   }
 
   /**
@@ -360,7 +347,7 @@ public class XtfSearcher
   /**
    * Find out the set of stop words, or null if none.
    */
-  public Set stopSet() {
+  public Set<String> stopSet() {
     return stopSet;
   }
 

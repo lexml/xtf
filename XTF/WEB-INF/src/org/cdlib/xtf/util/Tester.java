@@ -44,10 +44,10 @@ public abstract class Tester
    * List of all tests (or at least, tests for all classes that have been
    * loaded.
    */
-  private static LinkedList allTests = new LinkedList();
+  private static final LinkedList allTests = new LinkedList();
 
   /** Name of this test */
-  private String name;
+  private final String name;
 
   /** True after test has been tried */
   private boolean testedAlready;

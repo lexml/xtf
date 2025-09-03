@@ -42,7 +42,7 @@ import java.io.StringReader;
 public class FastStringReader extends StringReader 
 {
   /** The actual string to read from */
-  private String str;
+  private final String str;
 
   /** Construct a reader for the given string */
   public FastStringReader(String s) {

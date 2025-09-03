@@ -61,7 +61,7 @@ public class ParseException extends Exception {
    * this object and thereby affects the semantics of the
    * "getMessage" method (see below).
    */
-  protected boolean specialConstructor;
+  protected final boolean specialConstructor;
 
   /**
    * This is the last token that has been consumed successfully.  If
@@ -137,7 +137,7 @@ public class ParseException extends Exception {
   /**
    * The end of line string for this machine.
    */
-  protected String eol = System.getProperty("line.separator", "\n");
+  protected final String eol = System.getProperty("line.separator", "\n");
  
   /**
    * Used to convert raw characters to their escaped version

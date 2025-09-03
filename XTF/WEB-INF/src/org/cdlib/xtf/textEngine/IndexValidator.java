@@ -93,7 +93,7 @@ public class IndexValidator
 
     // If no validation is specified, we're done.
     String validationName = doc.get("validation");
-    if (validationName == null || validationName.length() == 0)
+    if (validationName == null || validationName.isEmpty())
       return true;
 
     // Let the user know we're validating now.

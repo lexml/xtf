@@ -65,5 +65,5 @@ public class StringCache extends SimpleCache
   }
 
   /** Name of the cache, printed by logAction() */
-  public String cacheName;
+  public final String cacheName;
 } // class StringCache

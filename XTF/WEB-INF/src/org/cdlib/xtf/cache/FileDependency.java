@@ -79,8 +79,8 @@ public class FileDependency extends Dependency
   }
 
   /** The file we're tracking */
-  private File file;
+  private final File file;
 
   /** When the file was modified */
-  private long lastModified;
+  private final long lastModified;
 } // class FileDependency

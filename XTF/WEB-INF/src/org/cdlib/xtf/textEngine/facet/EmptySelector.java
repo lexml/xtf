@@ -33,7 +33,7 @@ package org.cdlib.xtf.textEngine.facet;
 /** Select empty or non-empty groups, according to a flag. */
 public class EmptySelector extends GroupSelector 
 {
-  private boolean flag;
+  private final boolean flag;
 
   public EmptySelector(boolean flag) {
     this.flag = flag;

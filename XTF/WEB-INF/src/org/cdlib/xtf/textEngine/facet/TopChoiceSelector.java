@@ -36,7 +36,7 @@ public class TopChoiceSelector extends GroupSelector
 {
   private int bestLevel;
   private int bestParent;
-  private Vector bestChildren = new Vector(10);
+  private final Vector bestChildren = new Vector(10);
   private int[] firstChild;
 
   public void reset(boolean conservative) {

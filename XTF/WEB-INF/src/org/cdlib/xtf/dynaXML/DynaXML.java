@@ -98,7 +98,7 @@ public class DynaXML extends TextServlet
   private DynaXMLConfig config;
 
   /** Locator used to find lazy and non-lazy document files */
-  private DocLocator docLocator = createDocLocator();
+  private final DocLocator docLocator = createDocLocator();
 
   /**
    * Called by the superclass to find out the name of our specific config
@@ -185,7 +185,7 @@ public class DynaXML extends TextServlet
     // Some broken proxies prepend "unknown" to the real IP address.
     // To work around these, skip all characters until we hit a digit.
     //
-    while (ip.length() > 0 && !Character.isDigit(ip.charAt(0)))
+    while (!ip.isEmpty() && !Character.isDigit(ip.charAt(0)))
       ip = ip.substring(1);
 
     // All done!

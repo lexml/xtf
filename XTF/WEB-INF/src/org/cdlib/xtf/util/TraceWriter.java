@@ -39,10 +39,10 @@ import java.io.Writer;
 public class TraceWriter extends Writer 
 {
   /** What level to output messages at */
-  private int traceLevel;
+  private final int traceLevel;
 
   /** Buffer to build up each line, flushed at newline */
-  private StringBuffer buf = new StringBuffer();
+  private final StringBuffer buf = new StringBuffer();
 
   /**
    * Construct a TraceWriter, recording the Trace level that future

@@ -31,6 +31,7 @@ package org.cdlib.xtf.util;
  */
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Maintains a list of key/value pairs. Can be easily iterated over or
@@ -42,7 +43,7 @@ public class AttribList
    * The list is stored as a linked list. Not so fast to iterate, but fast
    * to add/remove.
    */
-  private LinkedList list = new LinkedList();
+  private final List<Attrib> list = new LinkedList<>();
 
   /**
    * Add a key/value pair to the list. Note: does not check for duplicates!
@@ -60,8 +61,7 @@ public class AttribList
    */
   public String get(String key) 
   {
-    for (Iterator iter = iterator(); iter.hasNext();) {
-      Attrib att = (Attrib)iter.next();
+    for (Attrib att : list) {
       if (att.key.equals(key))
         return att.value;
     }
@@ -69,7 +69,7 @@ public class AttribList
   }
 
   /** Get an iterator on the list */
-  public Iterator iterator() {
+  public Iterator<Attrib> iterator() {
     return list.iterator();
   }
 

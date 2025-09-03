@@ -51,7 +51,7 @@ class BufferedRandomAccessFile extends RandomAccessFileOrArray
   
   // Buffering
   final int BUFFER_SIZE = 4096;
-  byte[] buffer = new byte[BUFFER_SIZE];
+  final byte[] buffer = new byte[BUFFER_SIZE];
   int startOffset = 0;
   int bufferLength = 0;
   int bufferPos = 0;

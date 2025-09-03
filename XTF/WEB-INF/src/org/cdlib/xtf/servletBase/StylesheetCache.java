@@ -51,12 +51,12 @@ import org.cdlib.xtf.util.*;
  * This class is used to cache stylesheets so they don't have to be
  * reloaded each time they're used.
  */
-public class StylesheetCache extends GeneratingCache 
+public class StylesheetCache extends GeneratingCache<String,Templates>
 {
   private boolean dependencyChecking = false;
-  private GeneratingCache dependencyReceiver = null;
+  private GeneratingCache<String,Templates> dependencyReceiver = null;
   private TraceListenerFactory traceListenerFactory = null;
-  private TransformerFactory factory;
+  private final TransformerFactory factory;
   
   public interface TraceListenerFactory {
     TraceListener createListener();
@@ -103,20 +103,6 @@ public class StylesheetCache extends GeneratingCache
   }
 
   /**
-   * Locate the stylesheet for the given filesystem path. If not cached,
-   * then load it.
-   *
-   * @param  path         Filesystem path of the stylesheet to load
-   * @return              The parsed stylesheet
-   * @throws Exception    If the stylesheet could not be loaded.
-   */
-  public Templates find(String path)
-    throws Exception 
-  {
-    return (Templates)super.find(path);
-  }
-
-  /**
    * Enable or disable profiling (only affects stylesheets that are
    * not already cached). If the factory is null, profiling is
    * disabled.
@@ -128,11 +114,11 @@ public class StylesheetCache extends GeneratingCache
   /**
    * Load and parse a stylesheet from the filesystem.
    *
-   * @param  key          (String)Filesystem path of the stylesheet to load
+   * @param  path          (String)Filesystem path of the stylesheet to load
    * @return              The parsed stylesheet
    * @throws Exception    If the stylesheet could not be loaded.
    */
-  protected synchronized Object generate(Object key)
+  protected synchronized Templates generate(String path)
     throws Exception 
   {
     assert dependencyReceiver == null : "stylesheet cache should only have dependencyReceiver " +
@@ -142,7 +128,6 @@ public class StylesheetCache extends GeneratingCache
 
     try 
     {
-      String path = (String)key;
       File file = new File(path);
       if (dependencyChecking)
         addDependency(new FileDependency(file));
@@ -161,7 +146,7 @@ public class StylesheetCache extends GeneratingCache
       if (path.startsWith("http:"))
         url = path;
       else
-        url = file.toURL().toString();
+        url = file.toURI().toURL().toString();
       Templates x = factory.newTemplates(new SAXSource(new InputSource(url)));
       if (x == null)
         throw new TransformerException("Cannot read stylesheet: " + path);
@@ -174,8 +159,8 @@ public class StylesheetCache extends GeneratingCache
   } // generate()
 
   /** Prints out useful debugging info */
-  protected void logAction(String action, Object key, Object value) {
-    Trace.debug("StylesheetCache: " + action + ". Path=" + (String)key);
+  protected void logAction(String action, String key, Templates value) {
+    Trace.debug("StylesheetCache: " + action + ". Path=" + key);
   }
 
   /**
@@ -187,8 +172,12 @@ public class StylesheetCache extends GeneratingCache
    * We do it by implementing a pass-through URIResolver that adds a
    * dependency and then does the normal URIResolver work.
    */
-  private static class DepResolver implements URIResolver 
-  {
+  private static class DepResolver implements URIResolver {
+      /** The cache to add dependencies to */
+      final StylesheetCache cache;
+
+      /** Does the work of resolving the URI's */
+      final URIResolver realResolver;
     /**
      * Constructor.
      *
@@ -244,10 +233,6 @@ public class StylesheetCache extends GeneratingCache
       return src;
     } // resolve()
 
-    /** The cache to add dependencies to */
-    StylesheetCache cache;
 
-    /** Does the work of resolving the URI's */
-    URIResolver realResolver;
   } // class DepResolver
 } // class StylesheetCache

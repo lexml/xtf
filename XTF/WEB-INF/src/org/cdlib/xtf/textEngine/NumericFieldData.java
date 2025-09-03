@@ -54,13 +54,13 @@ import org.apache.lucene.util.LongList;
 public class NumericFieldData 
 {
   /** Cached data. If the reader goes away, our cache will too. */
-  private static WeakHashMap cache = new WeakHashMap();
+  private static final WeakHashMap cache = new WeakHashMap();
 
   /** Document IDs containing values for the field */
-  private IntList docs = new IntList();
+  private final IntList docs = new IntList();
 
   /** Associated numeric value for each document */
-  private LongList values = new LongList();
+  private final LongList values = new LongList();
 
   /**
    * Retrieves tags for a given field from a given reader. Maintains a cache

@@ -130,13 +130,13 @@ import org.cdlib.xtf.util.WordMap;
 public class XTFTextAnalyzer extends Analyzer 
 {
   /** The list of stop-words currently set for this filter. */
-  private Set stopSet;
+  private final Set stopSet;
 
   /** The set of words to change from plural to singular */
-  private WordMap pluralMap;
+  private final WordMap pluralMap;
 
   /** The set of accented chars to remove diacritics from */
-  private CharMap accentMap;
+  private final CharMap accentMap;
 
   /** A reference to the contiguous source text block to be tokenized and
    *  filtered. (Used by the {@link XTFTextAnalyzer#tokenStream(String,Reader) tokenStream()}
@@ -148,13 +148,13 @@ public class XTFTextAnalyzer extends Analyzer
   /**
    * List of fields marked as "facets" and thus get special tokenization
    */
-  private HashSet facetFields = new HashSet();
+  private final HashSet facetFields = new HashSet();
 
   /**
    * List of fields that marked as possibly misspelled, and thus don't get
    * added to the spelling correction dictionary.
    */
-  private HashSet misspelledFields = new HashSet();
+  private final HashSet misspelledFields = new HashSet();
 
   /** If building a spelling correction dictionary, this is the writer */
   private SpellWriter spellWriter = null;
@@ -330,10 +330,10 @@ public class XTFTextAnalyzer extends Analyzer
         result = new BigramStopFilter(result, stopSet) 
         {
           protected boolean isStopWord(String word) {
-            if (word.length() > 0 &&
+            if (!word.isEmpty() &&
                 word.charAt(0) == Constants.FIELD_START_MARKER)
               word = word.substring(1);
-            if (word.length() > 0 &&
+            if (!word.isEmpty() &&
                 word.charAt(word.length() - 1) == Constants.FIELD_END_MARKER)
               word = word.substring(0, word.length() - 1);
             return super.isStopWord(word);

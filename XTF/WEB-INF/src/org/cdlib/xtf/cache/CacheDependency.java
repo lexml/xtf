@@ -61,11 +61,11 @@ public class CacheDependency extends Dependency
   }
 
   /** The cache we're depending on */
-  public Cache cache;
+  public final Cache cache;
 
   /** The key within that cache we're depending on */
-  public Object key;
+  public final Object key;
 
   /** The set time of the cache entry when this dependency was created. */
-  public long lastSet;
+  public final long lastSet;
 } // class CacheDependency

@@ -58,7 +58,7 @@ import org.xml.sax.ext.LexicalHandler;
 class XMLStubReader extends DTDSuppressingXMLReader
 {
   /** Thrown after the first element end marker is found */
-  private class GetOut extends RuntimeException { }
+  private static class GetOut extends RuntimeException { }
   
   /** 
    * Establish the content handler that will receive events. We wrap it
@@ -77,7 +77,7 @@ class XMLStubReader extends DTDSuppressingXMLReader
     throws SAXNotRecognizedException, SAXNotSupportedException 
   {
     if (name.equals("http://xml.org/sax/properties/lexical-handler")) {
-      StubLexicalHandler stubHandler = new StubLexicalHandler((LexicalHandler)value);
+      StubLexicalHandler stubHandler = new StubLexicalHandler((LexicalHandler) value);
       super.setProperty(name, stubHandler);
     }
     else      
@@ -101,9 +101,9 @@ class XMLStubReader extends DTDSuppressingXMLReader
    * and turn that even into an unparsed entity declaration so that Saxon will
    * keep a record of it.
    */
-  private class StubLexicalHandler implements LexicalHandler
+  private static class StubLexicalHandler implements LexicalHandler
   {
-    private LexicalHandler out;
+    private final LexicalHandler out;
     
     public StubLexicalHandler(LexicalHandler out) {
       this.out = out;
@@ -157,8 +157,8 @@ class XMLStubReader extends DTDSuppressingXMLReader
    */
   private class StubContentHandler implements ContentHandler 
   {
-    private ContentHandler out;
-    private Stack<String[]> eventStack = new Stack<String[]>();
+    private final ContentHandler out;
+    private final Stack<String[]> eventStack = new Stack<String[]>();
     
     /** Construct the content handler, passing events to 'out' */
     public StubContentHandler(ContentHandler out) {

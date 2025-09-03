@@ -85,7 +85,7 @@ public class IndexDump
 
       // Make sure the XTF_HOME environment variable is specified.
       cfgInfo.xtfHomePath = System.getProperty("xtf.home");
-      if (cfgInfo.xtfHomePath == null || cfgInfo.xtfHomePath.length() == 0) {
+      if (cfgInfo.xtfHomePath == null || cfgInfo.xtfHomePath.isEmpty()) {
         Trace.error("Error: xtf.home property not found");
         return;
       }
@@ -212,7 +212,7 @@ public class IndexDump
           showUsage = true;
 
         String[] fieldNameArray = (String[])fieldNames.toArray(
-          new String[fieldNames.size()]);
+                new String[0]);
 
         // If the config file was read successfully, we can begin processing.
         if (showUsage) 
@@ -397,7 +397,7 @@ public class IndexDump
           continue;
 
         // Skip empty terms (there shouldn't be any though) 
-        if (text.length() == 0)
+        if (text.isEmpty())
           continue;
 
         // Skip special start/end of field marks (normal terms will also

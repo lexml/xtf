@@ -208,14 +208,14 @@ public class XMLConfigParser extends DefaultHandler
 
     // Make sure all the required items were specified.
     if (cfgInfo.indexInfo.indexPath == null ||
-        cfgInfo.indexInfo.indexPath.equals("")) 
+            cfgInfo.indexInfo.indexPath.isEmpty())
     {
       Trace.error("Error: Index configuration file failed to specify 'db' element");
       return -1;
     }
 
     if (cfgInfo.indexInfo.sourcePath == null ||
-        cfgInfo.indexInfo.sourcePath.equals("")) 
+            cfgInfo.indexInfo.sourcePath.isEmpty())
     {
       Trace.error(
         "Error: Index configuration file failed to specify 'sourcePath' element");
@@ -223,7 +223,7 @@ public class XMLConfigParser extends DefaultHandler
     }
 
     if (cfgInfo.indexInfo.docSelectorPath == null ||
-        cfgInfo.indexInfo.docSelectorPath.equals("")) 
+            cfgInfo.indexInfo.docSelectorPath.isEmpty())
     {
       Trace.error(
         "Error: Index configuration file failed to specify 'docSelectorPath' element");
@@ -288,7 +288,7 @@ public class XMLConfigParser extends DefaultHandler
       String xmlIdxName = atts.getValue("name").trim();
 
       // If the name is missing, don't do any more work.
-      if (xmlIdxName == null || xmlIdxName.length() == 0)
+      if (xmlIdxName == null || xmlIdxName.isEmpty())
         return;
 
       // Get a more convenient reference to the index name that we're
@@ -408,7 +408,7 @@ public class XMLConfigParser extends DefaultHandler
       // If the chunk size was not specified, or 'document' was
       // specified as the chunk size...
       //
-      if (value == null || value.length() == 0) 
+      if (value == null || value.isEmpty())
       {
         // Set the chunk size to be the default, and the overlap too'.
         configInfo.indexInfo.setChunkSize(IndexInfo.defaultChunkSize);
@@ -428,7 +428,7 @@ public class XMLConfigParser extends DefaultHandler
       // If the chunk overlap was not specified, set the overlap to
       // be half the selected chunk size.
       //
-      if (value == null || value.length() == 0) {
+      if (value == null || value.isEmpty()) {
         configInfo.indexInfo.setChunkOvlp(
           configInfo.indexInfo.chunkAtt[IndexInfo.chunkSize]);
         return;
@@ -446,11 +446,11 @@ public class XMLConfigParser extends DefaultHandler
       String list = atts.getValue("list");
       String path = atts.getValue("path");
 
-      if (list != null && list.length() > 0)
+      if (list != null && !list.isEmpty())
         configInfo.indexInfo.stopWords = atts.getValue("list");
 
       // Was a path specified?
-      else if (path != null && path.length() > 0) 
+      else if (path != null && !path.isEmpty())
       {
         path = Path.normalizeFileName(atts.getValue("path"));
         File file = new File(new File(configInfo.xtfHomePath), path);

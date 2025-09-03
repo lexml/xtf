@@ -62,7 +62,7 @@ public final class ProxyElement extends NodeImpl implements NodeInfo, Fingerprin
   ElementImpl element = null;
 
   /** Document to use for loading */
-  LazyDocument document;
+  final LazyDocument document;
 
   /** Node number represented by this element */
   int nodeNum;

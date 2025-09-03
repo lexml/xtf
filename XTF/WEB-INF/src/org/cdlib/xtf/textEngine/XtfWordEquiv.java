@@ -37,10 +37,10 @@ import org.cdlib.xtf.util.WordMap;
 /** Used for eliminating redundant spelling suggestions */
 public class XtfWordEquiv implements WordEquiv 
 {
-  private CharMap accentMap;
-  private WordMap pluralMap;
-  private StdTermFilter stdTermFilter = new StdTermFilter();
-  private FastCache recent = new FastCache(1000);
+  private final CharMap accentMap;
+  private final WordMap pluralMap;
+  private final StdTermFilter stdTermFilter = new StdTermFilter();
+  private final FastCache recent = new FastCache(1000);
 
   public XtfWordEquiv(CharMap accentMap, WordMap pluralMap) {
     this.accentMap = accentMap;

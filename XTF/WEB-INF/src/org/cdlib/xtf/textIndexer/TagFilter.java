@@ -57,7 +57,7 @@ public class TagFilter extends TokenFilter
   public static final String XML_TYPE = "ELEMENT".intern();
 
   /** The source text being tokenized */
-  private char[] srcChars;
+  private final char[] srcChars;
 
   /** True while we're processing inside an element definition */
   private boolean inElement = false;
@@ -87,7 +87,7 @@ public class TagFilter extends TokenFilter
   private String attrName = null;
 
   /** Queued tokens */
-  private LinkedList tokenQueue = new LinkedList();
+  private final LinkedList tokenQueue = new LinkedList();
   
   /** Pattern used to detect entities stuck onto a token. */
   private static final Pattern followingEntityPat = Pattern.compile("^(.*)&(\\w+)$");

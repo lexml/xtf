@@ -55,8 +55,8 @@ import org.cdlib.xtf.util.AttribList;
  */
 public class FakeServletRequest implements HttpServletRequest 
 {
-  private String url;
-  private AttribList params = new AttribList();
+  private final String url;
+  private final AttribList params = new AttribList();
 
   public FakeServletRequest(String url) 
   {

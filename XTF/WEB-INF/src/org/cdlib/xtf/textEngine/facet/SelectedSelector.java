@@ -33,7 +33,7 @@ package org.cdlib.xtf.textEngine.facet;
 /** Select selected or non-selected groups, depending on a flag */
 public class SelectedSelector extends GroupSelector 
 {
-  private boolean flag;
+  private final boolean flag;
 
   public SelectedSelector(boolean flag) {
     this.flag = flag;

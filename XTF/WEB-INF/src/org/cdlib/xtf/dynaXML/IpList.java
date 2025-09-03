@@ -49,9 +49,9 @@ class IpList
    * Data class to keep track of the four numeric components of an IP
    * address.
    */
-  private class IpAddr 
+  private static class IpAddr
   {
-    public int[] components = new int[4];
+    public final int[] components = new int[4];
 
     /** Constructs a blank IP address structure */
     IpAddr() {
@@ -158,16 +158,16 @@ class IpList
   private class IpRange 
   {
     /** Start of the range */
-    public IpAddr startAddr;
+    public final IpAddr startAddr;
 
     /** End of the range (can be equal to startAddr) */
-    public IpAddr endAddr;
+    public final IpAddr endAddr;
 
     /**
      * true if the range is specified IP address to include, false if
      * it specifies addresses to exclude.
      */
-    public boolean isPositive;
+    public final boolean isPositive;
 
     /**
      * Construct an IP range.
@@ -320,7 +320,7 @@ class IpList
       line = line.trim();
 
       // Skip blank lines.
-      if (line.equals(""))
+      if (line.isEmpty())
         continue;
 
       // Lines beginning with numbers specify positive IP addresses
@@ -380,5 +380,5 @@ class IpList
   }
 
   /** List of IpRanges. */
-  private ArrayList<IpRange> ranges;
+  private final ArrayList<IpRange> ranges;
 } // class IpList

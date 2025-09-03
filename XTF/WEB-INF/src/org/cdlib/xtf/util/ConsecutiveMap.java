@@ -41,10 +41,10 @@ import java.util.Vector;
 public class ConsecutiveMap 
 {
   /** Mapping used to keep the unique set of keys */
-  private HashMap map = new HashMap(100);
+  private final HashMap map = new HashMap(100);
 
   /** Vector of all unique keys, in order of addition */
-  private Vector inOrder = new Vector(100);
+  private final Vector inOrder = new Vector(100);
 
   /**
    * If the key is already present in the map, return its assigned number.

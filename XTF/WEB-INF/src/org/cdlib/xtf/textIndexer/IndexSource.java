@@ -35,27 +35,20 @@ package org.cdlib.xtf.textIndexer;
  * was made possible by a grant from the Andrew W. Mellon Foundation,
  * as part of the Melvyl Recommender Project.
  */
-import java.io.File;
-import java.io.IOException;
-import java.util.Date;
 import javax.xml.transform.Templates;
-import org.xml.sax.SAXException;
+
+import org.xml.sax.InputSource;
 
 /**
  * Represents a single source of data for an XTF index. It may contain one or
- * more {@link IndexRecord}s, including its key and prefilters to apply to the
+ * more IndexRecords, including its key and prefilters to apply to the
  * records.
  */
-public abstract class IndexSource 
-{
-  /** Obtain the path to the file (or null if it's not a local file) */
-  protected abstract File path();
+public abstract class IndexSource {
 
-  public final long lastModified() {
-      return path() == null ? -1L :  path().lastModified();
-  }
+  public abstract long lastModified();
 
-  /** Obtain a unique key for this input file */
+    /** Obtain a unique key for this input file */
   public abstract String key();
 
   /**
@@ -85,7 +78,5 @@ public abstract class IndexSource
    */
   public abstract long totalSize();
 
-  /** Obtain the next record from the file, or null if no more. */
-  public abstract IndexRecord nextRecord()
-    throws SAXException, IOException;
+    public abstract InputSource getInputSource();
 } // class IndexSource

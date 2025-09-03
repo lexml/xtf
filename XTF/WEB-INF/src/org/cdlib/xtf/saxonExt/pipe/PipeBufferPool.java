@@ -41,7 +41,7 @@ class PipeBufferPool
 {
   static final int MAX_SPARE_BUFS = 4;
   static final int BUF_SIZE = 32*1024; // 32 Kbytes
-  static LinkedList spareBuffers = new LinkedList();
+  static final LinkedList spareBuffers = new LinkedList();
 
   /**
    * Allocate a buffer to use for I/O. Uses previously allocated buffer if 

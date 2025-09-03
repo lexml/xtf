@@ -83,7 +83,7 @@ public class ProcessRunner
   {
     // Empty arguments would result in very weird rsync behavior
     for (String arg : argArray)
-      assert arg != null && arg.length() > 0;
+      assert arg != null && !arg.isEmpty();
       
     // Output a trace message showing the rsync command (debug mode only)
     if (Trace.getOutputLevel() >= Trace.debug)
@@ -252,8 +252,8 @@ public class ProcessRunner
    */
   private static class InputStuffer extends Thread 
   {
-    private OutputStream outStream;
-    private byte[] bytes;
+    private final OutputStream outStream;
+    private final byte[] bytes;
     public Throwable error;
     public boolean done = false;
 
@@ -293,8 +293,8 @@ public class ProcessRunner
    */
   private static class OutputGrabber extends Thread 
   {
-    private InputStream inStream;
-    private ByteArrayOutputStream buffer = new ByteArrayOutputStream(100);
+    private final InputStream inStream;
+    private final ByteArrayOutputStream buffer = new ByteArrayOutputStream(100);
     public byte[] outBytes = new byte[0];
     public Throwable error;
     public boolean done = false;

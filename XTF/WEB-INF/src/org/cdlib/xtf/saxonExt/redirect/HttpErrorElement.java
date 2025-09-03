@@ -79,10 +79,10 @@ public class HttpErrorElement extends ExtensionInstruction
     return new HttpErrorInstruction(codeExp, messageExp);
   }
 
-  private class HttpErrorInstruction extends SimpleExpression 
+  private static class HttpErrorInstruction extends SimpleExpression
   {
-    Expression codeExp;
-    Expression messageExp;
+    final Expression codeExp;
+    final Expression messageExp;
 
     public HttpErrorInstruction(Expression codeExp, Expression messageExp) {
       this.codeExp = codeExp;

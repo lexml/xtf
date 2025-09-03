@@ -6,7 +6,7 @@ import net.sf.saxon.type.Type;
 
 final class FollowingEnumeration extends TreeEnumeration 
 {
-  private NodeImpl root;
+  private final NodeImpl root;
 
   public FollowingEnumeration(NodeImpl node, NodeTest nodeTest) 
   {

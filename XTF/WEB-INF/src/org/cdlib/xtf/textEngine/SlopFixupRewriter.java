@@ -52,10 +52,10 @@ import org.cdlib.xtf.util.WordMap;
  */
 public class SlopFixupRewriter extends XtfQueryRewriter 
 {
-  private DocNumMap docNumMap;
-  private Set stopSet;
-  private WordMap pluralMap;
-  private CharMap accentMap;
+  private final DocNumMap docNumMap;
+  private final Set stopSet;
+  private final WordMap pluralMap;
+  private final CharMap accentMap;
 
   /** Construct a new rewriter */
   public SlopFixupRewriter(DocNumMap docNumMap, Set stopSet, WordMap pluralMap,

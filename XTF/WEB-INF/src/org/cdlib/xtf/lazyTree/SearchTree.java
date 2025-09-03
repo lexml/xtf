@@ -94,7 +94,7 @@ import org.cdlib.xtf.util.WordMap;
 public class SearchTree extends LazyDocument 
 {
   /** Prefix for this document in the Lucene index */
-  String sourceKey;
+  final String sourceKey;
 
   /** Map containing all terms used in the query */
   Set termMap;

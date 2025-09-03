@@ -66,7 +66,7 @@ public abstract class InstructionWithContent extends Instruction
 {
   protected final String            name;
   private int                       nameCode;
-  protected Map<String, Expression> attribs;
+  protected final Map<String, Expression> attribs;
   protected Expression              content;
 
   /**
@@ -214,8 +214,7 @@ public abstract class InstructionWithContent extends Instruction
   public Iterator iterateSubExpressions() 
   {
       ArrayList<Expression> list = new ArrayList<Expression>(attribs.size() + 1);
-      for (Expression exp : attribs.values())
-        list.add(exp);
+      list.addAll(attribs.values());
       if (content != null) {
           list.add(content);
       }

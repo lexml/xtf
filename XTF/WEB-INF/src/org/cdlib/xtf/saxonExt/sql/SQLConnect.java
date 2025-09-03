@@ -32,7 +32,7 @@ public class SQLConnect extends ExtensionInstruction
   Expression driver;
   Expression user;
   Expression password;
-  static ThreadLocal threadConnections = new ThreadLocal();
+  static final ThreadLocal threadConnections = new ThreadLocal();
 
   /** Close any connections held by the current thread */
   public static synchronized void closeThreadConnections() 

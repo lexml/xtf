@@ -86,7 +86,7 @@ public class RedirectElement extends ExtensionInstruction
 
   private class RedirectInstruction extends SimpleExpression 
   {
-    Expression urlExp;
+    final Expression urlExp;
 
     public RedirectInstruction(Expression urlExp) {
       this.urlExp = urlExp;

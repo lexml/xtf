@@ -33,7 +33,7 @@ package org.cdlib.xtf.textEngine.facet;
 /** Pass incoming groups to a number of selectors. */
 public class UnionSelector extends GroupSelector 
 {
-  GroupSelector[] selectors;
+  final GroupSelector[] selectors;
 
   public UnionSelector(GroupSelector[] selectors) {
     this.selectors = selectors;

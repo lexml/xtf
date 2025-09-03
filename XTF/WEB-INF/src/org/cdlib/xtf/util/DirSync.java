@@ -3,6 +3,7 @@ package org.cdlib.xtf.util;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.cdlib.xtf.util.ProcessRunner.CommandFailedException;
@@ -47,7 +48,7 @@ public class DirSync
 {
   public static final int MAX_SELECTIVE_SYNC = 500;
   private static final int MAX_RSYNC_BATCH = 2;
-  private SubDirFilter filter;
+  private final SubDirFilter filter;
 
   /**
    * Initialize a directory syncer with no sub-directory filter
@@ -160,8 +161,7 @@ public class DirSync
       
       // Add any extra arguments at this point, before the paths.
       if (extraArgs != null) {
-        for (String extra : extraArgs)
-          args.add(extra);
+          args.addAll(Arrays.asList(extraArgs));
       }
 
       // We want to hard link dest files to the source
@@ -186,7 +186,7 @@ public class DirSync
       args.add(dst.getAbsolutePath() + (dst.isDirectory() ? "/" : ""));
 
       // And run the command
-      String[] argArray = args.toArray(new String[args.size()]);
+      String[] argArray = args.toArray(new String[0]);
       ProcessRunner.runAndGrab(argArray, "", 0);
     } 
     catch (InterruptedException e) {

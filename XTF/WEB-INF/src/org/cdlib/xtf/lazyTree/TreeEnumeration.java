@@ -9,9 +9,9 @@ import net.sf.saxon.trans.XPathException;
 
 abstract class TreeEnumeration implements AxisIterator, LookaheadIterator 
 {
-  protected NodeImpl start;
+  protected final NodeImpl start;
   protected NodeImpl next;
-  protected NodeTest nodeTest;
+  protected final NodeTest nodeTest;
   protected NodeImpl current = null;
   protected int position = 0;
 

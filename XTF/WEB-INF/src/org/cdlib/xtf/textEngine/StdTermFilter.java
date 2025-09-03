@@ -49,8 +49,8 @@ import org.cdlib.xtf.util.FastTokenizer;
  */
 public class StdTermFilter 
 {
-  private DribbleStream dribble;
-  private TokenStream filter;
+  private final DribbleStream dribble;
+  private final TokenStream filter;
 
   /**
    * During tokenization, the '*' wildcard has to be changed to a word
@@ -122,7 +122,7 @@ public class StdTermFilter
     return s;
   } // restoreWildcards()
 
-  private class DribbleStream extends TokenStream 
+  private static class DribbleStream extends TokenStream
   {
     public String nextToken;
 

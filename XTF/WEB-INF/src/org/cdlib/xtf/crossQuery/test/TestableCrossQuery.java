@@ -62,10 +62,10 @@ import org.cdlib.xtf.util.AttribList;
  */
 public class TestableCrossQuery extends CrossQuery 
 {
-  private String baseDir;
+  private final String baseDir;
   private String indexDirOverride;
   private IndexWarmer indexWarmer;
-  private ThreadLocal<Integer> nHits = new ThreadLocal<Integer>();
+  private final ThreadLocal<Integer> nHits = new ThreadLocal<Integer>();
   
   /**
    * Simplified initialization for use outside a real servlet container.

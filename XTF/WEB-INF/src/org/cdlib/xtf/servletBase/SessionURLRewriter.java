@@ -50,9 +50,9 @@ import net.sf.saxon.trans.XPathException;
  */
 public class SessionURLRewriter extends ProxyReceiver 
 {
-  private Pattern encodeURLPattern;
-  private HttpServletRequest httpRequest;
-  private HttpServletResponse httpResponse;
+  private final Pattern encodeURLPattern;
+  private final HttpServletRequest httpRequest;
+  private final HttpServletResponse httpResponse;
   private NamePool namePool;
   private String elementName;
 

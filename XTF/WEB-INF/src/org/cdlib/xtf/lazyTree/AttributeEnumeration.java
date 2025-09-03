@@ -12,7 +12,7 @@ final class AttributeEnumeration extends AxisIteratorImpl
   implements LookaheadIterator 
 {
   private ElementImpl element;
-  private NodeTest nodeTest;
+  private final NodeTest nodeTest;
   private NodeInfo next;
   private int index;
   private int length;

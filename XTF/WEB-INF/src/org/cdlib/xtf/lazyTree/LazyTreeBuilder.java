@@ -75,10 +75,10 @@ public class LazyTreeBuilder
   private ConsecutiveMap names = new ConsecutiveMap();
 
   /** Saxon configuration used for tree loading */
-  private Configuration config;
+  private final Configuration config;
 
   /** Pipeline configuration */
-  private PipelineConfiguration pipe;
+  private final PipelineConfiguration pipe;
 
   /** File version stored in the persistent file. */
   public static final String CURRENT_VERSION = "2.0";

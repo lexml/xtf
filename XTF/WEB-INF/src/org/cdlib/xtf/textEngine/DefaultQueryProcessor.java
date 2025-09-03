@@ -88,7 +88,7 @@ import org.cdlib.xtf.util.WordMap;
 public class DefaultQueryProcessor extends QueryProcessor 
 {
   /** Map of all XtfSearchers, so we can re-use them */
-  private static HashMap searchers = new HashMap();
+  private static final HashMap searchers = new HashMap();
 
   /** Lucene reader from which to read index data */
   private IndexReader indexReader;
@@ -408,7 +408,7 @@ public class DefaultQueryProcessor extends QueryProcessor
     result.totalDocs = nDocsHit;
     result.startDoc = req.startDoc;
     result.endDoc = req.startDoc + hitVec.size();
-    result.docHits = (DocHit[])hitVec.toArray(new DocHit[hitVec.size()]);
+    result.docHits = (DocHit[])hitVec.toArray(new DocHit[0]);
 
     // Make spelling suggestions if applicable.
     if (spellReader != null && req.spellcheckParams != null)
@@ -466,10 +466,10 @@ public class DefaultQueryProcessor extends QueryProcessor
     {
       // Make a list of fields and terms.
       LinkedHashSet fieldsSet = (LinkedHashSet)fi.next();
-      String[] fields = (String[])fieldsSet.toArray(new String[fieldsSet.size()]);
+      String[] fields = (String[])fieldsSet.toArray(new String[0]);
 
       LinkedHashSet termsSet = (LinkedHashSet)fieldsMap.get(fieldsSet);
-      String[] terms = (String[])termsSet.toArray(new String[termsSet.size()]);
+      String[] terms = (String[])termsSet.toArray(new String[0]);
 
       // Get some suggestions
       String[] suggested = spellReader.suggestKeywords(terms);
@@ -502,7 +502,7 @@ public class DefaultQueryProcessor extends QueryProcessor
     } // for fi
 
     // If no suggestions, we're done.
-    if (out.size() == 0)
+    if (out.isEmpty())
       return;
 
     // Make sure the suggestions result in better results.
@@ -511,7 +511,7 @@ public class DefaultQueryProcessor extends QueryProcessor
 
     // Record the final suggestions in an array.
     res.suggestions = (SpellingSuggestion[])out.values().toArray(
-      new SpellingSuggestion[out.values().size()]);
+            new SpellingSuggestion[0]);
   } // spellCheck()
 
   /**
@@ -706,7 +706,7 @@ public class DefaultQueryProcessor extends QueryProcessor
     if (!dynamicGroupVec.isEmpty()) 
     {
       final DynamicGroupData[] dynGroups = (DynamicGroupData[])dynamicGroupVec.toArray(
-        new DynamicGroupData[dynamicGroupVec.size()]);
+              new DynamicGroupData[0]);
       searcher.search(query, null,
                       new SpanHitCollector() 
       {
@@ -898,7 +898,7 @@ public class DefaultQueryProcessor extends QueryProcessor
         fieldNames.add(st.nextToken());
   
       // If there were none, do a simple score sort.
-      if (fieldNames.size() == 0)
+      if (fieldNames.isEmpty())
         ret = new HitQueue(size);
       else
       {
@@ -1067,9 +1067,9 @@ public class DefaultQueryProcessor extends QueryProcessor
 
   private static class HitQueueMakerImpl implements GroupCounts.HitQueueMaker 
   {
-    private IndexReader reader;
-    private String sortFields;
-    private boolean isSparse;
+    private final IndexReader reader;
+    private final String sortFields;
+    private final boolean isSparse;
 
     public HitQueueMakerImpl(IndexReader reader, String sortFields,
                              boolean isSparse) 

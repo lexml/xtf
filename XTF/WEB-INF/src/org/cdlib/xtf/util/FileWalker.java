@@ -201,7 +201,7 @@ public abstract class FileWalker
     // treat this as a file name with an initial '.' and no extension (for 
     // files like .login)
     //
-    if (fileName.length() == 0 && fileExt.length() != 0) {
+    if (fileName.isEmpty() && !fileExt.isEmpty()) {
       fileName = fileExt;
       fileExt = "";
     }

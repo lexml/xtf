@@ -49,8 +49,8 @@ import org.cdlib.xtf.util.CharMap;
  */
 public class AccentFoldingRewriter extends XtfQueryRewriter 
 {
-  private CharMap accentMap;
-  private Set tokenizedFields;
+  private final CharMap accentMap;
+  private final Set tokenizedFields;
 
   /** Construct a new rewriter to use the given map
    * @param tokFields */

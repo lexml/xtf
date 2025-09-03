@@ -91,7 +91,7 @@ public class IndexStats
 
       // Make sure the XTF_HOME environment variable is specified.
       cfgInfo.xtfHomePath = System.getProperty("xtf.home");
-      if (cfgInfo.xtfHomePath == null || cfgInfo.xtfHomePath.length() == 0) {
+      if (cfgInfo.xtfHomePath == null || cfgInfo.xtfHomePath.isEmpty()) {
         Trace.error("Error: xtf.home property not found");
         return;
       }

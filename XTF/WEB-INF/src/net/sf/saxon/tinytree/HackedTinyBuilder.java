@@ -25,7 +25,7 @@ import net.sf.saxon.type.Type;
 public class HackedTinyBuilder extends Builder 
 {
   // MCH: Added stuff for straight-to-disk text storage.
-  private PackedByteBuf textBuf = new PackedByteBuf(1000);
+  private final PackedByteBuf textBuf = new PackedByteBuf(1000);
   private StructuredStore treeStore;
   private SubStoreWriter textStore;
 

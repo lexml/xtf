@@ -49,9 +49,9 @@ import org.apache.lucene.util.IntList;
  */
 @SuppressWarnings("cast")
 public class IntMultiMap {
-  private int[] keyLinks;
+  private final int[] keyLinks;
   private static final int BLOCK_SIZE = 32760;
-  private Block[] blocks = { new Block() };
+  private Block[] blocks = {new Block()};
   private short curBlockNum = 0;
   private Block curBlock = blocks[0];
   private short curBlockTop = 0;
@@ -171,10 +171,10 @@ public class IntMultiMap {
   /**
    * Keeps track of a block of values, with links to the following values.
    */
-  private class Block 
+  private static class Block
   {
-    int[] values = new int[BLOCK_SIZE];
-    int[] links = new int[BLOCK_SIZE];
+    final int[] values = new int[BLOCK_SIZE];
+    final int[] links = new int[BLOCK_SIZE];
 
     Block() {
       Arrays.fill(values, Integer.MIN_VALUE);

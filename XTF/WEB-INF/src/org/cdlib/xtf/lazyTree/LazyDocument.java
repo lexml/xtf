@@ -50,19 +50,19 @@ public class LazyDocument extends ParentNodeImpl implements DocumentInfo,
                                                             PersistentTree 
 {
   /** Saxon configuration info */
-  protected Configuration config;
+  protected final Configuration config;
 
   /** Name pool used to look up namecodes */
   protected NamePool namePool;
 
   /** Unique number assigned to each document */
-  protected int documentNumber;
+  protected final int documentNumber;
 
   /** Determines whether this document is using namespaces. Not sure why
    *  this works when false, but it does. ( It turns out false is what breaks 
    *  namespace prefixes in the ;raw=1 output. Changed to true. )
    */
-  protected boolean usesNamespaces = true;
+  protected final boolean usesNamespaces = true;
 
   /**
    * This structure supports trees whose root is an element node rather than
@@ -132,7 +132,7 @@ public class LazyDocument extends ParentNodeImpl implements DocumentInfo,
   int[] nameNumToCode;
 
   /** Caches nodes in memory so they only have to be loaded once. */
-  HashMap nodeCache = new HashMap();
+  final HashMap nodeCache = new HashMap();
 
   /** True if nodes in the cache should be permanent, false for weak refs */
   boolean allPermanent = false;

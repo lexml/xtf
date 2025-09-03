@@ -38,10 +38,7 @@ import java.io.InputStreamReader;
 import java.io.FileInputStream;
 import java.io.PrintWriter;
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.Vector;
+import java.util.*;
 import javax.xml.transform.Source;
 import javax.xml.transform.Templates;
 import javax.xml.transform.Transformer;
@@ -108,10 +105,10 @@ public class RegressTest
   String baseDir;
   File filterDir;
   File filterFile;
-  LinkedList failedTests = new LinkedList();
-  static Configuration config = new Configuration();
+  final LinkedList failedTests = new LinkedList();
+  static final Configuration config = new Configuration();
   static { config.setNamePool(NamePool.getDefaultNamePool()); }
-  StylesheetCache stylesheetCache = new StylesheetCache(10, 0, false);
+  final StylesheetCache stylesheetCache = new StylesheetCache(10, 0, false);
 
   public static void main(String[] args) 
   {
@@ -207,8 +204,7 @@ public class RegressTest
 
       // Sort the list.
       ArrayList list = new ArrayList();
-      for (int i = 0; i < files.length; i++)
-        list.add(files[i]);
+        list.addAll(Arrays.asList(files));
       Collections.sort(list);
 
       // And process each of them.
@@ -575,7 +571,7 @@ public class RegressTest
       }
     } // while
 
-    return (String[])lines.toArray(new String[lines.size()]);
+    return (String[])lines.toArray(new String[0]);
   } // slurp()
 
   /**

@@ -1,0 +1,256 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>br.gov.lexml</groupId>
+  <artifactId>xtf-lexml</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <packaging>jar</packaging>
+  <name>XTF</name>
+  <url>https://git.senado.leg.br/lexml/xtf-lexml.git</url>
+  <licenses>
+    <license>
+      <name>GPLv2</name>
+      <url>https://www.gnu.org/licenses/old-licenses/gpl-2.0.html</url>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>jrafael</id>
+      <name>João Nicola</name>
+      <email>jrafael@senado.leg.br</email>
+    </developer>
+  </developers>
+  <description>Rotinas para acessar o site do INLABS</description>
+  <properties>
+    <!-- Define the versions of dependencies -->
+    <scala.version>3.3.6</scala.version>
+    <zio.version>2.1.20</zio.version>
+    <zio-streams.version>2.1.20</zio-streams.version>
+    <maven-scala-plugin.version>4.9.5</maven-scala-plugin.version>
+    <scala.compat.version>3</scala.compat.version>
+    <maven-compiler-plugin.version>3.14.0</maven-compiler-plugin.version>
+    <maven-compiler-plugin.source_target>8</maven-compiler-plugin.source_target>
+    <zio-logging.version>2.5.1</zio-logging.version>
+    <zio-config.version>4.0.4</zio-config.version>
+  </properties>
+  <scm>
+    <url>https:/git.senado.leg.br/lexml/espelho-inlabs</url>
+    <developerConnection>scm:git:https:/git.senado.leg.br/lexml/espelho-inlabs.git</developerConnection>
+    <connection>scm:git:https:/git.senado.leg.br/lexml/espelho-inlabs.git</connection>
+  </scm>
+  <dependencies>
+    <!-- Scala Library -->
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala3-library_${scala.compat.version}</artifactId>
+      <version>${scala.version}</version>
+    </dependency>
+    <!-- ZIO Core -->
+    <dependency>
+      <groupId>dev.zio</groupId>
+      <artifactId>zio_${scala.compat.version}</artifactId>
+      <version>${zio.version}</version>
+    </dependency>
+    <!-- ZIO Streams -->
+    <dependency>
+      <groupId>dev.zio</groupId>
+      <artifactId>zio-streams_${scala.compat.version}</artifactId>
+      <version>${zio-streams.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>dev.zio</groupId>
+      <artifactId>zio-config_${scala.compat.version}</artifactId>
+      <version>${zio-config.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>dev.zio</groupId>
+      <artifactId>zio-config-magnolia_${scala.compat.version}</artifactId>
+      <version>${zio-config.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>dev.zio</groupId>
+      <artifactId>zio-config-typesafe_${scala.compat.version}</artifactId>
+      <version>${zio-config.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>dev.zio</groupId>
+      <artifactId>zio-config-refined_${scala.compat.version}</artifactId>
+      <version>${zio-config.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>dev.zio</groupId>
+      <artifactId>zio-logging_${scala.compat.version}</artifactId>
+      <version>${zio-logging.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>dev.zio</groupId>
+      <artifactId>zio-logging-slf4j_${scala.compat.version}</artifactId>
+      <version>${zio-logging.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>1.5.8</version>
+    </dependency>
+    <dependency>
+      <groupId>com.typesafe</groupId>
+      <artifactId>config</artifactId>
+      <version>1.4.3</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>2.0.17</version>
+    </dependency>
+    <dependency>
+      <groupId>dev.zio</groupId>
+      <artifactId>zio-streams-compress-zip_${scala.compat.version}</artifactId>
+      <version>1.1.0</version>
+    </dependency>
+    <!-- from xtf -->
+    <!-- Resolved from https://repo.maven.apache.org/maven2 -->
+    <dependency>
+      <groupId>org.apache.pdfbox</groupId>
+      <artifactId>fontbox</artifactId>
+      <version>1.8.5</version>
+    </dependency>
+    <!-- Resolved from https://repo.maven.apache.org/maven2 -->
+    <dependency>
+      <groupId>net.java.dev.javacc</groupId>
+      <artifactId>javacc</artifactId>
+      <version>4.1</version>
+    </dependency>
+    <!-- Resolved from https://repo.maven.apache.org/maven2 -->
+    <dependency>
+      <groupId>org.apache.xmlgraphics</groupId>
+      <artifactId>fop</artifactId>
+      <version>0.95-1</version>
+    </dependency>
+    <!-- Resolved from https://repo.maven.apache.org/maven2 -->
+    <dependency>
+      <groupId>org.apache.pdfbox</groupId>
+      <artifactId>pdfbox</artifactId>
+      <version>1.8.5</version>
+    </dependency>
+    <!-- Resolved from https://repo.maven.apache.org/maven2 -->
+    <dependency>
+      <groupId>org.apache.poi</groupId>
+      <artifactId>poi</artifactId>
+      <version>3.0.2-FINAL</version>
+    </dependency>
+    <!-- Resolved from https://repo.maven.apache.org/maven2 -->
+    <dependency>
+      <groupId>com.lowagie</groupId>
+      <artifactId>itext</artifactId>
+      <version>2.1.7</version>
+    </dependency>
+    <!-- Resolved from https://repo.maven.apache.org/maven2 -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.2</version>
+    </dependency>
+    <dependency>
+      <groupId>javax.activation</groupId>
+      <artifactId>activation</artifactId>
+      <version>1.1</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/cql-java/cql-java -->
+    <dependency>
+      <groupId>org.dspace</groupId>
+      <artifactId>cql-java</artifactId>
+      <version>1.0</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/javax.mail/mail -->
+    <dependency>
+      <groupId>javax.mail</groupId>
+      <artifactId>mail</artifactId>
+      <version>1.4.7</version>
+    </dependency>
+    <dependency>
+      <groupId>net.java.dev.javacc</groupId>
+      <artifactId>javacc</artifactId>
+      <version>4.1</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/net.sf.saxon/saxon -->
+    <dependency>
+      <groupId>net.sf.saxon</groupId>
+      <artifactId>saxon</artifactId>
+      <version>8.9</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/org.textmining/tm-extractors -->
+    <dependency>
+      <groupId>org.textmining</groupId>
+      <artifactId>tm-extractors</artifactId>
+      <version>1.0</version>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>servlet-api</artifactId>
+      <version>2.3</version>
+      <scope>provided</scope>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/org.apache.lucene/lucene-core -->
+    <dependency>
+      <groupId>org.apache.lucene</groupId>
+      <artifactId>lucene-core</artifactId>
+      <version>2.1.0</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/com.github.jtidy/jtidy -->
+<dependency>
+    <groupId>com.github.jtidy</groupId>
+    <artifactId>jtidy</artifactId>
+    <version>1.0.5</version>
+</dependency>
+  </dependencies>
+  <build>
+	  <sourceDirectory>XTF/WEB-INF/src</sourceDirectory>
+    <testSourceDirectory>src/test/java</testSourceDirectory>
+    <plugins>
+      <!-- Scala Maven Compiler Plugin -->
+      <plugin>
+        <groupId>net.alchim31.maven</groupId>
+        <artifactId>scala-maven-plugin</artifactId>
+        <version>${maven-scala-plugin.version}</version>
+        <configuration>
+          <args>
+            <arg>-explain-cyclic</arg>
+            <arg>-Ydebug-cyclic</arg>
+          </args>
+          <sourceDirectories>
+            <sourceDirectory>src/main/scala</sourceDirectory>
+	    <sourceDirectory>XTF/WEB-INF/src</sourceDirectory>
+          </sourceDirectories>
+          <testSourceDirectories>
+            <testSourceDirectory>src/test/scala</testSourceDirectory>
+            <testSourceDirectory>src/test/java</testSourceDirectory>
+          </testSourceDirectories>
+        </configuration>
+        <executions>
+          <execution>
+            <id>scala-compile-first</id>
+            <goals>
+              <goal>add-source</goal>
+              <goal>compile</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>${maven-compiler-plugin.version}</version>
+        <configuration>
+          <source>8</source>
+          <target>8</target>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>compile</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

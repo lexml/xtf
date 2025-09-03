@@ -45,13 +45,13 @@ import org.apache.lucene.index.TermDocs;
 public class XtfDocNumMap implements DocNumMap 
 {
   /** Where to get the data from */
-  private IndexReader reader;
+  private final IndexReader reader;
 
   /** Max number of words in a chunk */
-  private int chunkSize;
+  private final int chunkSize;
 
   /** Number of words one chunk overlaps with the next */
-  private int chunkOverlap;
+  private final int chunkOverlap;
 
   /** Total number of docInfo chunks found */
   private int nDocs;
@@ -60,7 +60,7 @@ public class XtfDocNumMap implements DocNumMap
   private int[] docNums = null; /* null until load() called */
 
   /** Caches result of previous scan, used for speed */
-  private int prevNum = -1;
+  private final int prevNum = -1;
 
   /** Used in binary searching */
   private int low = -1;

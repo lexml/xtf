@@ -48,7 +48,7 @@ import java.util.HashMap;
 public class StructuredFile implements StructuredStore 
 {
   /** Actual file path of the structured file */
-  private File file;
+  private final File file;
 
   /** Used to read/write the disk file */
   private RandomAccessFile realFile;
@@ -75,7 +75,7 @@ public class StructuredFile implements StructuredStore
   private DirEntry creatingEnt;
 
   /** List of currently opened subfiles */
-  private LinkedList openSubfiles = new LinkedList();
+  private final LinkedList openSubfiles = new LinkedList();
 
   /**
    * The sub-file that last accessed the file. This is checked every time
@@ -93,7 +93,7 @@ public class StructuredFile implements StructuredStore
    * only one instance of a given file is in memory at any given time,
    * to avoid concurrency problems.
    */
-  private static HashMap fileMap = new HashMap();
+  private static final HashMap fileMap = new HashMap();
 
   /**
    * Instances should never be created by outside parties, so the constructor
@@ -555,7 +555,7 @@ public class StructuredFile implements StructuredStore
   } // class Directory
 
   /** A single entry in a Directory */
-  private class DirEntry 
+  private static class DirEntry
   {
     /** Sub-file name */
     public String name;

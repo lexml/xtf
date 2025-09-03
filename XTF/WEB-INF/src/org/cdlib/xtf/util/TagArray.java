@@ -48,7 +48,7 @@ import java.util.Hashtable;
  */
 public class TagArray 
 {
-  private int BLOCK_SIZE = (1024 * 1024) - 32;
+  private final int BLOCK_SIZE = (1024 * 1024) - 32;
   private byte[][] blocks = { new byte[BLOCK_SIZE] };
   private short nBlocks = 1;
   private byte[] curBlock = blocks[0];
@@ -59,7 +59,7 @@ public class TagArray
   private int[] tagOffset = { 0 };
   private short[] tagLength = { 0 };
   private int nTags = 1;
-  private Hashtable typeTable = new Hashtable();
+  private final Hashtable typeTable = new Hashtable();
   private int nTypes = 1; // type 0 means no type
 
   /**
@@ -103,7 +103,7 @@ public class TagArray
   public int add(String str, int type, int subType) 
   {
     // If the string is empty, return a zero tag.
-    if (str.length() == 0)
+    if (str.isEmpty())
       return 0;
 
     // Do we have room in the current block? If not, make a new one.

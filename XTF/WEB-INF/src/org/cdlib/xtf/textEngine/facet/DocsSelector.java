@@ -33,8 +33,8 @@ package org.cdlib.xtf.textEngine.facet;
 /** Gather documents for all incoming groups. Always ends a selector chain */
 public class DocsSelector extends GroupSelector 
 {
-  int start;
-  int max;
+  final int start;
+  final int max;
 
   public DocsSelector(int start, int max) {
     this.start = start;

@@ -139,13 +139,13 @@ public class SendElement extends ElementWithContent
         ArrayList<InternetAddress> addressTo = new ArrayList<InternetAddress>();
         for (String recip : recips.split(",")) {
           recip = recip.trim();
-          if (recip.length() > 0)
+          if (!recip.isEmpty())
             addressTo.add(new InternetAddress(recip));
         }
         
         // Add the recipient list to the message
         msg.setRecipients(Message.RecipientType.TO, 
-                          addressTo.toArray(new InternetAddress[addressTo.size()]));
+                          addressTo.toArray(new InternetAddress[0]));
         
         // Set the subject
         msg.setSubject(attribs.get("subject").evaluateAsString(context));

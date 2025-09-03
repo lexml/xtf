@@ -51,22 +51,22 @@ import org.cdlib.xtf.util.*;
 class Authenticator 
 {
   /** Used for generating random nonce values */
-  private SecureRandom secureRandom = new SecureRandom();
+  private final SecureRandom secureRandom = new SecureRandom();
 
   /** Caches IP maps */
-  private IpListCache ipListCache;
+  private final IpListCache ipListCache;
 
   /** Caches authorized session IDs */
-  private StringCache authCache;
+  private final StringCache authCache;
 
   /** Caches nonce values for external log-ins */
-  private StringCache loginCache;
+  private final StringCache loginCache;
 
   /** Servlet to get dependencies from */
-  private DynaXML servlet;
+  private final DynaXML servlet;
 
   /** Configuration info */
-  private DynaXMLConfig config;
+  private final DynaXMLConfig config;
 
   /**
    * Construct an authorizer, initializing all the caches.
@@ -87,13 +87,13 @@ class Authenticator
                                  config.loginCacheExpire);
 
     ipListCache = new IpListCache(config.ipListCacheSize,
-                                  config.ipListCacheExpire,
-                                  config.dependencyCheckingEnabled);
+            config.ipListCacheExpire,
+            config.dependencyCheckingEnabled);
   } // constructor
 
   /** Utility method to check if a string is null or "" */
   private boolean isEmpty(String s) {
-    return (s == null || s.equals(""));
+    return (s == null || s.isEmpty());
   } // isEmpty()
 
   /**
@@ -259,7 +259,7 @@ class Authenticator
     // the password from the user.
     //
     if (session.getAttribute("LDAP_attempted") == null) {
-      session.setAttribute("LDAP_attempted", new Boolean(true));
+      session.setAttribute("LDAP_attempted", Boolean.TRUE);
       Trace.debug(
         "New session (" + session.getId() + ")... " +
         "forcing re-authentication");
@@ -367,7 +367,7 @@ class Authenticator
       res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 
       // Don't force re-re-authentication.
-      session.setAttribute("LDAP_attempted", new Boolean(true));
+      session.setAttribute("LDAP_attempted", Boolean.TRUE);
 
       throw new NoPermissionException(e);
     }
@@ -605,7 +605,7 @@ class Authenticator
   } // bytesToHex()
 
   /** Holds information on a particular authorization specification */
-  private class AuthSpec {
+  private static class AuthSpec {
     public static final int ACCESS_DENY = 0;
     public static final int ACCESS_ALLOW = 1;
     public static final int TYPE_ALL = 0;
@@ -649,9 +649,9 @@ class Authenticator
    * This class is used to cache IP maps so we don't have to load the
    * same ones over and over.
    */
-  private class IpListCache extends GeneratingCache 
+  private static class IpListCache extends GeneratingCache
   {
-    private boolean dependencyChecking;
+    private final boolean dependencyChecking;
 
     /** Constructor - initializes the cache */
     public IpListCache(int maxEntries, int maxTime, boolean dependencyChecking) {

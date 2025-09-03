@@ -43,7 +43,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class FakeServletResponse implements HttpServletResponse 
 {
-  ServletOutputStream out;
+  final ServletOutputStream out;
 
   public FakeServletResponse(ServletOutputStream out) {
     this.out = out;

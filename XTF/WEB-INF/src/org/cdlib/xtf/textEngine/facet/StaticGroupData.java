@@ -52,7 +52,7 @@ import org.apache.lucene.index.TermEnum;
 public class StaticGroupData extends GroupData 
 {
   /** The particular field we have data from */
-  private String field;
+  private final String field;
 
   /** Array of document IDs */
   private int[] docs;
@@ -78,7 +78,7 @@ public class StaticGroupData extends GroupData
   private int[] groupSiblings;
 
   /** Cached data. If the reader goes away, our cache will too. */
-  private static WeakHashMap cache = new WeakHashMap();
+  private static final WeakHashMap cache = new WeakHashMap();
 
   /**
    * Retrieves GroupData for a given field from a given reader. Maintains a cache
@@ -168,7 +168,7 @@ public class StaticGroupData extends GroupData
         // find the ancestor groups and add them to the child map.
         //
         String termText = term.text();
-        if (termText.length() == 0)
+        if (termText.isEmpty())
           termText = "<empty>";
         Integer termKey = addTermKey(termText, groupVec, groupMap, childMap);
 
@@ -205,7 +205,7 @@ public class StaticGroupData extends GroupData
     // Build the final array of groups. Basically we just take the last
     // component of each path.
     //
-    groups = (String[])groupVec.toArray(new String[groupVec.size()]);
+    groups = (String[])groupVec.toArray(new String[0]);
     for (int i = 0; i < groups.length; i++) {
       int lastSep = groups[i].lastIndexOf("::");
       if (lastSep >= 0)
@@ -268,7 +268,7 @@ public class StaticGroupData extends GroupData
       }
 
       // Stop when we reach the root.
-      if (curName.length() == 0)
+      if (curName.isEmpty())
         break;
 
       // Go up one level in the hierarchy.

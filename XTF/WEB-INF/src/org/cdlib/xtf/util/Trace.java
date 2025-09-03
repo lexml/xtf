@@ -107,10 +107,10 @@ public class Trace
   public static final int debug = 8;
 
   /** Amount to indent when {@link #tab()} is called. Default value: 2 */
-  public static int defaultTabSize = 2;
+  public static final int defaultTabSize = 2;
 
   /** Format to output dates in. Default: yyyy-MM-dd:HH:mm:ss */
-  public static DateFormat dateFormat = new SimpleDateFormat(
+  public static final DateFormat dateFormat = new SimpleDateFormat(
     "yyyy-MM-dd:HH:mm:ss");
 
   //////////////////////////////////////////////////////////////////////////////
@@ -485,7 +485,7 @@ public class Trace
       }
       else {
         assert nThreads >= 2;
-        if (firstTrace.threadId.length() == 0)
+        if (firstTrace.threadId.isEmpty())
           firstTrace.threadId = "[1] ";
         threadId = "[" + nThreads + "] ";
       }
@@ -594,5 +594,5 @@ public class Trace
   private int tabCount = 0;
 
   /** Amount to indent when {@link #tab()} is called. */
-  private int tabSize = defaultTabSize;
+  private final int tabSize = defaultTabSize;
 } // class Trace

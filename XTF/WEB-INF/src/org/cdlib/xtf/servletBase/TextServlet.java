@@ -118,7 +118,7 @@ public abstract class TextServlet extends HttpServlet
   private boolean isInitted = false;
 
   /** The error generator stylesheet to use */
-  private ThreadLocal<String> errorGenSheet = new ThreadLocal<String>();
+  private final ThreadLocal<String> errorGenSheet = new ThreadLocal<String>();
 
   /**
    * Last modification time of the configuration file, so we can decide
@@ -127,16 +127,16 @@ public abstract class TextServlet extends HttpServlet
   private long configFileLastModified = 0;
 
   /** Keeps track, per thread, of the servlet performing a request */
-  private static ThreadLocal curServlet = new ThreadLocal();
+  private static final ThreadLocal curServlet = new ThreadLocal();
 
   /** Keeps track, per thread, of the HTTP servlet request being processed */
-  private static ThreadLocal curRequest = new ThreadLocal();
+  private static final ThreadLocal curRequest = new ThreadLocal();
 
   /** Keeps track, per thread, of the HTTP servlet response */
-  private static ThreadLocal curResponse = new ThreadLocal();
+  private static final ThreadLocal curResponse = new ThreadLocal();
 
   /** Used for warming up indexes in the background */
-  private static HashMap<String,IndexWarmer> indexWarmers = new HashMap();
+  private static final HashMap<String,IndexWarmer> indexWarmers = new HashMap();
 
   /**
    * During tokenization, the '*' wildcard has to be changed to a word
@@ -205,7 +205,7 @@ public abstract class TextServlet extends HttpServlet
    * @return      true if the string is null or the empty string ("")
    */
   public static boolean isEmpty(String s) {
-    return (s == null || s.equals(""));
+    return (s == null || s.isEmpty());
   }
 
   /**
@@ -565,7 +565,7 @@ public abstract class TextServlet extends HttpServlet
     //
     if (url.indexOf('?') < 0 &&
         req.getQueryString() != null &&
-        req.getQueryString().length() > 0) 
+            !req.getQueryString().isEmpty())
     {
       url = url + "?" + req.getQueryString();
     }
@@ -602,7 +602,7 @@ public abstract class TextServlet extends HttpServlet
       if (values != null) {
         for (String value : values)
         {
-          if (value == null || value.length() == 0)
+          if (value == null || value.isEmpty())
             continue;
           
           // Deal with screwy URL encoding of Unicode strings on
@@ -629,7 +629,7 @@ public abstract class TextServlet extends HttpServlet
   {
     for (Iterator i = list.iterator(); i.hasNext();) {
       Attrib a = (Attrib)i.next();
-      if (a.value == null || a.value.length() == 0)
+      if (a.value == null || a.value.isEmpty())
         continue;
       trans.setParameter(a.key, new StringValue(a.value));
     }
@@ -721,7 +721,7 @@ public abstract class TextServlet extends HttpServlet
                               Transformer targetTrans)
     throws Exception 
   {
-    if (path == null || path.equals(""))
+    if (path == null || path.isEmpty())
       return;
 
     // First, load the stylesheet.
@@ -1121,7 +1121,7 @@ public abstract class TextServlet extends HttpServlet
         continue;
 
       // Don't add empty attributes.
-      if (att.value == null || att.value.length() == 0)
+      if (att.value == null || att.value.isEmpty())
         continue;
 
       // Got one. Let's add (and optionally tokenize) it.
@@ -1345,7 +1345,7 @@ public abstract class TextServlet extends HttpServlet
   {
     // Remove spaces. If nothing is left, don't bother making a token.
     str = str.trim();
-    if (str.length() == 0)
+    if (str.isEmpty())
       return;
 
     // Recover wildcards that were saved.
@@ -1640,9 +1640,9 @@ public abstract class TextServlet extends HttpServlet
    * about that.
    */
   @SuppressWarnings("deprecation")
-  private class RequestWrapper extends HttpServletRequestWrapper 
+  private static class RequestWrapper extends HttpServletRequestWrapper
   {
-    HttpServletRequest inReq;
+    final HttpServletRequest inReq;
 
     RequestWrapper(HttpServletRequest inReq) {
       super(inReq);
@@ -1729,12 +1729,12 @@ public abstract class TextServlet extends HttpServlet
     } // init()
 
     /** Special code to protect semicolons in protectChars() */
-    private char semiChar = '\uE010';
+    private final char semiChar = '\uE010';
     
     /** Special code to protect equal signs in protectChars() */
-    private char equalChar = '\uE012';
+    private final char equalChar = '\uE012';
     
-    private char[] hexChars = "0123456789ABCDEF".toCharArray();
+    private final char[] hexChars = "0123456789ABCDEF".toCharArray();
 
     /**
      * Protect '=' and ';' characters that were actually escaped with % codes in
@@ -1867,7 +1867,7 @@ public abstract class TextServlet extends HttpServlet
       ArrayList<String> vals = params.get(name);
       if (vals == null)
         return null;
-      return vals.toArray(new String[vals.size()]);
+      return vals.toArray(new String[0]);
     }
 
     @Override
@@ -1884,9 +1884,9 @@ public abstract class TextServlet extends HttpServlet
    * about that.
    */
   @SuppressWarnings("deprecation")
-  private class ResponseWrapper extends HttpServletResponseWrapper 
+  private static class ResponseWrapper extends HttpServletResponseWrapper
   {
-    private ServletOutputStream substOutStream;
+    private final ServletOutputStream substOutStream;
 
     ResponseWrapper(HttpServletResponse toWrap,
                     ServletOutputStream substOutStream) 

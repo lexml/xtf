@@ -56,10 +56,10 @@ public class UnicodeNormalizingRewriter extends XtfQueryRewriter
   private static final int CACHE_SIZE = 5000;
 
   /** Keep a cache of lookups performed to-date */
-  private FastCache<String, String> cache = new FastCache(CACHE_SIZE);
+  private final FastCache<String, String> cache = new FastCache(CACHE_SIZE);
 
   /** Set of fields that are tokenized in the index */
-  private Set tokenizedFields;
+  private final Set tokenizedFields;
 
   /** Construct a new rewriter. Will only operate on tokenized fields. */
   public UnicodeNormalizingRewriter(Set tokFields) {

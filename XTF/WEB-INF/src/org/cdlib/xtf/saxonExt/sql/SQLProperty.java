@@ -109,7 +109,7 @@ public class SQLProperty extends XSLGeneralVariable
 
   protected static class PropertyInstruction extends GeneralVariable 
   {
-    private String name;
+    private final String name;
 
     public PropertyInstruction(String name) {
       this.name = name;

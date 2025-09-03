@@ -53,7 +53,7 @@ import org.apache.lucene.search.spans.SpanTermQuery;
  */
 public class UnspanningQueryRewriter extends XtfQueryRewriter 
 {
-  private Stack parentStack = new Stack();
+  private final Stack parentStack = new Stack();
 
   public Query rewriteQuery(Query q) 
   {

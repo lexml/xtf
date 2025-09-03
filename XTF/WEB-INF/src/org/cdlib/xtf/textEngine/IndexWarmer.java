@@ -46,10 +46,10 @@ import org.cdlib.xtf.util.Trace;
  */
 public class IndexWarmer
 {
-  private String xtfHome;
-  private HashMap<String, Entry> entries  = new HashMap();
+  private final String xtfHome;
+  private final HashMap<String, Entry> entries  = new HashMap();
   private BgThread bgThread;
-  private int updateInterval;
+  private final int updateInterval;
   
   /**
    * Construct the warmer and start up the background warming thread.
@@ -165,7 +165,7 @@ public class IndexWarmer
    */
   private static class BgThread extends Thread
   {
-    private IndexWarmer warmer;
+    private final IndexWarmer warmer;
     private long prevWarmTime = 0;
     private boolean shouldStop = false;
     
@@ -328,12 +328,12 @@ public class IndexWarmer
   /** An entry mapping indexPath to XtfSearcher */
   private static class Entry
   {
-    String      indexPath;
+    final String      indexPath;
 
-    File currentPath;
-    File pendingPath;
-    File sparePath;
-    File newPath;
+    final File currentPath;
+    final File pendingPath;
+    final File sparePath;
+    final File newPath;
     
     XtfSearcher curSearcher;
     XtfSearcher newSearcher;

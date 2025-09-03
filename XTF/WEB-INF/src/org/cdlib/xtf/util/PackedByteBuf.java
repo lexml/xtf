@@ -67,7 +67,7 @@ public class PackedByteBuf {
   private int uncompLen = 0;
 
   /** Used to compress/decompress data */
-  private static ThreadLocal<WeakReference<CompressInfo>> compressInfo = new ThreadLocal();
+  private static final ThreadLocal<WeakReference<CompressInfo>> compressInfo = new ThreadLocal();
 
   /** Special marker used to denote a compressed buffer */
   private static final byte compressMarker = (byte)0xBF;
@@ -287,7 +287,7 @@ public class PackedByteBuf {
   public void writeString(String s) 
   {
     // Quick out for empty strings.
-    if (s.length() == 0) {
+    if (s.isEmpty()) {
       ensureSize(1);
       bytes[pos++] = 0;
       return;
@@ -695,7 +695,7 @@ public class PackedByteBuf {
   /**
    * Keeps tracks of inflate/deflate stuff on a thread-local basis.
    */
-  private class CompressInfo {
+  private static class CompressInfo {
     Deflater deflater;
     Inflater inflater;
     byte[] buf = new byte[500];

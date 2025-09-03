@@ -25,7 +25,7 @@ import javax.xml.transform.dom.DOMLocator;
 public class XTFSaxonErrorListener implements ErrorListener 
 {
   // Records errors that have occurred in each thread
-  private static ThreadLocal<ArrayList<String>> threadErrors = 
+  private static final ThreadLocal<ArrayList<String>> threadErrors =
       new ThreadLocal<ArrayList<String>>();
   
   /**
@@ -187,7 +187,7 @@ public class XTFSaxonErrorListener implements ErrorListener
     else if (loc instanceof InstructionInfoProvider) {
       String instructionName = getInstructionName(((InstructionInfoProvider)loc),
                                                   context);
-      if (instructionName != null && !"".equals(instructionName)) {
+      if (instructionName != null && !instructionName.isEmpty()) {
         locmessage += "at " + instructionName + ' ';
       }
       systemId = ((InstructionInfoProvider)loc).getInstructionInfo()
@@ -239,7 +239,7 @@ public class XTFSaxonErrorListener implements ErrorListener
         next = "";
       if (!("TRaX Transform Exception".equals(next) || message.endsWith(next))) 
       {
-        if (!"".equals(message)) {
+        if (!message.isEmpty()) {
           message += ": ";
         }
         message += e.getMessage();

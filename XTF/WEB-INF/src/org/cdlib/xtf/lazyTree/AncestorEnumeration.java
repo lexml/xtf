@@ -5,7 +5,7 @@ import net.sf.saxon.pattern.NodeTest;
 
 final class AncestorEnumeration extends TreeEnumeration 
 {
-  private boolean includeSelf;
+  private final boolean includeSelf;
 
   public AncestorEnumeration(NodeImpl node, NodeTest nodeTest,
                              boolean includeSelf) 

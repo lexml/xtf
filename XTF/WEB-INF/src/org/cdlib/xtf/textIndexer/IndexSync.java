@@ -48,7 +48,7 @@ import org.cdlib.xtf.util.Trace;
  */
 public class IndexSync 
 {
-  private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S Z");
+  private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S Z");
   
   /**
    * Perform the minimum necessary work to ensure that the contents of dstDir

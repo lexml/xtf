@@ -47,7 +47,7 @@ import org.cdlib.xtf.cache.GeneratingCache;
  */
 class ImageCache extends GeneratingCache<String, BufferedImage>
 {
-  private int outColorBase;
+  private final int outColorBase;
   
   /** Construct the cache */
   ImageCache(int outColorBase) {

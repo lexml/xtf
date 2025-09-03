@@ -46,8 +46,8 @@ import org.cdlib.xtf.util.PackedByteBuf;
  */
 public class LazyHashMap implements Map
 {
-  private LazyDocument doc;
-  private DiskHashReader reader;
+  private final LazyDocument doc;
+  private final DiskHashReader reader;
 
   /** Construct a hash map to read keys from a {@link DiskHashReader} */
   public LazyHashMap(LazyDocument doc, DiskHashReader reader) {

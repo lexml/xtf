@@ -17,8 +17,8 @@ import net.sf.saxon.type.Type;
  */
 class ProxyAttributeImpl extends NodeImpl 
 {
-  ProxyElement element;
-  int index;
+  final ProxyElement element;
+  final int index;
 
   /**
    * Construct an Attribute node for the n'th attribute of a given element

@@ -62,32 +62,32 @@ import org.cdlib.xtf.util.WordMap;
 public class SnippetMaker 
 {
   /** Lucene index reader used to fetch text data */
-  public IndexReader reader;
+  public final IndexReader reader;
 
   /** Lucene analyzer used for tokenizing text */
-  private Analyzer analyzer;
+  private final Analyzer analyzer;
 
   /**
    * Keeps track of which chunks belong to which source document in the
    * index.
    */
-  private DocNumMap docNumMap;
+  private final DocNumMap docNumMap;
 
   /** Max # of words in an index chunk */
   @SuppressWarnings("unused")
-  private int chunkSize;
+  private final int chunkSize;
 
   /** Amount of overlap between adjacent index chunks */
-  private int chunkOverlap;
+  private final int chunkOverlap;
 
   /** Set of stop-words removed (e.g. "the", "a", "and", etc.) */
-  private Set stopSet;
+  private final Set stopSet;
 
   /** Plural words to convert to singular */
-  private WordMap pluralMap;
+  private final WordMap pluralMap;
 
   /** Accented chars to remove diacritics from */
-  private CharMap accentMap;
+  private final CharMap accentMap;
 
   /** 
    * The fields that were specified as tokenized at index time. Not exactly
@@ -95,16 +95,16 @@ public class SnippetMaker
    * from Lucene's point of view, are not tokenized from the XTF point of
    * view.
    */
-  private Set tokFields;
+  private final Set tokFields;
   
   /** Target # of characters to include in the snippet. */
-  private int maxContext;
+  private final int maxContext;
 
   /** Where to mark terms (all, only in spans, etc.) */
-  private int termMode;
+  private final int termMode;
 
   /** List of metadata fields to return in the doc hits, or null for all */
-  private Set<String> returnMetaFields;
+  private final Set<String> returnMetaFields;
 
   // Precompiled patterns for quickly matching common chars special to XML
   private static final Pattern ampPattern = Pattern.compile("&");
@@ -222,7 +222,7 @@ public class SnippetMaker
       {
         private Snippet curSnippet;
         private MarkPos prevPos = null;
-        private StringBuffer buf = getText ? new StringBuffer() : null;
+        private final StringBuffer buf = getText ? new StringBuffer() : null;
 
         private void copyUpTo(MarkPos pos) {
           if (prevPos != null)
@@ -468,7 +468,7 @@ public class SnippetMaker
   /**
    * Strips the special start-of-field/end-of-field markers from tokens.
    */
-  public class StartEndStripper extends TokenFilter 
+  public static class StartEndStripper extends TokenFilter
   {
     public StartEndStripper(TokenStream input) {
       super(input);

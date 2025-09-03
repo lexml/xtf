@@ -48,8 +48,8 @@ import java.util.List;
  */
 public class SubDirFilter
 {
-  private HashSet<String> targets   = new HashSet();
-  private HashSet<String> ancestors = new HashSet();
+  private final HashSet<String> targets   = new HashSet();
+  private final HashSet<String> ancestors = new HashSet();
 
   /** Tell if nothing has been added yet */
   public boolean isEmpty() {

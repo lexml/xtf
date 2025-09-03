@@ -65,7 +65,7 @@ import net.sf.saxon.type.Type;
  */
 public class OutputElement extends ExtensionInstruction 
 {
-  HashMap<String, Expression> attribs = new HashMap<String, Expression>();
+  final HashMap<String, Expression> attribs = new HashMap<String, Expression>();
   boolean flipY = false;
   
   private final static int        outColorBase = 32;
@@ -111,7 +111,7 @@ public class OutputElement extends ExtensionInstruction
 
   private static class OutputInstruction extends InstructionWithContent 
   {
-    private boolean    flipY;
+    private final boolean    flipY;
     private float      xBias;
     private float      xScale;
     private float      yBias;
@@ -346,10 +346,10 @@ public class OutputElement extends ExtensionInstruction
       return (width() <= 0 || height() <= 0);
     }
 
-    public int left;
-    public int top;
-    public int right;
-    public int bottom;
+    public final int left;
+    public final int top;
+    public final int right;
+    public final int bottom;
     
     public int width()  { return right - left; }
     public int height() { return bottom - top; }

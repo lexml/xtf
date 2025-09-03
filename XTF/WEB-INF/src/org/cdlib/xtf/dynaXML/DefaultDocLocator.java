@@ -373,9 +373,9 @@ public class DefaultDocLocator implements DocLocator
    */
   private static class LazyPassthru extends DefaultHandler 
   {
-    private StringBuffer charBuf = new StringBuffer();
-    private ContentHandler lazyHandler;
-    private boolean stripWhitespace;
+    private final StringBuffer charBuf = new StringBuffer();
+    private final ContentHandler lazyHandler;
+    private final boolean stripWhitespace;
 
     public LazyPassthru(ContentHandler lazyHandler, boolean stripWhitespace) {
       this.lazyHandler = lazyHandler;

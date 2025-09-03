@@ -124,8 +124,8 @@ public class SQLColumn extends XSLGeneralVariable
 
   protected static class ColumnInstruction extends GeneralVariable 
   {
-    String name;
-    boolean evalSql;
+    final String name;
+    final boolean evalSql;
 
     public ColumnInstruction(String name, boolean evalSql) {
       this.name = name;

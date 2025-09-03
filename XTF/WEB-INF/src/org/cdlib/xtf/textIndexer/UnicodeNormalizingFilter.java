@@ -22,7 +22,7 @@ public class UnicodeNormalizingFilter extends TokenFilter
     private static final int CACHE_SIZE = 5000;
   
     /** Keep a cache of lookups performed to-date */
-    private FastCache<String, String> cache = new FastCache(CACHE_SIZE);
+    private final FastCache<String, String> cache = new FastCache(CACHE_SIZE);
   
     public UnicodeNormalizingFilter(TokenStream input) {
         super(input);

@@ -33,8 +33,8 @@ package org.cdlib.xtf.textEngine.facet;
 /** Select a range of the incoming groups */
 public class RangeSelector extends GroupSelector 
 {
-  int start;
-  int max;
+  final int start;
+  final int max;
   int skipped;
   int returned;
 

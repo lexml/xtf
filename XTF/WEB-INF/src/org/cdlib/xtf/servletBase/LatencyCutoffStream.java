@@ -129,19 +129,19 @@ class LatencyCutoffStream extends ServletOutputStream
   }
 
   /** The output stream to receive the output */
-  private OutputStream realOut;
+  private final OutputStream realOut;
 
   /** How many bytes have been output so far */
   private int total = 0;
 
   /** The limit on the number of bytes after which the message is printed */
-  private int limit;
+  private final int limit;
 
   /** The URL of the request being served */
-  private String url;
+  private final String url;
 
   /** The start of the request, for timing purposes */
-  private long reqStartTime;
+  private final long reqStartTime;
 
   /** Whether the message has been printed yet */
   private boolean isReported = false;

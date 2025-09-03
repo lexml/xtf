@@ -598,7 +598,7 @@ public class KeyManager implements Serializable
               Map index2 = (Map)indexObject2;
 
               // NOTE: we've been known to encounter a null index2 here, but it doesn't seem possible
-              if (index2.size() > 0) 
+              if (!index2.isEmpty())
               {
                 value = soughtValue.convert(type, context);
                 ArrayList nodes = (ArrayList)index2.get(getCollationKey(

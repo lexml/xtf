@@ -145,9 +145,9 @@ public class IdxTreeDictMaker
       spellWriter.flushQueuedWords(new ProgressTracker() 
       {
         public void report(int pctDone, String descrip) {
-          String pctTxt = Integer.toString(pctDone);
+          StringBuilder pctTxt = new StringBuilder(Integer.toString(pctDone));
           while (pctTxt.length() < 3)
-            pctTxt = " " + pctTxt;
+            pctTxt.insert(0, " ");
           Trace.info("[" + pctTxt + "%] " + descrip);
         }
       });

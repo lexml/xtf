@@ -54,8 +54,10 @@ public class Normalizer
     //
     boolean allSafe = true;
     for (int i=0; i<in.length(); i++) {
-      if ((in.charAt(i) & ~0x7F) != 0)
-        allSafe = false;
+        if ((in.charAt(i) & ~0x7F) != 0) {
+            allSafe = false;
+            break;
+        }
     }
     
     if (allSafe)

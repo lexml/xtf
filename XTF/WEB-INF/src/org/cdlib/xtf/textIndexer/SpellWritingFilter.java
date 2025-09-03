@@ -50,7 +50,7 @@ import org.cdlib.xtf.textEngine.Constants;
 public class SpellWritingFilter extends TokenFilter 
 {
   /** Spelling writer to write to */
-  private SpellWriter writer;
+  private final SpellWriter writer;
 
   /** true before the first token is returned */
   private boolean firstTime = true;

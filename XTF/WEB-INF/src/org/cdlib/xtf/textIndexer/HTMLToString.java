@@ -51,7 +51,7 @@ import org.cdlib.xtf.util.*;
 public class HTMLToString 
 {
   /** Create the HTMLTidy object that will do the work. */
-  static Tidy tidy = new Tidy();
+  static final Tidy tidy = new Tidy();
 
   //////////////////////////////////////////////////////////////////////////////
 
@@ -256,7 +256,7 @@ public class HTMLToString
 };
 
   /** Build a HashMap from the code table above */
-  private static HashMap htmlCodeMap = new HashMap();
+  private static final HashMap htmlCodeMap = new HashMap();
 
   static {
     for (int i = 0; i < htmlCodes.length; i += 2)

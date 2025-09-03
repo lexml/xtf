@@ -52,7 +52,7 @@ import net.sf.saxon.type.Type;
 public class EasyNode 
 {
   /** The node we are wrapping */
-  private NodeInfo wrapped;
+  private final NodeInfo wrapped;
 
   /** Attribute names for this node */
   private ArrayList<String> attrNames;
@@ -64,7 +64,7 @@ public class EasyNode
   private ArrayList<EasyNode> children;
   
   /** Configuration used for parsing XML files */
-  private static Configuration config = new Configuration();
+  private static final Configuration config = new Configuration();
   
   /**
    * Convenience method to read an XML file and return the root node.

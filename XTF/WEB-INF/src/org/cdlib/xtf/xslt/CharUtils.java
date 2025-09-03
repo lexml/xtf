@@ -53,7 +53,7 @@ import net.sf.saxon.expr.XPathContext;
 public class CharUtils 
 {
   /** Used to avoid recreating AccentMap objects all the time */
-  private static HashMap<String,CharMap> accentMapCache = new HashMap();
+  private static final HashMap<String,CharMap> accentMapCache = new HashMap();
 
   /** 
    * Get the accent map corresponding to a file. 
@@ -116,7 +116,7 @@ public class CharUtils
     // Then apply it to each word.
     StringBuilder buf = new StringBuilder();
     for (String word : str.split("\\s")) {
-      if (word.length() == 0)
+      if (word.isEmpty())
         continue;
       String mappedWord = accentMap.mapWord(word);
       if (mappedWord != null)

@@ -34,7 +34,7 @@ public class FreeformQueryParser implements FreeformQueryParserConstants {
     {
       System.out.print("Enter query: ");
       String text = in.readLine();
-      if (text == null || text.length() == 0)
+      if (text == null || text.isEmpty())
         break;
       FreeformQueryParser parser = new FreeformQueryParser(new StringReader(text));
       try {
@@ -51,13 +51,13 @@ public class FreeformQueryParser implements FreeformQueryParserConstants {
    * The result of a parse. A very simple hierarchical structure, basically
    * mirroring the XML that would be generated for an XTF query.
    */
-  public class FNode
+  public static class FNode
   {
     public String name;  // Name of the element, such as "query", "and", "term", etc.
     public String text;  // Text of a term element
     public String field; // Field name, or null if specified by parent, or "serverChoice"
 
-    public ArrayList<FNode> children = new ArrayList(); // Sub-elements
+    public final ArrayList<FNode> children = new ArrayList(); // Sub-elements
 
     /** Private constructor */
     FNode(String n) { name = n; }
@@ -174,8 +174,10 @@ public class FreeformQueryParser implements FreeformQueryParserConstants {
           // If all kids have the same field name, propagate it up.
           boolean anyDiff = false;
           for (FNode kid : children) {
-            if (!f.equals(kid.field))
-              anyDiff = true;
+              if (!f.equals(kid.field)) {
+                  anyDiff = true;
+                  break;
+              }
           }
           if (!anyDiff) {
             for (FNode kid : children)
@@ -231,8 +233,10 @@ public class FreeformQueryParser implements FreeformQueryParserConstants {
         for (FNode k2 : children) {
           if (k2 == kid || k2.name == "not")
             continue;
-          if (k2.field == kid.field)
-            found = true;
+            if (k2.field == kid.field) {
+                found = true;
+                break;
+            }
         }
 
         // If nothing to match against, add something.
@@ -646,7 +650,7 @@ public class FreeformQueryParser implements FreeformQueryParserConstants {
   private int jj_ntk;
   private Token jj_scanpos, jj_lastpos;
   private int jj_la;
-  public boolean lookingAhead = false;
+  public final boolean lookingAhead = false;
   private boolean jj_semLA;
   private int jj_gen;
   final private int[] jj_la1 = new int[9];
@@ -796,10 +800,10 @@ public class FreeformQueryParser implements FreeformQueryParserConstants {
       return (jj_ntk = jj_nt.kind);
   }
 
-  private java.util.Vector jj_expentries = new java.util.Vector();
+  private final java.util.Vector jj_expentries = new java.util.Vector();
   private int[] jj_expentry;
   private int jj_kind = -1;
-  private int[] jj_lasttokens = new int[100];
+  private final int[] jj_lasttokens = new int[100];
   private int jj_endpos;
 
   private void jj_add_error_token(int kind, int pos) {
@@ -808,9 +812,7 @@ public class FreeformQueryParser implements FreeformQueryParserConstants {
       jj_lasttokens[jj_endpos++] = kind;
     } else if (jj_endpos != 0) {
       jj_expentry = new int[jj_endpos];
-      for (int i = 0; i < jj_endpos; i++) {
-        jj_expentry[i] = jj_lasttokens[i];
-      }
+        System.arraycopy(jj_lasttokens, 0, jj_expentry, 0, jj_endpos);
       boolean exists = false;
       for (java.util.Enumeration e = jj_expentries.elements(); e.hasMoreElements();) {
         int[] oldentry = (int[])(e.nextElement());

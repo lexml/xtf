@@ -132,7 +132,7 @@ public class RawQuery extends CrossQuery
 
     // Grab the "query" parameter -- it must be present.
     String queryText = req.getParameter("query");
-    if (queryText == null || queryText.length() == 0)
+    if (queryText == null || queryText.isEmpty())
       throw new RuntimeException("'query' parameter must be specified");
     
     // Parse the XML query to make an XTF QueryRequest
@@ -158,7 +158,7 @@ public class RawQuery extends CrossQuery
                startTime);
   } // apply()
 
-  private class RawQueryConfig extends CrossQueryConfig
+  private static class RawQueryConfig extends CrossQueryConfig
   {
     RawQueryConfig(RawQuery servlet) { super(servlet); }
   }} // class TestableCrossQuery

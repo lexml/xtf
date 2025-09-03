@@ -166,7 +166,7 @@ public class IndexerConfig
   /** Index specific information for the current index being created or
    *  updated.
    */
-  public IndexInfo indexInfo;
+  public final IndexInfo indexInfo;
 
   //////////////////////////////////////////////////////////////////////////// 
 
@@ -361,7 +361,7 @@ public class IndexerConfig
             if (line == null)
               break;
             String dirName = line.trim();
-            if (dirName.length() == 0)
+            if (dirName.isEmpty())
               continue;
             
             // If no dir list already, make one.

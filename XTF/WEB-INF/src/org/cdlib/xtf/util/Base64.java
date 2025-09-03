@@ -97,14 +97,14 @@ public class Base64
    */
   public static String decodeString(String base64) 
   {
-    String out = "";
+    StringBuilder out = new StringBuilder();
     while (base64.length() >= 4) {
       String quantum = base64.substring(0, 4);
       base64 = base64.substring(4);
       String str = decodeQuantum(quantum);
-      out += str;
+      out.append(str);
     }
 
-    return out;
+    return out.toString();
   } // decodeString()
 } // class Base64

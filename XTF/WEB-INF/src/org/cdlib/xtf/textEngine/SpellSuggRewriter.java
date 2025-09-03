@@ -52,8 +52,8 @@ import org.apache.lucene.util.StringUtil;
  */
 public class SpellSuggRewriter extends XtfQueryRewriter 
 {
-  private Map suggs;
-  private Set fields;
+  private final Map suggs;
+  private final Set fields;
 
   /** Construct a new rewriter. */
   public SpellSuggRewriter(Map suggs, Set fields) {

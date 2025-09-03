@@ -34,7 +34,7 @@ import java.util.HashSet;
 /** Pass only groups that are singletons, i.e. have no selected siblings. */
 public class SingletonSelector extends GroupSelector 
 {
-  private HashSet parents = new HashSet();
+  private final HashSet parents = new HashSet();
 
   public void reset(boolean conservative) {
     super.reset(conservative);

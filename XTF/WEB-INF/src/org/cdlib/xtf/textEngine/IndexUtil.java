@@ -71,8 +71,8 @@ import org.xml.sax.XMLReader;
  */
 public class IndexUtil 
 {
-  private static ConfigCache configCache = new ConfigCache();
-  private static SAXParserFactory saxParserFactory = null;
+  private static final ConfigCache configCache = new ConfigCache();
+  private static final SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
   private static TransformerFactory transformerFactory = null;
 
   /**
@@ -165,7 +165,7 @@ public class IndexUtil
       sourcePath = idxInfo.sourcePath;
     String fullSourcePath = Path.resolveRelOrAbs(xtfHome.toString(), sourcePath);
     String prefix = Path.calcPrefix(srcTextFile.getParent(),
-                                    fullSourcePath.toString());
+            fullSourcePath);
     if (prefix == null) {
       throw new IOException(
         "XML source file " + srcTextFile + " is not contained within " +
@@ -259,10 +259,9 @@ public class IndexUtil
     // Form the result using the index name and the non-overlapping part.
     String srcTextPath = Path.normalizeFileName(srcTextFile.toString());
     String after = srcTextPath.substring(prefix.length());
-    String key = idxInfo.indexName + ":" + after;
 
-    // And we're done.
-    return key;
+      // And we're done.
+    return idxInfo.indexName + ":" + after;
   } // calcDocKey()
 
   /**
@@ -272,43 +271,6 @@ public class IndexUtil
    */
   public static SAXParser createSAXParser() 
   {
-    // If we don't have a factory yet, make one...
-    if (saxParserFactory == null) 
-    {
-      // Our first choice is the new parser supplied by Java 1.5.
-      // Second choice is the older (but reliable) Crimson parser.
-      //
-      try 
-      {
-        Class factoryClass = Class.forName(
-          "com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl");
-        saxParserFactory = (SAXParserFactory)factoryClass.newInstance();
-      }
-      catch (ClassNotFoundException e) {
-        try 
-        {
-          Class factoryClass = Class.forName(
-            "org.apache.crimson.jaxp.SAXParserFactoryImpl");
-          saxParserFactory = (SAXParserFactory)factoryClass.newInstance();
-        }
-        catch (ClassNotFoundException e2) {
-          // Okay, accept whatever the default is.
-          saxParserFactory = SAXParserFactory.newInstance();
-        }
-        catch (InstantiationException e2) {
-          throw new RuntimeException(e2);
-        }
-        catch (IllegalAccessException e2) {
-          throw new RuntimeException(e2);
-        }
-      }
-      catch (InstantiationException e) {
-        throw new RuntimeException(e);
-      }
-      catch (IllegalAccessException e) {
-        throw new RuntimeException(e);
-      }
-    }
 
     // Use the parser factory to make a new parser.
     synchronized (saxParserFactory) 
@@ -336,10 +298,7 @@ public class IndexUtil
         // All done
         return xmlParser;
       }
-      catch (SAXException e) {
-        throw new RuntimeException(e);
-      }
-      catch (ParserConfigurationException e) {
+      catch (SAXException | ParserConfigurationException e) {
         throw new RuntimeException(e);
       }
     }
@@ -458,7 +417,7 @@ public class IndexUtil
                                      XMLReader reader, InputSource xmlSource,
                                      AttribList passThroughAttribs,
                                      Result ultimateResult)
-    throws SAXException, TransformerException, TransformerConfigurationException 
+    throws TransformerException
   {
     assert prefilterStylesheets.length > 0 : "applyPrefilters must have at least one stylesheet";
 
@@ -466,33 +425,31 @@ public class IndexUtil
     SAXTransformerFactory stf = (SAXTransformerFactory)getTransformerFactory();
 
     // Process each prefilter.
-    for (int i = 0; i < prefilterStylesheets.length; i++) 
-    {
-      // Create an XMLFilter from the stylesheet
-      Filter filter = (Filter)stf.newXMLFilter(prefilterStylesheets[i]);
-      Transformer trans = filter.getTransformer();
-      
-      // Give it the pass-through attributes.
-      if (passThroughAttribs != null)
-      {
-        for (Iterator iter = passThroughAttribs.iterator(); iter.hasNext();) {
-          Attrib a = (Attrib)iter.next();
-          if (a.value == null || a.value.length() == 0)
-            continue;
-          trans.setParameter(a.key, new StringValue(a.value));
-        }
-      }
+      for (Templates prefilterStylesheet : prefilterStylesheets) {
+          // Create an XMLFilter from the stylesheet
+          Filter filter = (Filter) stf.newXMLFilter(prefilterStylesheet);
+          Transformer trans = filter.getTransformer();
 
-      // Make sure errors get directed to the right place.
-      if (!(trans.getErrorListener() instanceof XTFSaxonErrorListener))
-        trans.setErrorListener(new XTFSaxonErrorListener());
+          // Give it the pass-through attributes.
+          if (passThroughAttribs != null) {
+              for (Iterator<Attrib> iter = passThroughAttribs.iterator(); iter.hasNext(); ) {
+                  Attrib a = iter.next();
+                  if (a.value == null || a.value.isEmpty())
+                      continue;
+                  trans.setParameter(a.key, new StringValue(a.value));
+              }
+          }
 
-      // Hook up its input.
-      filter.setParent(lastInChain);
+          // Make sure errors get directed to the right place.
+          if (!(trans.getErrorListener() instanceof XTFSaxonErrorListener))
+              trans.setErrorListener(new XTFSaxonErrorListener());
 
-      // Onward.
-      lastInChain = filter;
-    } // for i
+          // Hook up its input.
+          filter.setParent(lastInChain);
+
+          // Onward.
+          lastInChain = filter;
+      } // for i
 
     // Set up the transformer to process the SAX events generated
     // by the last filter in the chain.

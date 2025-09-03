@@ -107,7 +107,7 @@ public class DiskHashReader
     // Don't allow empty string as a key, since it's used to mark
     // the end of a slot.
     //
-    if (key.length() == 0)
+    if (key.isEmpty())
       key = " ";
 
     // Find the location of the slot data. If zero, we can fail now.
@@ -128,7 +128,7 @@ public class DiskHashReader
     {
       // Get the name. If empty, give up.
       String name = slotBuf.readString();
-      if (name.length() == 0)
+      if (name.isEmpty())
         return null;
 
       // Does it match? If not, advance to the next slot.

@@ -338,7 +338,7 @@ public class FastTokenizer extends Tokenizer
    *
    * @author Martin Haye
    */
-  private class DribbleReader extends Reader 
+  private static class DribbleReader extends Reader
   {
     /** String used to mark the end of the dribbled text */
     static final String fakeStr = " " + fakeWord + " ";

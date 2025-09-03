@@ -51,7 +51,7 @@ import org.apache.lucene.analysis.TokenStream;
  */
 public class FacetTokenizer extends TokenStream 
 {
-  String str;
+  final String str;
   int pos = 0;
   Token nextToken = null;
 

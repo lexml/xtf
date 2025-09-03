@@ -44,7 +44,7 @@ public class LineReader {
   private static final int blockSize = 1024;
 
   /** Internal buffer of file data */
-  private byte[] block = new byte[blockSize];
+  private final byte[] block = new byte[blockSize];
 
   /** Overall length of the file we're reading */
   private int length;
@@ -65,7 +65,7 @@ public class LineReader {
   private RandomAccessFile file;
 
   /** Used to accumulate lines */
-  private StringBuffer buf = new StringBuffer(500);
+  private final StringBuffer buf = new StringBuffer(500);
 
   /**
    * Default constructor

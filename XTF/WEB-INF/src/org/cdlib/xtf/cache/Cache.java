@@ -149,7 +149,7 @@ public abstract class Cache<K,V>
     cleanup();
 
     ListEntry ent = keyMap.get(key);
-    return (ent == null) ? new NullIterator() : ent.dependencies.iterator();
+    return (ent == null) ? new NullIterator<>() : ent.dependencies.iterator();
   } // getDependencies()
 
   /**
@@ -246,13 +246,13 @@ public abstract class Cache<K,V>
   }
 
   /** Used to return an iterator that does nothing */
-  protected class NullIterator implements Iterator 
+  protected static class NullIterator<T> implements Iterator<T>
   {
     public boolean hasNext() {
       return false;
     }
 
-    public Object next() {
+    public T next() {
       return null;
     }
 
@@ -280,13 +280,13 @@ public abstract class Cache<K,V>
   } // class ListEntry
 
   /** Maximum number of entries the cache may contain */
-  private int maxEntries;
+  private final int maxEntries;
 
   /**
    * Maximum amount of time (in seconds) an entry can stay in the cache
    * without being used.
    */
-  private int maxTime;
+  private final int maxTime;
 
   /** Maintains a mapping of key to ListEntry, for fast key lookups */
   protected HashMap<K,ListEntry> keyMap;

@@ -94,11 +94,11 @@ class LimitedOutputStream extends OutputStream
   }
 
   /** The output stream to receive the limited output */
-  private OutputStream realOut;
+  private final OutputStream realOut;
 
   /** How many bytes have been output so far */
   private int total = 0;
 
   /** The limit on the number of bytes */
-  private int limit;
+  private final int limit;
 } // class LimitedOutputStream

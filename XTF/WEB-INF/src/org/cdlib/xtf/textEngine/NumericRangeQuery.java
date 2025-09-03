@@ -103,7 +103,7 @@ public class NumericRangeQuery extends Query
   private class NumericRangeWeight implements Weight 
   {
     private NumericRangeQuery query;
-    private Similarity similarity;
+    private final Similarity similarity;
     private float queryNorm;
     private float queryWeight;
 

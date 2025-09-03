@@ -92,7 +92,7 @@ public class IndexMerge
 
       // Make sure the XTF_HOME environment variable is specified.
       cfgInfo.xtfHomePath = System.getProperty("xtf.home");
-      if (cfgInfo.xtfHomePath == null || cfgInfo.xtfHomePath.length() == 0) {
+      if (cfgInfo.xtfHomePath == null || cfgInfo.xtfHomePath.isEmpty()) {
         Trace.error("Error: xtf.home property not found");
         return;
       }
@@ -589,8 +589,8 @@ public class IndexMerge
       this.dir = srcDir;
     }
 
-    String path;
-    Directory dir;
+    final String path;
+    final Directory dir;
     int chunkSize;
     int chunkOverlap;
     String stopWords;

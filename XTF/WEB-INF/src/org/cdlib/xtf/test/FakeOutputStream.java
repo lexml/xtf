@@ -40,7 +40,7 @@ import javax.servlet.ServletOutputStream;
  */
 public class FakeOutputStream extends ServletOutputStream 
 {
-  ByteArrayOutputStream buf = new ByteArrayOutputStream();
+  final ByteArrayOutputStream buf = new ByteArrayOutputStream();
 
   public void write(int b)
     throws IOException 

@@ -42,17 +42,17 @@ import org.cdlib.xtf.textEngine.DocHitImpl;
  */
 public class GroupCounts 
 {
-  private GroupData data;
-  private FacetSpec spec;
-  private HitQueueMaker hitQueueMaker;
+  private final GroupData data;
+  private final FacetSpec spec;
+  private final HitQueueMaker hitQueueMaker;
   private boolean prepMode = false;
   private int[] count;
   private float[] score;
-  private int[] mark;
-  private int[] selection;
-  private int[] startDoc;
-  private int[] maxDocs;
-  private PriorityQueue[] hitQueue;
+  private final int[] mark;
+  private final int[] selection;
+  private final int[] startDoc;
+  private final int[] maxDocs;
+  private final PriorityQueue[] hitQueue;
   private int[] sortedChild;
   private int[] sortedSibling;
   private int curMark = 1000;
@@ -432,8 +432,8 @@ public class GroupCounts
     resultGroup.startDoc = start;
     resultGroup.endDoc = start + nHits;
 
-    for (int i = startDoc[group]; i < nFound; i++)
-      resultGroup.docHits[i - start] = hitArray[i];
+      if (nFound - startDoc[group] >= 0)
+          System.arraycopy(hitArray, startDoc[group], resultGroup.docHits, startDoc[group] - start, nFound - startDoc[group]);
   } // buildDocHits()
 
   public static interface HitQueueMaker {

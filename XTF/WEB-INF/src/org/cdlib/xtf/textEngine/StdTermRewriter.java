@@ -49,8 +49,8 @@ import org.apache.lucene.search.spans.SpanWildcardQuery;
  */
 public class StdTermRewriter extends XtfQueryRewriter 
 {
-  private Set tokenizedFields;
-  private StdTermFilter filter = new StdTermFilter();
+  private final Set tokenizedFields;
+  private final StdTermFilter filter = new StdTermFilter();
 
   /**
    * Construct a term rewriter that will operate on the given tokenized

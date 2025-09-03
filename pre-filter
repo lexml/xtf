@@ -1,0 +1,4 @@
+#!/bin/bash
+SAXON_JAR=/home/joao/git/senado/xtf/XTF/WEB-INF/lib/saxonb-8.9.jar
+XSL_FILE=/home/joao/git/senado/xtf/dcPreFilter.xsl
+java -jar $SAXON_JAR -s "$1" -o "$2" "$XSL_FILE"

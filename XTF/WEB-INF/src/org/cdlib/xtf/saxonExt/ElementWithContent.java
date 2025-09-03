@@ -50,7 +50,7 @@ import net.sf.saxon.trans.XPathException;
  */
 public abstract class ElementWithContent extends ExtensionInstruction 
 {
-  protected Map<String, Expression> attribs = new HashMap();
+  protected final Map<String, Expression> attribs = new HashMap();
 
   /**
    * Parse mandatory and optional attributes during prepareAttributes() call.

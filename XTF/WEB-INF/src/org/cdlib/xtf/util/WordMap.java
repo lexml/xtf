@@ -57,13 +57,13 @@ public class WordMap
   private static final int CACHE_SIZE = 5000;
 
   /** Keep a cache of lookups performed to-date */
-  private FastCache cache = new FastCache(CACHE_SIZE);
+  private final FastCache cache = new FastCache(CACHE_SIZE);
 
   /** Map of blocks, keyed by the first word in each block */
-  private HashMap blockMap = new HashMap(100);
+  private final HashMap blockMap = new HashMap(100);
 
   /** Sorted list of the block keys, for fast binary searching */
-  private ArrayList blockHeads = new ArrayList(100);
+  private final ArrayList blockHeads = new ArrayList(100);
 
   /** Construct a word map by reading in a file. */
   public WordMap(File f, CharMap charMap)
@@ -171,7 +171,7 @@ public class WordMap
       String key = line.substring(0, barPos).trim();
       String val = line.substring(barPos + 1).trim();
 
-      if (key.length() == 0 || val.length() == 0)
+      if (key.isEmpty() || val.isEmpty())
         continue;
       
       // Map characters if a mapping was specified.
@@ -199,7 +199,7 @@ public class WordMap
       String key = (String)entry.getKey();
       String val = (String)entry.getValue();
 
-      if (firstKey.length() == 0) {
+      if (firstKey.isEmpty()) {
         firstKey = key;
         prev = firstKey;
       }

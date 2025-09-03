@@ -30,6 +30,7 @@ package org.cdlib.xtf.textIndexer;
  * POSSIBILITY OF SUCH DAMAGE.
  */
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Stack;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -70,10 +71,10 @@ public class SectionInfoStack
   /** Actual generic stack that holds the
    *  {@link org.cdlib.xtf.textIndexer.SectionInfo} objects.
    */
-  private Stack infoStack = new Stack();
+  private final Stack<SectionInfo> infoStack = new Stack<>();
   
   /** Top-level list of meta-data */
-  private LinkedList defaultMetaInfo = new LinkedList();
+  private final List<MetaField> defaultMetaInfo = new LinkedList<>();
   
   public SectionInfoStack()
   {
@@ -84,187 +85,7 @@ public class SectionInfoStack
   //////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////
 
-  /** Explicit section push operator. <br><br>
-   *
-   *  Call this method to push a new section onto the stack with explicitly
-   *  specified values for the section's attributes. <br><br>
-   *
-   *  @param indexFlag     A flag indicating whether or not the current section
-   *                       should be indexed. Valid values are
-   *                       {@link org.cdlib.xtf.textIndexer#parentIndex parentIndex},
-   *                       {@link org.cdlib.xtf.textIndexer#index index},
-   *                       {@link org.cdlib.xtf.textIndexer#noIndex noIndex}.
-   *                       <br><br>
-   *
-   *  @param sectionType   The type name for the section being pushed. This may
-   *                       either a caller defined string or an empty string
-   *                       (""). Note that if an empty string is passed, the
-   *                       section name is inherited from the parent section
-   *                       (if defined.) <br><br>
-   *
-   *  @param sectionBump   The offset (in words) of the current section from
-   *                       the previous section. Used to lower the relevance of
-   *                       (or completely avoid) proximity matches that
-   *                       span two sections. This value is typically set to
-   *                       zero (for no de-emphasis of proximity matches
-   *                       across adjacent sections), or a value greater than
-   *                       or equal to the chunk overlap used by the index (to
-   *                       completely avoid proximity matches across adjacent
-   *                       sections.) <br><br>
-   *
-   *  @param wordBoost     Boost factor to apply to words in this section.
-   *                       values greater than 1.0 make the words found in this
-   *                       section more relevant in a search, while values less
-   *                       than 1.0 make words in the section less relevant.
-   *                       <br><br>
-   *
-   *  @param sentenceBump  The offset (in words) for this section between the
-   *                       start of a new sentence and the end of the previous
-   *                       one. Like the section bump, this value is used to
-   *                       adjust the relevance of proximity matches made
-   *                       across sentence boundaries. Typical values are
-   *                       one (for no de-emphasis of proximity matches across
-   *                       sentence boundaries), a value between one and the
-   *                       chunk overlap for the index (for partial de-emphasis
-   *                       of proximity matches across sentence boundaries), or
-   *                       a value greater than or equal to the chunk size to
-   *                       completely avoid proximity matches across sentence
-   *                       boundaries.) <br><br>
-   *
-   *  @param spellFlag     A flag indicating whether or not words in the current
-   *                       section should be added to the spelling correction
-   *                       dictionary. Valid values are
-   *                       {@link org.cdlib.xtf.textIndexer#parentSpell parentSpell},
-   *                       {@link org.cdlib.xtf.textIndexer#spell spell},
-   *                       {@link org.cdlib.xtf.textIndexer#noSpell noSpell}.
-   *                       <br><br>
-   *                       
-   *  @param subDocument   A name of the subdocument being pushed. A subdocument
-   *                       is part of a document that is to be represented as a 
-   *                       single searchable unit in search results, but should be
-   *                       viewed in the context of its larger document. A subdoc
-   *                       can have its own meta-data. If the empty string ""
-   *                       is passed, the subdocument is unchanged.
-   *                       
-   *  @param metaInfo      List of meta-data for the subdocument being pushed. 
-   *                       If null, the parent meta-data list will be used.
-   *
-   *  @.notes
-   *       This method compares the passed attributes to the section currently
-   *       at the top of the stack (if any.) If the attributes are identical,
-   *       the {@link org.cdlib.xtf.textIndexer.SectionInfoStack#push() depth-push}
-   *       method is called to save space. Otherwise, the new section entry
-   *       with the passed attributes is created and placed on the stack.
-   *       <br><br>
-   *
-   *       For a more complete description of the above listed attributes,
-   *       see the {@link org.cdlib.xtf.textIndexer.SectionInfo SectionInfo}
-   *       class. <br><br>
-   */
-  public void push(int indexFlag, String sectionType, int sectionBump,
-                   float wordBoost, int sentenceBump, int spellFlag,
-                   String subDocument, LinkedList metaInfo) 
-  {
-    int prevSectionBump = 0;
-
-    // See what's on the top of the stack.
-    SectionInfo info = top();
-    
-    // Be sure to use interned strings so we can use '==' comparison later.
-    if (sectionType != null)
-      sectionType = sectionType.intern();
-    if (subDocument != null)
-      subDocument = subDocument.intern();
-
-    // If there's something on the stack...
-    if (info != null) 
-    {
-      // And we were asked to inherit the parent's index flag, do so.
-      if (indexFlag == SectionInfo.parentIndex)
-        indexFlag = info.indexFlag;
-
-      // If we were asked to inherit the parent's spell flag, do so.
-      if (spellFlag == SectionInfo.parentSpell)
-        spellFlag = info.spellFlag;
-
-      // If no section name was specified, inherit the parent's section name.
-      if (sectionType == "")
-        sectionType = info.sectionType;
-      
-      // If no subdocument was specified, inherit the parent's subdoc name.
-      if (subDocument == "")
-        subDocument = info.subDocument;
-      
-      // If no metaInfo was specified, inherit the parent's metaInfo
-      if (metaInfo == null)
-        metaInfo = info.metaInfo;
-
-      // If the information being pushed is the same as what's already
-      // on the top of the stack, simply increase the depth of the current
-      // info at the top of the stack. 
-      //
-      if (!valuesChanged(indexFlag,
-                         sectionType,
-                         sectionBump,
-                         wordBoost,
-                         sentenceBump,
-                         spellFlag,
-                         subDocument,
-                         metaInfo)) 
-      {
-        push();
-        return;
-      }
-
-      /////////////////////////////////////////////////////////////////
-      // If we got here, then the section information passed doesn't //
-      // match what's at the top of the stack, so fall through and   //
-      // add a new entry to the stack.                               //
-      /////////////////////////////////////////////////////////////////
-
-      // If there was still a section bump pending from the previous
-      // section, forward it onto the current section. By doing this,
-      // we will correctly accumulate bump values if a new section
-      // occurs immediately after a containing section (i.e., no text
-      // appears between the start of a parent and child node.) 
-      //
-      prevSectionBump = info.saveSectionBump();
-    } // if( info != null )
-
-    // If there was no previous section info on the stack, and we were asked
-    // to inherit the parent's index flag, turn on indexing by default.
-    //
-    if (indexFlag == SectionInfo.parentIndex)
-      indexFlag = SectionInfo.defaultIndexFlag;
-
-    // Likewise with the spell flag.
-    if (spellFlag == SectionInfo.parentSpell)
-      spellFlag = SectionInfo.defaultSpellFlag;
-    
-    // Likewise with the sectionType.
-    if (sectionType == "")
-      sectionType = SectionInfo.defaultSectionType;
-
-    // Likewise with the subdocument name.
-    if (subDocument == "")
-      subDocument = SectionInfo.defaultSubDocument;
-    
-    // At this point, we need to push new section info on the stack, either
-    // because there's nothing on the stack, or because the specified section
-    // info doesn't match the previous section info.
-    //
-    infoStack.push(new SectionInfo(0,
-                                   indexFlag,
-                                   sectionType,
-                                   prevSectionBump + sectionBump,
-                                   wordBoost,
-                                   sentenceBump,
-                                   spellFlag,
-                                   subDocument,
-                                   metaInfo));
-  } // public push( indexFlag, ... )
-
-  //////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////
 
   /** Implicit depth-push operator. <br><br>
    *
@@ -322,15 +143,13 @@ public class SectionInfoStack
       return;
 
     // Assume we don't need  to restore the previous section bump.
-    boolean restorePrevSectionBump = false;
+    boolean restorePrevSectionBump = top().sectionBump != 0;
 
     // If the accumulated section bump didn't get used in the current
     // section, we must restore the section bump for the previous section.
     //
-    if (top().sectionBump != 0)
-      restorePrevSectionBump = true;
 
-    // Actually pop the top item off the section info stack.
+      // Actually pop the top item off the section info stack.
     if (--(top().depth) == -1)
       infoStack.pop();
 
@@ -375,7 +194,7 @@ public class SectionInfoStack
       return theTop;
 
     // Otherwise up-cast a reference to the previous thing on the stack.
-    return (SectionInfo)(infoStack.elementAt(infoStack.size() - 1));
+    return infoStack.elementAt(infoStack.size() - 1);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -392,172 +211,9 @@ public class SectionInfoStack
     return infoStack.isEmpty();
   }
 
-  //////////////////////////////////////////////////////////////////////////////
-  //////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////
 
-  /** Query method to determine if the passed set of section attributes differs
-   *  from the section at the top of the nesting stack. <br><br>
-   *
-   *  @return <code>true</code> - One or more of the passed attributes do not
-   *                              match the attributes for the section
-   *                              currently at the top of the stack.
-   *                              <br>
-   *          <code>false</code> - The passed attributes are identical to those
-   *                               for the section currently at the top of the
-   *                               stack. <br><br>
-   *
-   *  @.notes  If the stack is empty when this method is called, the value
-   *           <code>true</code>. <br><br>
-   */
-  public boolean valuesChanged(int indexFlag, String sectionType,
-                               int sectionBump, float wordBoost,
-                               int sentenceBump, int spellFlag,
-                               String subDocument, LinkedList metaInfo) 
-  {
-    // If the stack is empty, tell the caller that the values have changed.
-    if (isEmpty())
-      return true;
-
-    // Otherwise, take a peek at the top entry on the stack.
-    SectionInfo info = top();
-
-    // If the caller wants to use the parent's index flag, get it.
-    if (indexFlag == SectionInfo.parentIndex)
-      indexFlag = info.indexFlag;
-
-    // If the caller wants to use the parent's spell flag, get it.
-    if (spellFlag == SectionInfo.parentSpell)
-      spellFlag = info.spellFlag;
-
-    // If no explicit section bump was specified, inherit the parent's bump.
-    if (sectionBump == 0)
-      sectionBump = info.sectionBump;
-
-    // Now this part looks a bit weird... If the specified bump was an explicit
-    // value, set it to some crazy value for the following comparison.  Why? 
-    // To ensure that section bump values for parent and child nodes with 
-    // no intervening text are considered different (because nested explicit 
-    // section bumps should be additive.)
-    //  
-    else
-      sectionBump = -1;
-    
-    // If any of the values passed differs from the ones on the stack,
-    // tell the caller.
-    //
-    if (indexFlag != info.indexFlag ||
-        sectionType != info.sectionType ||
-        sectionBump != info.sectionBump ||
-        wordBoost != info.wordBoost ||
-        sentenceBump != info.sentenceBump ||
-        spellFlag != info.spellFlag ||
-        subDocument != info.subDocument ||
-        metaInfo != info.metaInfo)
-      return true;
-
-    // Otherwise, indicate that the values are the same.    
-    return false;
-  } // public valuesChanged()
-
-  //////////////////////////////////////////////////////////////////////////////
-
-  /** Return the current depth of the top section on the nesting stack. <br><br>
-   *
-   *  @return  The current depth of the entry at the top of the section stack,
-   *           or <code>-1</code> if the stack is empty.
-   */
-  public int depth() 
-  {
-    // If the stack is empty, indicate with a -1 that there is no current depth.
-    if (isEmpty())
-      return -1;
-
-    // Otherwise return the actual depth for the top entry.
-    return top().depth;
-  } // depth()
-
-  //////////////////////////////////////////////////////////////////////////////
-
-  /** Return the index flag for the top section on the nesting stack. <br><br>
-   *
-   *  @return  Returns {@link org.cdlib.xtf.textIndexer.SectionInfo#index index}
-   *           or
-   *           {@link org.cdlib.xtf.textIndexer.SectionInfo#noIndex noIndex}.
-   *           <br><br>
-   *
-   *  @.notes
-   *
-   *  This function will never return
-   *  {@link org.cdlib.xtf.textIndexer.SectionInfo#parentIndex parentIndex}.
-   *  That value is only used as an argument when calling the
-   *  explicit section-push
-   *  operator to force the new section to adopt it's parents index
-   *  flag.<br><br>
-   *
-   *  For a complete explanation of the <code>indexFlag</code> attribute, see
-   *  the {@link org.cdlib.xtf.textIndexer.SectionInfo#indexFlag indexFlag}
-   *  field in the {@link org.cdlib.xtf.textIndexer.SectionInfo} class. <br><br>
-   */
-  public int indexFlag() 
-  {
-    // If the stack is empty, return a no indexing flag, as the outermost node
-    // is seldomly ever indexed.
-    //
-    if (isEmpty())
-      return SectionInfo.noIndex;
-
-    // Otherwise return the actual index flag for the top entry.
-    return top().indexFlag;
-  } // indexFlag()
-
-  //////////////////////////////////////////////////////////////////////////////
-
-  /** Return the spell flag for the top section on the nesting stack. <br><br>
-   *
-   *  @return  Returns {@link org.cdlib.xtf.textIndexer.SectionInfo#spell spell}
-   *           or
-   *           {@link org.cdlib.xtf.textIndexer.SectionInfo#noSpell noSpell}.
-   *           <br><br>
-   *
-   *  @.notes
-   *
-   *  This function will never return
-   *  {@link org.cdlib.xtf.textIndexer.SectionInfo#parentSpell parentSpell}.
-   *  That value is only used as an argument when calling the
-   *  explicit section-push
-   *  operator to force the new section to adopt it's parents spell
-   *  flag.<br><br>
-   *
-   *  For a complete explanation of the <code>spellFlag</code> attribute, see
-   *  the {@link org.cdlib.xtf.textIndexer.SectionInfo#spellFlag spellFlag}
-   *  field in the {@link org.cdlib.xtf.textIndexer.SectionInfo} class. <br><br>
-   */
-  public int spellFlag() 
-  {
-    // If the stack is empty, return the default spelling flag.
-    //
-    if (isEmpty())
-      return SectionInfo.defaultSpellFlag;
-
-    // Otherwise return the actual spell flag for the top entry.
-    return top().spellFlag;
-  } // spellFlag()
-  
-  /** Return the subdocument name for the top of the nesting stack.
-   * 
-   * @return    Returns the subdocument name, or null for the outer document.
-   */
-  public String subDocument()
-  {
-    // If the stack is empty, return the default subdocument (none).
-    if (isEmpty())
-      return null;
-
-    // Otherwise return the actual subdocument for the top entry.
-    return top().subDocument;
-  }
-  
-  public LinkedList metaInfo()
+    public List<MetaField> metaInfo()
   {
     // If the stack is empty, use the default list.
     if (isEmpty())
@@ -593,154 +249,10 @@ public class SectionInfoStack
 
   //////////////////////////////////////////////////////////////////////////////
 
-  /** Return the section bump value for the top section on the nesting stack.
-   *  <br><br>
-   *
-   *  @return  Returns the bump value for the top section entry on the stack
-   *           (if any), or the {@link org.cdlib.xtf.textIndexer.SectionInfo#defaultSectionBump defaultSectionBump}
-   *           value if the stack is empty. <br><br>
-   *
-   *  @.notes
-   *  For a complete explanation of the <code>sectionBump</code> attribute, see
-   *  the {@link org.cdlib.xtf.textIndexer.SectionInfo#sectionBump sectionBump}
-   *  field in the {@link org.cdlib.xtf.textIndexer.SectionInfo} class. <br><br>
-   */
-  public int sectionBump() 
-  {
-    // If the stack is empty, return the default section bump value.
-    if (isEmpty())
-      return SectionInfo.defaultSectionBump;
+    //////////////////////////////////////////////////////////////////////////////
 
-    // Otherwise, return the actual section bump for the top entry.
-    return top().sectionBump;
-  } // sectionBump()
 
-  //////////////////////////////////////////////////////////////////////////////
-
-  /** Use and clear the section bump value for the top section on the nesting
-   *  stack. <br><br>
-   *
-   *  @return  Returns the bump value for the top section entry on the stack
-   *           (if any), or the {@link org.cdlib.xtf.textIndexer.SectionInfo#defaultSectionBump defaultSectionBump}
-   *           value if the stack is empty. <br><br>
-   *
-   *  @.notes
-   *  "Using" the section bump at the top of the stack consists of retrieving
-   *  its value and resetting its field to zero. This is done so that any
-   *  accumulated bump from nested sections is used only once. After the reset,
-   *  subsequent calls to this function will return zero, thus preventing any
-   *  unwanted repeat bumping. <br><br>
-   *
-   *  For a complete explanation of the <code>sectionBump</code> attribute, see
-   *  the {@link org.cdlib.xtf.textIndexer.SectionInfo#sectionBump sectionBump}
-   *  field in the {@link org.cdlib.xtf.textIndexer.SectionInfo} class. <br><br>
-   *
-   */
-  public int useSectionBump() 
-  {
-    // If the stack is empty, return the default section bump value.
-    if (isEmpty())
-      return SectionInfo.defaultSectionBump;
-
-    // Otherwise, get a reference to the top entry.
-    SectionInfo info = top();
-
-    // Then fetch the bump value to return.
-    int sectionBump = info.sectionBump;
-
-    // And zero the bump out so that it only gets used once. 
-    info.sectionBump = 0;
-
-    // Then return the original bump to the caller.
-    return sectionBump;
-  } // useSectionBump()
-
-  //////////////////////////////////////////////////////////////////////////////
-
-  /** This function sets the section bump value for the top entry in the stack.
-   *  <br><br>
-   *
-   *  @param newBump   New bump value to set for top entry. <br><br>
-   *
-   *  @return          The bump value set for the top entry in the stack just
-   *                   before this call was made. <br><br>
-   *
-   *  @.notes
-   *  For a complete explanation of the <code>sectionBump</code> attribute, see
-   *  the {@link org.cdlib.xtf.textIndexer.SectionInfo#sectionBump sectionBump}
-   *  field in the {@link org.cdlib.xtf.textIndexer.SectionInfo} class. <br><br>
-   */
-  public int setSectionBump(int newBump) 
-  {
-    // If the stack is empty, return the default section bump.
-    if (isEmpty())
-      return SectionInfo.defaultSectionBump;
-
-    // Get a reference to the top entry in the stack.
-    SectionInfo info = top();
-
-    // Hang on to the section bump value already recorded.
-    int retBump = info.sectionBump;
-
-    // Set the new bump value passed in.
-    info.sectionBump = newBump;
-
-    // And finally return the original bump value to the caller.
-    return retBump;
-  } // setSectionBump()
-
-  //////////////////////////////////////////////////////////////////////////////
-
-  /** Return the word boost value for the top entry in the stack.
-   *
-   *  @return   If the stack is empty, this function returns
-   *            {@link org.cdlib.xtf.textIndexer.SectionInfo#defaultWordBoost}.
-   *            Otherwise, it returns the word boost for the section currently
-   *            at the top of the stack. <br><br>
-   *
-   *  @.notes
-   *  For a complete explanation of the <code>wordBoost</code> attribute, see
-   *  the {@link org.cdlib.xtf.textIndexer.SectionInfo#wordBoost wordBoost}
-   *  field in the {@link org.cdlib.xtf.textIndexer.SectionInfo} class. <br><br>
-   */
-  public float wordBoost() 
-  {
-    // If the stack is empty, simply return the default word boost.
-    if (isEmpty())
-      return SectionInfo.defaultWordBoost;
-
-    // Otherwise return the actual word boost for the top entry.
-    return top().wordBoost;
-  } // wordBoost()
-
-  //////////////////////////////////////////////////////////////////////////////
-
-  /** Return the sentence bump value for the top entry in the stack.
-    *
-    *  @return   If the stack is empty, this function returns
-    *            {@link org.cdlib.xtf.textIndexer.SectionInfo#defaultSentenceBump}.
-    *            Otherwise, it returns the sentence bump for the section
-    *            currently at the top of the stack. <br><br>
-    *
-   *  @.notes
-   *  For a complete explanation of the <code>sentenceBump</code> attribute, see
-   *  the {@link org.cdlib.xtf.textIndexer.SectionInfo#sentenceBump sentenceBump}
-   *  field in the {@link org.cdlib.xtf.textIndexer.SectionInfo} class. <br><br>
-    */
-  public int sentenceBump() 
-  {
-    // If the stack is empty, simply return the default word boost.
-    if (isEmpty())
-      return SectionInfo.defaultSentenceBump;
-
-    // Otherwise, return the sentence bump for the top entry.
-    return top().sentenceBump;
-  } // sentenceBump()
-
-  //////////////////////////////////////////////////////////////////////////////
-  //////////////////////////////////////////////////////////////////////////////
-
-  /** Push a {@link org.cdlib.xtf.textIndexer.SectionInfo} instance onto the
+    /** Push a {@link org.cdlib.xtf.textIndexer.SectionInfo} instance onto the
    *  top of the section stack. <br><br>
    *
    *  @.notes
@@ -774,6 +286,6 @@ public class SectionInfoStack
       return null;
 
     // Otherwise up-cast a reference to whatever is at the top of the stack.
-    return (SectionInfo)(infoStack.peek());
+    return infoStack.peek();
   } // top()
 } // class SectionInfoStack

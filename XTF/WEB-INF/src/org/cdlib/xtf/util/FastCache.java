@@ -40,7 +40,7 @@ package org.cdlib.xtf.util;
  */
 public class FastCache<K, V>
 {
-  private int size;
+  private final int size;
   private FastHashMap<K, V> oldHash;
   private FastHashMap<K, V> newHash;
 

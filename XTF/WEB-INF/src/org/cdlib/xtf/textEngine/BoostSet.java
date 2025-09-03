@@ -57,19 +57,19 @@ import org.cdlib.xtf.util.Trace;
 public class BoostSet 
 {
   /** Cached data. If the reader goes away, our cache will too. */
-  private static WeakHashMap cache = new WeakHashMap();
+  private static final WeakHashMap cache = new WeakHashMap();
 
   /** Field to find document keys in */
-  private String field;
+  private final String field;
 
   /** Number of warnings emitted so far. After 10, we suppress them. */
   private int nWarnings = 0;
 
   /** Set of boost values, one per document ID */
-  private float[] boostByDoc;
+  private final float[] boostByDoc;
 
   /** Marker for the default value */
-  private static float DEFAULT_MARKER = -99.0f;
+  private static final float DEFAULT_MARKER = -99.0f;
 
   /**
    * Retrieves BoostSet for a given File from a given reader. Maintains a cache
@@ -215,11 +215,11 @@ public class BoostSet
   /**
    * Iterates all the document keys in an index
    */
-  private class DocIter 
+  private static class DocIter
   {
     boolean done = false;
     String docKey;
-    String field;
+    final String field;
     TermPositions termPositions;
     TermEnum termEnum;
 
@@ -289,7 +289,7 @@ public class BoostSet
    */
   private class LineIter 
   {
-    BufferedReader reader;
+    final BufferedReader reader;
     boolean done = false;
     String prevLineKey = "";
     String lineKey;

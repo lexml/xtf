@@ -52,7 +52,7 @@ import java.util.StringTokenizer;
 public class CharMap 
 {
   /** The mapping of chars. */
-  private char[] map = new char[65536];
+  private final char[] map = new char[65536];
 
   /** Special character to denote null list */
   private static final char NULL_CHAR = '\uEE00';
@@ -61,13 +61,13 @@ public class CharMap
   private static final int SUPP_HASH_SIZE = 100;
 
   /** Supplemental mapping of characters after the first */
-  private IntHash supplementalCharsMap = new IntHash(SUPP_HASH_SIZE);
+  private final IntHash supplementalCharsMap = new IntHash(SUPP_HASH_SIZE);
 
   /** How many recent mappings to maintain */
   private static final int CACHE_SIZE = 5000;
 
   /** Keep a cache of lookups performed to-date */
-  private FastCache cache = new FastCache(CACHE_SIZE);
+  private final FastCache cache = new FastCache(CACHE_SIZE);
 
   /** Construct a char map by reading in a file. */
   public CharMap(File f)

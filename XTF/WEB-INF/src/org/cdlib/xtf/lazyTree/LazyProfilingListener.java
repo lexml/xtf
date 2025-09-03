@@ -25,7 +25,7 @@ public class LazyProfilingListener implements TraceListener
    * being processed. Must be thread-local, since the same stylesheet may
    * be in use by multiple threads at one time.
    */
-  private ThreadLocal tlInstructionStack = new ThreadLocal();
+  private final ThreadLocal tlInstructionStack = new ThreadLocal();
 
   /** Dummy used for counting nodes when no instruction is specified */
   private static final ProfileCount emptyInstr = new ProfileCount("[Global variables]", 0);
@@ -35,7 +35,7 @@ public class LazyProfilingListener implements TraceListener
    * Must be thread-local, since the same stylesheet may be in use by
    * multiple threads at one time.
    */
-  private ThreadLocal tlCountMap = new ThreadLocal();
+  private final ThreadLocal tlCountMap = new ThreadLocal();
 
   /** Unused */
   public void open() {
@@ -173,7 +173,7 @@ public class LazyProfilingListener implements TraceListener
     public int count;
 
     /** Map of each node hit by this instruction */
-    public HashMap nodes = new HashMap();
+    public final HashMap nodes = new HashMap();
 
     /** Construct an empty ProfileCount */
     public ProfileCount() {

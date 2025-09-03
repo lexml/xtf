@@ -61,8 +61,8 @@ import net.sf.saxon.value.StringValue;
  */
 class RunInstruction extends SimpleExpression 
 {
-  protected Expression command;
-  protected int timeout;
+  protected final Expression command;
+  protected final int timeout;
   protected int nArgs;
   protected InputElement.InputInstruction inputExpr;
 
@@ -73,7 +73,7 @@ class RunInstruction extends SimpleExpression
 
     nArgs = args.size();
 
-    if (args.size() > 0 &&
+    if (!args.isEmpty() &&
         args.get(args.size() - 1) instanceof InputElement.InputInstruction) 
     {
       inputExpr = (InputElement.InputInstruction)args.get(args.size() - 1);
@@ -193,7 +193,7 @@ class RunInstruction extends SimpleExpression
       args.add(strVal);
     } // for c
     
-    String[] argArray = (String[])args.toArray(new String[args.size()]);
+    String[] argArray = (String[])args.toArray(new String[0]);
     return argArray;
   }
   

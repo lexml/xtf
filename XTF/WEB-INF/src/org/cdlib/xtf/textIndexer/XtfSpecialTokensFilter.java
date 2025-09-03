@@ -74,7 +74,7 @@ public class XtfSpecialTokensFilter extends TokenFilter
    *  for more about how this reference is used. <br><br>
    *
    */
-  private String srcText;
+  private final String srcText;
 
   //////////////////////////////////////////////////////////////////////////////
 

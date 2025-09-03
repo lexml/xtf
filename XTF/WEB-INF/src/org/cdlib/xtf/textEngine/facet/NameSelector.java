@@ -33,7 +33,7 @@ package org.cdlib.xtf.textEngine.facet;
 /** Filter out groups that don't match the given name. */
 public class NameSelector extends GroupSelector 
 {
-  String targetName;
+  final String targetName;
 
   public NameSelector(String name) {
     this.targetName = name;

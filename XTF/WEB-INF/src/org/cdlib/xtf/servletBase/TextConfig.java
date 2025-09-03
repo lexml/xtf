@@ -39,7 +39,7 @@ import org.cdlib.xtf.util.*;
 public abstract class TextConfig 
 {
   /** Servlet we are part of */
-  public TextServlet servlet;
+  public final TextServlet servlet;
 
   /** Logging level: "silent", "errors", "warnings", "info", or "debug" */
   public String logLevel = "info";
@@ -111,13 +111,13 @@ public abstract class TextConfig
    * List of parameters to tokenize specially. Default: empty (meaning use
    * default tokenizer for all parameters.)
    */
-  public Map tokenizerMap = new HashMap();
+  public final Map tokenizerMap = new HashMap();
   
   /** Interval for index warming. Default: 60 (seconds) */
   public int indexWarmingUpdateInterval = 60;
   
   /** All the configuration attributes in the form of name/value pairs */
-  public AttribList attribs = new AttribList();
+  public final AttribList attribs = new AttribList();
 
   /* Private temporaries for use during parsing */
   private String tokenizeParam;
@@ -144,7 +144,7 @@ public abstract class TextConfig
       
       // Make sure the root tag is correct.
       String rootTag = root.name();
-      if (rootTag.equals("") && root.nChildren() == 1) {
+      if (rootTag.isEmpty() && root.nChildren() == 1) {
         root = root.child(0);
         rootTag = root.name();
       }
@@ -256,7 +256,7 @@ public abstract class TextConfig
       return true;
     }
     else if (tagAttr.equalsIgnoreCase("trackSessions.encodeURLPattern") &&
-             strVal.length() > 0) 
+            !strVal.isEmpty())
     {
       try {
         sessionEncodeURLPattern = Pattern.compile(strVal);
@@ -355,7 +355,7 @@ public abstract class TextConfig
   public static void requireOrElse(String value, String descrip)
     throws GeneralException 
   {
-    if (value == null || value.equals(""))
+    if (value == null || value.isEmpty())
       throw new GeneralException(descrip);
   } // requireOrElse()
 } // class TextConfig

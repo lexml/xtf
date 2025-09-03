@@ -48,7 +48,7 @@ import org.cdlib.xtf.util.CharMap;
 public class AccentFoldingFilter extends TokenFilter 
 {
   /** Set of characters to map */
-  private CharMap accentMap;
+  private final CharMap accentMap;
 
   /**
    * Construct a token stream to remove accents from the input tokens.
@@ -89,7 +89,7 @@ public class AccentFoldingFilter extends TokenFilter
       // with the next token), but that was insidiously evil because it threw off
       // chunk word counting.
       //
-      if (mapped.length() == 0)
+      if (mapped.isEmpty())
         return t;
   
       // Okay, we gotta make a new token that's the same in every respect

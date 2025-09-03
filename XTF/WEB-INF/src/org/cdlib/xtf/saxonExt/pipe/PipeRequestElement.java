@@ -132,7 +132,7 @@ public class PipeRequestElement extends ElementWithContent
       byte[] inputBytes = new byte[0];
       if (content != null) {
         String inputStr = sequenceToString(content, context).trim();
-        if (inputStr.length() > 0) {
+        if (!inputStr.isEmpty()) {
           try {
             inputBytes = inputStr.getBytes("UTF-8");
           } catch (UnsupportedEncodingException e) {

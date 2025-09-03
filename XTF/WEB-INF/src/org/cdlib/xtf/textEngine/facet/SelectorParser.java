@@ -42,7 +42,7 @@ public class SelectorParser implements SelectorParserConstants {
         {if (true) return (GroupSelector) list.get(0);}
 
     GroupSelector[] array = (GroupSelector[])
-        list.toArray(new GroupSelector[list.size()]);
+        list.toArray(new GroupSelector[0]);
     {if (true) return new UnionSelector(array);}
     throw new Error("Missing return statement in function");
   }
@@ -435,7 +435,7 @@ public class SelectorParser implements SelectorParserConstants {
       return (jj_ntk = jj_nt.kind);
   }
 
-  private java.util.Vector jj_expentries = new java.util.Vector();
+  private final java.util.Vector jj_expentries = new java.util.Vector();
   private int[] jj_expentry;
   private int jj_kind = -1;
 

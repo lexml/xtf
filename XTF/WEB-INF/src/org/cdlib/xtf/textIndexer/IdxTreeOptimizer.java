@@ -95,11 +95,9 @@ public class IdxTreeOptimizer
         String[] files = dir.getAbsoluteFile().list();
 
         // And process each of them.
-        for (int i = 0; i < files.length; i++)
-          processDir(new File(dir, files[i]));
+          for (String file : files) processDir(new File(dir, file));
       }
 
-      return;
     } // if( dir.isDirectory() )
 
     // The current file is not a directory, so skip it.

@@ -72,7 +72,7 @@ public class CrossQuery extends TextServlet
   protected CrossQueryConfig config;
 
   /** Used to format decimal numbers */
-  protected static DecimalFormat decimalFormat = new DecimalFormat();
+  protected static final DecimalFormat decimalFormat = new DecimalFormat();
   
   /** Used for stylesheet profiling, if enabled */
   protected TimeProfilingListener profListener;
@@ -545,7 +545,7 @@ public class CrossQuery extends TextServlet
     //
     if (baseUrl.indexOf('?') < 0 &&
         req.getQueryString() != null &&
-        req.getQueryString().length() > 0) 
+            !req.getQueryString().isEmpty())
     {
       baseUrl = baseUrl + "?" + req.getQueryString();
     }
@@ -553,7 +553,7 @@ public class CrossQuery extends TextServlet
     baseUrl = baseUrl.replaceAll("\"", "&quot;"); // because we're embedding in HTML
 
     String step = req.getParameter("debugStep");
-    if (step == null || step.length() == 0)
+    if (step == null || step.isEmpty())
       return null;
 
     // Output the frame set, with two frames: one for info, one for data.

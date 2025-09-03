@@ -47,7 +47,7 @@ public class QueryRoute
   public String errorGenSheet;
 
   /** Special parsing requests for particular URL parameters */
-  public HashMap tokenizerMap = new HashMap();
+  public final HashMap tokenizerMap = new HashMap();
 
   /** Optional: input to query router stylesheet */
   public String routerInput = null;
@@ -83,7 +83,7 @@ public class QueryRoute
     // Make sure the root tag is correct.
     EasyNode root = new EasyNode(input);
     String rootTag = root.name();
-    if (rootTag.equals("") && root.nChildren() == 1) {
+    if (rootTag.isEmpty() && root.nChildren() == 1) {
       root = root.child(0);
       rootTag = root.name();
     }
@@ -110,7 +110,7 @@ public class QueryRoute
     } // for i
 
     // Make sure that required parameters were specified.
-    if (ret.queryParserSheet == null || ret.queryParserSheet.length() == 0)
+    if (ret.queryParserSheet == null || ret.queryParserSheet.isEmpty())
       throw new QueryRouteException(
         "Query router stylesheet must output a 'queryParser' element");
 

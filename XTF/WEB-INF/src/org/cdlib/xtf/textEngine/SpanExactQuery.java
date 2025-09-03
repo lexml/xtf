@@ -89,7 +89,7 @@ public class SpanExactQuery extends SpanQuery
 
     SpanExactQuery clone = (SpanExactQuery)this.clone();
     clone.clauses = (SpanQuery[])newClauses.toArray(
-      new SpanQuery[newClauses.size()]);
+            new SpanQuery[0]);
     return clone;
   }
 
@@ -238,13 +238,13 @@ public class SpanExactQuery extends SpanQuery
 
       // Make an OR to stick them together
       SpanOrQuery orQuery = new SpanOrQuery(
-        (SpanQuery[])orClauses.toArray(new SpanQuery[orClauses.size()]));
+        (SpanQuery[])orClauses.toArray(new SpanQuery[0]));
       newClauses.add(orQuery);
     } // for i
 
     // And make a near query out of the whole thing.
     SpanQuery q = new SpanNearQuery(
-      (SpanQuery[])newClauses.toArray(new SpanQuery[newClauses.size()]),
+      (SpanQuery[])newClauses.toArray(new SpanQuery[0]),
       0,
       true);
     q.setSpanRecording(getSpanRecording());

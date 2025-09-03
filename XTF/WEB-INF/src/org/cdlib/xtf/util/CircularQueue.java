@@ -39,10 +39,10 @@ package org.cdlib.xtf.util;
 public class CircularQueue 
 {
   /** Max # of entries in the queue */
-  private int maxSize;
+  private final int maxSize;
 
   /** The current queue entries */
-  private Object[] entries;
+  private final Object[] entries;
 
   /** Points to the current bottom entry */
   private int bottom;

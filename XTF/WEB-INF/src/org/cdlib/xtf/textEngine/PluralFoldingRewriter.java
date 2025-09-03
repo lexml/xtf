@@ -48,8 +48,8 @@ import org.cdlib.xtf.util.WordMap;
  */
 public class PluralFoldingRewriter extends XtfQueryRewriter 
 {
-  private WordMap pluralMap;
-  private Set tokenizedFields;
+  private final WordMap pluralMap;
+  private final Set tokenizedFields;
 
   /** Construct a new rewriter to use the given map  */
   public PluralFoldingRewriter(WordMap pluralMap, Set tokFields) {

@@ -45,7 +45,7 @@ class DynaXMLConfig extends TextConfig
   public String reverseProxyMarker;
 
   /** The default header to recording the original IP address. */
-  public String reverseProxyDefaultMarker = "X-Forwarded-For";
+  public final String reverseProxyDefaultMarker = "X-Forwarded-For";
 
   /**
    * Filesystem path to the 'doclookup' stylesheet, used to get info

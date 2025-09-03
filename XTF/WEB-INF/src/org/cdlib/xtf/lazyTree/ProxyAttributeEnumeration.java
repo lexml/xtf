@@ -17,7 +17,7 @@ final class ProxyAttributeEnumeration extends AxisIteratorImpl
   implements LookaheadIterator 
 {
   private ProxyElement element;
-  private NodeTest nodeTest;
+  private final NodeTest nodeTest;
   private NodeInfo next;
   private int index;
   private int length;

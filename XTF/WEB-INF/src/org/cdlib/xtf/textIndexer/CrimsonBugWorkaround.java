@@ -58,10 +58,10 @@ public class CrimsonBugWorkaround extends SequenceInputStream
   private static class BlockEnum implements Enumeration 
   {
     static final int BLOCK_SIZE = 32 * 1024;
-    InputStream in;
-    byte[] inBuf = new byte[BLOCK_SIZE];
+    final InputStream in;
+    final byte[] inBuf = new byte[BLOCK_SIZE];
     int inBufLen;
-    byte[] outBuf = new byte[BLOCK_SIZE * 2];
+    final byte[] outBuf = new byte[BLOCK_SIZE * 2];
     int outBufLen;
     boolean eof = false;
     byte prev = 'a';

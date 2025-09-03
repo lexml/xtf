@@ -145,9 +145,9 @@ public class SQLQuery extends ExtensionInstruction
     public static final int COLUMN = 1;
     public static final int TABLE = 2;
     public static final int WHERE = 3;
-    String rowTag;
-    String colTag;
-    int options;
+    final String rowTag;
+    final String colTag;
+    final int options;
 
     public QueryInstruction(Expression connection, Expression column,
                             Expression table, Expression where, String rowTag,

@@ -49,7 +49,7 @@ import org.cdlib.xtf.util.WordMap;
 public class PluralFoldingFilter extends TokenFilter 
 {
   /** Set of words to de-pluralize */
-  private WordMap pluralMap;
+  private final WordMap pluralMap;
 
   /**
    * Construct a token stream to convert plural words to singular.
@@ -81,12 +81,12 @@ public class PluralFoldingFilter extends TokenFilter
     boolean isStartTerm = false;
     boolean isEndTerm = false;
 
-    if (term.length() > 0 && term.charAt(0) == Constants.FIELD_START_MARKER) {
+    if (!term.isEmpty() && term.charAt(0) == Constants.FIELD_START_MARKER) {
       isStartTerm = true;
       term = term.substring(1);
     }
 
-    if (term.length() > 0 &&
+    if (!term.isEmpty() &&
         term.charAt(term.length() - 1) == Constants.FIELD_END_MARKER) 
     {
       isEndTerm = true;

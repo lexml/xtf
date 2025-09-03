@@ -42,7 +42,7 @@ import org.cdlib.xtf.util.Trace;
  */
 public class XtfBigramQueryRewriter extends BigramQueryRewriter 
 {
-  private Set tokenizedFields;
+  private final Set tokenizedFields;
 
   /**
    * Constructs a rewriter using the given stopword set.
@@ -248,7 +248,7 @@ public class XtfBigramQueryRewriter extends BigramQueryRewriter
       StringTokenizer st = new StringTokenizer(text);
       while (st.hasMoreTokens())
         v.add(term(st.nextToken()));
-      return (SpanQuery[])v.toArray(new SpanQuery[v.size()]);
+      return (SpanQuery[])v.toArray(new SpanQuery[0]);
     }
 
     private SpanQuery or(SpanQuery[] clauses) {

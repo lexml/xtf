@@ -1,6 +1,6 @@
 package org.cdlib.xtf.textIndexer;
 
-import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Copyright (c) 2004, Regents of the University of California
@@ -77,32 +77,6 @@ import java.util.LinkedList;
  */
 public class SectionInfo 
 {
-  /** Index/No-Index Flag Value: Use parent section index/no-index state.
-   *  <br><br>
-   *
-   *  @.notes
-   *  This index flag value is never actually stored in the index flag attribute
-   *  for a <code>SectionInfo</code> instance. It is only passed as an argument
-   *  to the
-   *  explicit section push
-   *  method defined by the {@link org.cdlib.xtf.textIndexer.SectionInfoStack}
-   *  class. That method in turn uses the parent section's index flag value,
-   *  which will be either
-   *  {@link org.cdlib.xtf.textIndexer.SectionInfo#index index} or
-   *  {@link org.cdlib.xtf.textIndexer.SectionInfo#noIndex noIndex}.
-   *  <br><br>
-   */
-  public final static int parentIndex = -1;
-
-  /** Index/No-Index Flag Value: Index the current section.
-   *  <br><br>
-   *
-   *  This value is used for the
-   *  {@link org.cdlib.xtf.textIndexer.SectionInfo#indexFlag indexFlag} field
-   *  to indicate that the current section should not be indexed.
-   *  <br><br>
-   */
-  public final static int noIndex = 0;
 
   /** Index/No-Index Flag Value: Index the current section.
    *  <br><br>
@@ -113,25 +87,6 @@ public class SectionInfo
    *  <br><br>
    */
   public final static int index = 1;
-
-  /** Special Section Bump: Value = Use parent's section bump.
-   *  <br><br>
-   *
-   *  This special value when used for the
-   *  {@link org.cdlib.xtf.textIndexer.SectionInfo#sectionBump sectionBump}
-   *  field indicates that the parent's section bump value should be used.
-   *  <br><br>
-   *
-   *  @.notes
-   *  This section bump value is never actually stored in the section bump
-   *  attribute for a <code>SectionInfo</code> instance. It is only passed as
-   *  an argument to the
-   *  explicit section push
-   *  method defined by the {@link org.cdlib.xtf.textIndexer.SectionInfoStack}
-   *  class. That method in turn uses the parent section's bump value for the
-   *  new entry on the stack.<br><br>
-   */
-  public final static int parentSectionBump = -1;
 
   /** Default state for Index/No-Index Flag. Value = index.
    *  <br><br>
@@ -152,16 +107,7 @@ public class SectionInfo
   *  <br><br>
   */
   public final static String defaultSectionType = "";
-  
-  /** Default subdocument: Value = null.
-  *  <br><br>
-  *
-  *  This is the default value applied to the
-  *  {@link org.cdlib.xtf.textIndexer.SectionInfo#subDocument subDocument}
-  *  field whenever a <code>SectionInfo</code> class is constructed.
-  *  <br><br>
-  */
-  public final static String defaultSubDocument = null;
+
 
   /** Default word bump for a section: Value = {@value}.
    *  <br><br>
@@ -201,23 +147,6 @@ public class SectionInfo
    *  <br><br>
    */
   public final static int defaultDepth = 0;
-
-  /** Spell/No-Spell Flag Value: Use parent section spell/no-spell state.
-   *  <br><br>
-   *
-   *  @.notes
-   *  This spell flag value is never actually stored in the spell flag attribute
-   *  for a <code>SectionInfo</code> instance. It is only passed as an argument
-   *  to the
-   *  explicit section push
-   *  method defined by the {@link org.cdlib.xtf.textIndexer.SectionInfoStack}
-   *  class. That method in turn uses the parent section's spell flag value,
-   *  which will be either
-   *  {@link org.cdlib.xtf.textIndexer.SectionInfo#spell spell} or
-   *  {@link org.cdlib.xtf.textIndexer.SectionInfo#noSpell noSpell}.
-   *  <br><br>
-   */
-  public final static int parentSpell = -1;
 
   /** No-Spell Flag Value: Do not add words from the current section to the
    *  spelling correction dictionary.
@@ -265,12 +194,9 @@ public class SectionInfo
    *
    *  This field indicates whether the associated section should be indexed
    *  or not. There are three valid values for this flag:
-   *  {@link org.cdlib.xtf.textIndexer.SectionInfo#parentIndex parentIndex},
-   *  {@link org.cdlib.xtf.textIndexer.SectionInfo#noIndex noIndex},
    *  and {@link org.cdlib.xtf.textIndexer.SectionInfo#index index}.
    *
    *  @.notes
-   *  The value {@link org.cdlib.xtf.textIndexer.SectionInfo#parentIndex parentIndex}
    *  is never actually stored in the index flag attribute for a
    *  <code>SectionInfo</code> instance. It is only passed as an argument to the
    *  explicit section push
@@ -281,7 +207,7 @@ public class SectionInfo
    *  {@link org.cdlib.xtf.textIndexer.SectionInfo#index noIndex}.
    *  <br><br>
    */
-  public int indexFlag;
+  public final int indexFlag;
 
   /** Type name for a section. <br><br>
    *
@@ -289,7 +215,7 @@ public class SectionInfo
    *  can be an empty string (""), in which case the parent section name (if
    *  any) is inherited, or an arbitrary string. <br><br>
    */
-  public String sectionType;
+  public final String sectionType;
 
   /** Word bump to add for a section. <br><br>
    *
@@ -306,14 +232,13 @@ public class SectionInfo
    *  nested sections starts are encountered with no intervening text.
    *
    *  @.notes
-   *  The value {@link org.cdlib.xtf.textIndexer.SectionInfo#parentSectionBump parentSectionBump}
    *  is never actually stored in the sectionBump attribute for a
    *  <code>SectionInfo</code> instance. It is only passed as an argument to the
    *  explicit section push
    *  method defined by the {@link org.cdlib.xtf.textIndexer.SectionInfoStack}
    *  class. That method in turn uses the parent section's bump value. <br><br>
    */
-  public int prevSectionBump;
+  public final int prevSectionBump;
 
   /** Word boost value for this section. <br><br>
    *
@@ -322,7 +247,7 @@ public class SectionInfo
    *  matches for searches when added to the index. If less than 1.0, words in
    *  this section are considered poorer matches.
    */
-  public float wordBoost;
+  public final float wordBoost;
 
   /** Sentence bump value for this section. <br><br>
    *
@@ -332,19 +257,17 @@ public class SectionInfo
    *  multiple sentences as compared to within a single sentence. <br><br>
    *.
    */
-  public int sentenceBump;
+  public final int sentenceBump;
 
   /** Spell flag for a section. <br><br>
    *
    *  This field indicates whether words from the associated section should be
    *  added to the spelling correction dictionary or not.
    *  There are three valid values for this flag:
-   *  {@link org.cdlib.xtf.textIndexer.SectionInfo#parentSpell parentSpell},
    *  {@link org.cdlib.xtf.textIndexer.SectionInfo#noSpell noSpell},
    *  and {@link org.cdlib.xtf.textIndexer.SectionInfo#spell spell}.
    *
    *  @.notes
-   *  The value {@link org.cdlib.xtf.textIndexer.SectionInfo#parentSpell parentSpell}
    *  is never actually stored in the spell flag attribute for a
    *  <code>SectionInfo</code> instance. It is only passed as an argument to the
    *  explicit section push
@@ -355,7 +278,7 @@ public class SectionInfo
    *  {@link org.cdlib.xtf.textIndexer.SectionInfo#spell noSpell}.
    *  <br><br>
    */
-  public int spellFlag;
+  public final int spellFlag;
   
   /** Name for a subdocument. <br><br>
    * 
@@ -364,7 +287,7 @@ public class SectionInfo
    * of its containing document. If null, the section is simply considered
    * part of the document with no subdocument distinction.
    */
-  public String subDocument;
+  public final String subDocument;
   
   /** Meta-data collection list for a subdocument. <br><br>
    * 
@@ -373,7 +296,7 @@ public class SectionInfo
    * subdocument. Since only a subdocument can have unique meta-data, this 
    * attribute should only be pushed when a new subdocument is begun.
    */
-  public LinkedList metaInfo;
+  public List<MetaField> metaInfo;
 
   //////////////////////////////////////////////////////////////////////////////
 
@@ -409,56 +332,14 @@ public class SectionInfo
 
   //////////////////////////////////////////////////////////////////////////////
 
-  /** Explicit Constructor. <br><br>
-   *
-   *  Initializes all the fields in a <code>SectionInfo</code> instance to
-   *  values passed by the caller. <br><br>
-   */
-  public SectionInfo(int depth, int indexFlag, String sectionType,
-                     int sectionBump, float wordBoost, int sentenceBump,
-                     int spellFlag, String subDocument, LinkedList metaInfo) 
-  {
-    this.depth = depth;
-    this.indexFlag = indexFlag;
-    this.sectionType = sectionType;
-    this.prevSectionBump = 0;
-    this.sectionBump = sectionBump;
-    this.wordBoost = wordBoost;
-    this.sentenceBump = sentenceBump;
-    this.spellFlag = spellFlag;
-    this.subDocument = subDocument;
-    assert subDocument == null || subDocument.length() > 0;
-    this.metaInfo = metaInfo;
-  } // sectionBump()
+    //////////////////////////////////////////////////////////////////////////////
 
-  //////////////////////////////////////////////////////////////////////////////
-
-  /** Saves the section bump value for later restore.<br><br>
-   *
-   *  This method is used to save the specific bump value assigned to a section
-   *  when accumulating nested section bumps with no intervening text.<br><br>
-   *
-   *  @return    The previous section bump value saved.<br><br>
-   *
-   *  @.notes
-   *     Once saved, the
-   *     {@link org.cdlib.xtf.textIndexer.SectionInfo#sectionBump sectionBump}
-   *     field is reset to zero in anticipation of accumulating bump values
-   *     from previous sections. <br><br>
-   */
-  public int saveSectionBump() {
-    prevSectionBump = sectionBump;
-    sectionBump = 0;
-    return prevSectionBump;
-  }
-
-  //////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////
 
   /** Restore a previously saved section bump value.<br><br>
    *
    *  This method is a convenience method for restoring the section bump value
    *  previously saved via
-   *  {@link org.cdlib.xtf.textIndexer.SectionInfo#saveSectionBump() saveSectionBump()}.
    *  <br><br>
    */
   public void restoreSectionBump() {

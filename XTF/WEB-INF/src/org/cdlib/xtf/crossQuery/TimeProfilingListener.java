@@ -25,14 +25,14 @@ public class TimeProfilingListener implements TraceListener
    * being processed. Must be thread-local, since the same stylesheet may
    * be in use by multiple threads at one time.
    */
-  private ThreadLocal<LinkedList<ProfileInstr>> stack = new ThreadLocal();
+  private final ThreadLocal<LinkedList<ProfileInstr>> stack = new ThreadLocal();
 
   /**
    * Keeps a count of how many nodes are accessed by each instruction.
    * Must be thread-local, since the same stylesheet may be in use by
    * multiple threads at one time.
    */
-  private ThreadLocal<HashMap<ProfileInstr, ProfileTime>> timeMap = new ThreadLocal();
+  private final ThreadLocal<HashMap<ProfileInstr, ProfileTime>> timeMap = new ThreadLocal();
 
   /** Called when the stylesheet begins execution, but before any instructions. */
   public void open() 
@@ -154,10 +154,10 @@ public class TimeProfilingListener implements TraceListener
   public static class ProfileInstr
   {
     /** ID representing the XSLT file of the instruction */
-    public String systemId;
+    public final String systemId;
 
     /** Line number of the instruction within the XSLT file */
-    public int lineNum;
+    public final int lineNum;
     
     /** Time instruction was started */
     public long start;
@@ -190,7 +190,7 @@ public class TimeProfilingListener implements TraceListener
   // Simple wrapper class to keep track of time.
   public static class ProfileTime
   {
-    public ProfileInstr instr;
+    public final ProfileInstr instr;
     public long         time;
 
     public ProfileTime(ProfileInstr instr) {

@@ -122,7 +122,7 @@ public class IntHash
    * Keeps track of a single entry in the hash table. Can be linked to form
    * a chain.
    */
-  private class Ent {
+  private static class Ent {
     int key;
     Object val;
     Ent next;

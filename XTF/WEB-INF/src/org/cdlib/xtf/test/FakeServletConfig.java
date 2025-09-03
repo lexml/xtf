@@ -41,9 +41,9 @@ import javax.servlet.ServletContext;
  */
 public class FakeServletConfig implements ServletConfig 
 {
-  private FakeServletContext context;
-  private String baseDir;
-  private String servletName;
+  private final FakeServletContext context;
+  private final String baseDir;
+  private final String servletName;
 
   public FakeServletConfig(FakeServletContext context, String baseDir,
                            String servletName) 

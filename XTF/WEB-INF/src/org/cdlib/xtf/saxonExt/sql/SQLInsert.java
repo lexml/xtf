@@ -89,8 +89,8 @@ public class SQLInsert extends ExtensionInstruction
   {
     public static final int CONNECTION = 0;
     public static final int FIRST_COLUMN = 1;
-    String table;
-    boolean ignoreDuplicate;
+    final String table;
+    final boolean ignoreDuplicate;
 
     public InsertInstruction(Expression connection, String table,
                              List columnInstructions, boolean ignoreDuplicate) 

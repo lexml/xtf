@@ -89,7 +89,7 @@ public class MoreLikeThisQuery extends Query
   private float[] fieldBoosts = null;
 
   /** Boost values for the fields */
-  private Map boostMap = new HashMap();
+  private final Map boostMap = new HashMap();
 
   /**
    * The maximum number of tokens to parse in each example doc field that is
@@ -107,7 +107,7 @@ public class MoreLikeThisQuery extends Query
   private int maxQueryTerms = 10;
 
   /** For idf() calculations. */
-  private Similarity similarity = new DefaultSimilarity();
+  private final Similarity similarity = new DefaultSimilarity();
 
   /** Constructs a span query selecting all terms greater than
    * <code>lowerTerm</code> but less than <code>upperTerm</code>.
@@ -251,7 +251,7 @@ public class MoreLikeThisQuery extends Query
           boostMap.put(fieldNames[i], new Float(fieldBoosts[i]));
         }
       }
-      fields = (String[])filteredFields.toArray(new String[filteredFields.size()]);
+      fields = (String[])filteredFields.toArray(new String[0]);
     }
 
     // If we've been asked to calculate the max document frequency, do it now.
@@ -325,7 +325,7 @@ public class MoreLikeThisQuery extends Query
         continue;
 
       SpanQuery[] clauses = (SpanQuery[])fieldClauses.toArray(
-        new SpanQuery[fieldClauses.size()]);
+              new SpanQuery[0]);
 
       // Now make a special Or-Near query out of the clauses.
       SpanOrNearQuery fieldQuery = new SpanOrNearQuery(clauses, 10, false);
@@ -514,7 +514,7 @@ public class MoreLikeThisQuery extends Query
   {
     int len = term.length();
 
-    if (term.length() > 0 &&
+    if (!term.isEmpty() &&
         (term.charAt(0) == Constants.FIELD_START_MARKER ||
         term.charAt(term.length() - 1) == Constants.FIELD_END_MARKER)) 
     {
@@ -559,8 +559,8 @@ public class MoreLikeThisQuery extends Query
 
   private static class QueryWord 
   {
-    public String word;
-    public float score;
+    public final String word;
+    public final float score;
 
     public QueryWord(String word, float score) {
       this.word = word;
@@ -590,10 +590,10 @@ public class MoreLikeThisQuery extends Query
    */
   public class MoreLikeWrapper extends Query 
   {
-    MoreLikeThisQuery outerQuery;
-    String outerDescrip;
-    Query innerQuery;
-    String innerDescrip;
+    final MoreLikeThisQuery outerQuery;
+    final String outerDescrip;
+    final Query innerQuery;
+    final String innerDescrip;
 
     public MoreLikeWrapper(MoreLikeThisQuery outerQuery, Query innerQuery) {
       this.outerQuery = outerQuery;

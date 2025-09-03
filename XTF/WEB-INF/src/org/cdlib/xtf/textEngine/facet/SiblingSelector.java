@@ -34,7 +34,7 @@ import java.util.HashSet;
 /** Select all siblings of each incoming group. */
 public class SiblingSelector extends GroupSelector 
 {
-  private HashSet parents = new HashSet();
+  private final HashSet parents = new HashSet();
 
   public void reset(boolean conservative) {
     super.reset(conservative);

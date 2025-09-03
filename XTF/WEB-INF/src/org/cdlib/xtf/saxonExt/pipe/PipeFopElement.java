@@ -102,8 +102,8 @@ import net.sf.saxon.trans.XPathException;
  */
 public class PipeFopElement extends ElementWithContent 
 {
-  private static HashMap<String, FopFactory> fopFactories = new HashMap();
-  private static Lock fopLock = new ReentrantLock();
+  private static final HashMap<String, FopFactory> fopFactories = new HashMap();
+  private static final Lock fopLock = new ReentrantLock();
   
   private enum MergeAt { START, END };
   private enum MergeMode { SEQUENTIAL, OVERLAY, UNDERLAY };
@@ -150,7 +150,7 @@ public class PipeFopElement extends ElementWithContent
       
       // If output file name specified, add the Content-disposition header.
       String fileName = getAttribStr("fileName", context);
-      if (fileName != null && fileName.length() != 0)
+      if (fileName != null && !fileName.isEmpty())
         servletResponse.setHeader("Content-disposition", "attachment; filename=\"" + fileName + "\"");
       
       // Get name of file to merge, if any.
@@ -350,7 +350,7 @@ public class PipeFopElement extends ElementWithContent
       
       // Gotta make a new one.
       FopFactory factory = FopFactory.newInstance();
-      if (fontDirs.length() > 0) 
+      if (!fontDirs.isEmpty())
       {
         // The only way I've figured out to put font search directories into the 
         // factory is to feed in an XML config file. So construct one.
@@ -616,7 +616,7 @@ public class PipeFopElement extends ElementWithContent
         
         // Filter out empty values.
         String val = toPut.get(key).trim();
-        if (val.length() == 0)
+        if (val.isEmpty())
           continue;
         
         // Add the new metadata

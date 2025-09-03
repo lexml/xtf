@@ -72,5 +72,5 @@ public class GeneralException extends RuntimeException
   }
 
   /** Attributes that give more info on the exception */
-  public AttribList attribs = new AttribList();
+  public final AttribList attribs = new AttribList();
 } // class GeneralException

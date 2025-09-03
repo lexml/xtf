@@ -35,7 +35,7 @@ public class TotalHitsComparator implements SortComparatorSource
     return new HitsComp();
   } // newComparator()
 
-  private class HitsComp implements ScoreDocComparator 
+  private static class HitsComp implements ScoreDocComparator
   {
     /**
      * Compares two ScoreDoc objects and returns a result indicating their

@@ -44,10 +44,10 @@ import org.apache.lucene.analysis.standard.StandardTokenizerConstants;
 public class CheckingTokenStream extends TokenStream 
 {
   /** Main token stream that is being checked */
-  TokenStream main;
+  final TokenStream main;
 
   /** Reference stream to check the main one against */
-  TokenStream ref;
+  final TokenStream ref;
 
   /** Token type for words containing apostrophes */
   private static final String APOSTROPHE_TYPE = StandardTokenizerConstants.tokenImage[StandardTokenizerConstants.APOSTROPHE];

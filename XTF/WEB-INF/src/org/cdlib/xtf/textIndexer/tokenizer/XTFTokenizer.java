@@ -164,7 +164,7 @@ public class XTFTokenizer extends org.apache.lucene.analysis.Tokenizer implement
       return (jj_ntk = jj_nt.kind);
   }
 
-  private java.util.List jj_expentries = new java.util.ArrayList();
+  private final java.util.List jj_expentries = new java.util.ArrayList();
   private int[] jj_expentry;
   private int jj_kind = -1;
 

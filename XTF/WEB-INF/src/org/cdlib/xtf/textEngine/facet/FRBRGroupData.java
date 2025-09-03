@@ -61,13 +61,13 @@ public class FRBRGroupData extends DynamicGroupData
   private FRBRData data;
 
   /** IDs of matching documents */
-  private IntList docs = new IntList();
+  private final IntList docs = new IntList();
 
   /** Highest doc ID encountered */
   private int maxDoc = 0;
 
   /** Score of each matching document */
-  private FloatList docScores = new FloatList();
+  private final FloatList docScores = new FloatList();
 
   /** Mapping of documents to groups */
   private IntList docGroups;
@@ -134,7 +134,7 @@ public class FRBRGroupData extends DynamicGroupData
     }
 
     // And fetch the doc/tag data for those fields.
-    data = FRBRData.getCachedTags(indexReader, fields.toArray(new String[fields.size()]));
+    data = FRBRData.getCachedTags(indexReader, fields.toArray(new String[0]));
   }
 
   /**
@@ -300,8 +300,8 @@ public class FRBRGroupData extends DynamicGroupData
   } // matchOnTitle()
 
   // Instance variables to avoid re-allocation for each iteration.
-  private IntList matchTags1 = new IntList();
-  private IntList matchTags2 = new IntList();
+  private final IntList matchTags1 = new IntList();
+  private final IntList matchTags2 = new IntList();
 
   /**
    * Compare the fields of two documents to determine if they should be in
@@ -641,7 +641,7 @@ public class FRBRGroupData extends DynamicGroupData
 
   private int wordHashKey = 0;
   private static final int WORD_HASH_SIZE = Prime.findAfter(1000000);
-  private int[] wordHash = new int[WORD_HASH_SIZE];
+  private final int[] wordHash = new int[WORD_HASH_SIZE];
   private static final char[] charType = new char[0x10000];
 
   static 

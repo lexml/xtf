@@ -178,7 +178,7 @@ public class IndexInfo
    *       see {@link org.cdlib.xtf.textIndexer.IndexInfo#chunkSize chunkSize}
    *       and {@link org.cdlib.xtf.textIndexer.IndexInfo#chunkOvlp chunkOvlp}.
    */
-  public int[] chunkAtt;
+  public final int[] chunkAtt;
 
   /** Index into Chunk Attribute Array for the chunk size attribute. <br><br>
    *
@@ -238,7 +238,7 @@ public class IndexInfo
                                                 "such t that the their then there these they this to was will with";
 
   /** Pass-through attributes in the form of name/value pairs */
-  public AttribList passThroughAttribs = new AttribList();
+  public final AttribList passThroughAttribs = new AttribList();
   
   //////////////////////////////////////////////////////////////////////////// 
 

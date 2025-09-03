@@ -68,10 +68,10 @@ import org.xml.sax.SAXException;
  */
 public class TestableDynaXML extends DynaXML 
 {
-  private String baseDir;
+  private final String baseDir;
   private String indexDirOverride;
   private IndexWarmer indexWarmer;
-  private ThreadLocal<Integer> nHits = new ThreadLocal<Integer>();
+  private final ThreadLocal<Integer> nHits = new ThreadLocal<Integer>();
   
   /**
    * Simplified initialization for use outside a real servlet container.

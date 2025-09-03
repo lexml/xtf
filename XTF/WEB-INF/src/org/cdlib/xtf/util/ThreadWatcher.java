@@ -39,7 +39,7 @@ import java.util.Iterator;
  */
 public class ThreadWatcher 
 {
-  private static HashMap beingWatched = new HashMap();
+  private static final HashMap beingWatched = new HashMap();
   private static Thread watcherThread = null;
 
   /**
@@ -283,12 +283,12 @@ public class ThreadWatcher
    */
   private static class Entry 
   {
-    Thread thread;
-    String descrip;
-    long startTime;
+    final Thread thread;
+    final String descrip;
+    final long startTime;
     long nextCheckTime;
-    long normalTime;
-    long killTime;
+    final long normalTime;
+    final long killTime;
     boolean runaway = false;
     boolean needPrint = false;
     boolean kill = false;

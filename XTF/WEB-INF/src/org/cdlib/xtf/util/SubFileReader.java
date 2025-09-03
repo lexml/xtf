@@ -46,13 +46,13 @@ class SubFileReader extends SubStoreReader
   private RandomAccessFile file;
 
   /** The structured file that owns this Subfile */
-  private StructuredFile parent;
+  private final StructuredFile parent;
 
   /** Absolute file position for the subfile's start */
-  private long segOffset;
+  private final long segOffset;
 
   /** Length of this subfile */
-  private long segLength;
+  private final long segLength;
 
   /** Current read position within the subfile */
   private long curPos;

@@ -18,8 +18,8 @@ import net.sf.saxon.event.Receiver;
  */
 final class AttributeImpl extends NodeImpl
 {
-  ElementImpl element;
-  int index;
+  final ElementImpl element;
+  final int index;
 
   /**
   * Construct an Attribute node for the n'th attribute of a given element
