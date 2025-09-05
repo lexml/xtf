@@ -35,23 +35,23 @@ package org.cdlib.xtf.util;
  * interface. For an easy way to do so, extend the {@link LinkableImpl}
  * class instead.
  */
-public interface Linkable 
+public interface Linkable<L extends Linkable<L>>
 {
   /** Get a reference to the next item in the chain */
-  public Linkable getNext();
+  public L getNext();
 
   /** Get a reference to the previous item in the chain */
-  public Linkable getPrev();
+  public L getPrev();
 
   /** Get a reference to the EmbeddedList that owns this object */
-  public EmbeddedList getOwner();
+  public EmbeddedList<L> getOwner();
 
   /** Assign the next item in the chain */
-  public void setNext(Linkable l);
+  public void setNext(L l);
 
   /** Assign the previous item in the chain */
-  public void setPrev(Linkable l);
+  public void setPrev(L l);
 
   /** Get a reference to the EmbeddedList that owns this object */
-  public void setOwner(EmbeddedList o);
+  public void setOwner(EmbeddedList<L> o);
 } // class Linkable

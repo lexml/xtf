@@ -112,7 +112,7 @@ public class SimpleCache<K,V> extends Cache<K,V>
    */
   public synchronized V get(K key) {
     if (has(key))
-      return ((ListEntry)keyMap.get(key)).value;
+      return (V) (keyMap.get(key)).value;
     else
       return null;
   } // get()

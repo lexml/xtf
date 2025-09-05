@@ -31,22 +31,22 @@ package org.cdlib.xtf.util;
  */
 
 /** A simple implementation of the Linkable interface. */
-public class LinkableImpl implements Linkable 
+public class LinkableImpl<L extends Linkable<L>> implements Linkable<L> 
 {
   /** Pointer to the next link in the chain */
-  private Linkable nextLink;
+  private L nextLink;
 
   /** Pointer to the previous link in the chain */
-  private Linkable prevLink;
+  private L prevLink;
 
   /** The list that owns this item */
   private EmbeddedList owner;
 
-  public Linkable getNext() {
+  public L getNext() {
     return nextLink;
   }
 
-  public Linkable getPrev() {
+  public L getPrev() {
     return prevLink;
   }
 
@@ -54,11 +54,11 @@ public class LinkableImpl implements Linkable
     return owner;
   }
 
-  public void setNext(Linkable l) {
+  public void setNext(L l) {
     nextLink = l;
   }
 
-  public void setPrev(Linkable l) {
+  public void setPrev(L l) {
     prevLink = l;
   }
 

@@ -34,8 +34,11 @@ package org.cdlib.xtf.cache;
  * A cache that generates an entry if one isn't found. The generate()
  * method must be supplied by the derived class.
  */
-public abstract class GeneratingCache<K,V> extends Cache<K,V> 
+public abstract class GeneratingCache<K,V> extends Cache<K,V>
 {
+    /** The entry being generated */
+    private Cache.ListEntry curEntry;
+
   /**
    * Constructor - sets up the parameters of the cache.
    *
@@ -63,7 +66,7 @@ public abstract class GeneratingCache<K,V> extends Cache<K,V>
     // entry and return it.
     //
     if (has(key)) {
-      return keyMap.get(key).value;
+      return (V) keyMap.get(key).value;
     }
 
     // Otherwise, create an entry and generate a value for it.
@@ -78,10 +81,10 @@ public abstract class GeneratingCache<K,V> extends Cache<K,V>
 
     // Add it to the key map and log the action.
     keyMap.put(key, curEntry);
-    logAction("Generated", key, curEntry.value);
+    logAction("Generated", key, (V) curEntry.value);
 
     // Clear the current entry to prevent any future refs to it.
-    V value = curEntry.value;
+    V value = (V) curEntry.value;
     curEntry = null;
 
     // Since we've modified the age list, clean up if necessary.
@@ -114,6 +117,5 @@ public abstract class GeneratingCache<K,V> extends Cache<K,V>
   protected abstract V generate(K key)
     throws Exception;
 
-  /** The entry being generated */
-  private ListEntry curEntry;
+
 } // class GeneratingCache

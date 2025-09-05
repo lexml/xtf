@@ -138,14 +138,7 @@ public class XTFTextAnalyzer extends Analyzer
   /** The set of accented chars to remove diacritics from */
   private final CharMap accentMap;
 
-  /** A reference to the contiguous source text block to be tokenized and
-   *  filtered. (Used by the {@link XTFTextAnalyzer#tokenStream(String,Reader) tokenStream()}
-   *  method to read the source text for filter operations in random access
-   *  fashion.)
-   */
-  private String srcText;
-
-  /**
+    /**
    * List of fields marked as "facets" and thus get special tokenization
    */
   private final HashSet facetFields = new HashSet();
@@ -269,7 +262,12 @@ public class XTFTextAnalyzer extends Analyzer
       fastReader = new FastStringReader(reader);
 
     // Record the text string for later use.
-    srcText = fastReader.getString();
+    /** A reference to the contiguous source text block to be tokenized and
+     *  filtered. (Used by the {@link XTFTextAnalyzer#tokenStream(String, Reader) tokenStream()}
+     *  method to read the source text for filter operations in random access
+     *  fashion.)
+     */
+    String srcText = fastReader.getString();
 
     // If this is a facet field, tokenize it specially.
     if (facetFields.contains(fieldName))

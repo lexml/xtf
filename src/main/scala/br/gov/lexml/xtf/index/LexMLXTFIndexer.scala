@@ -1,7 +1,7 @@
 package br.gov.lexml.xtf.index
 
-import org.cdlib.xtf.textIndexer.{IndexerConfig, SrcTreeProcessor}
-import org.cdlib.xtf.util.{SubDirFilter, Trace}
+import org.cdlib.xtf.textIndexer.{IdxTreeOptimizer, IndexerConfig, SrcTreeProcessor}
+import org.cdlib.xtf.util.{Path, SubDirFilter, Trace}
 
 import java.io.File
 import java.time.Instant
@@ -29,28 +29,54 @@ object LexMLXTFIndexer:
     val startTimeNano = System.nanoTime()
     System.err.println(s"\nStarting [$desc] ...")
     System.err.flush()
-    val res = f
-    val endTimeNano = System.nanoTime()
-    val deltaSeconds = (endTimeNano - startTimeNano) / 1e9
-    System.err.println(f"\nStarting [$desc%s]: ellapsed time: ${deltaSeconds}%.2f seconds.")
-    System.err.flush()
-    res
+    try {
+      f
+    } catch {
+      case t : Throwable =>
+        t.printStackTrace()
+        throw t
+    } finally {
+      val endTimeNano = System.nanoTime()
+      val deltaSeconds = (endTimeNano - startTimeNano) / 1e9
+      System.err.println(f"\nStarting [$desc%s]: ellapsed time: ${deltaSeconds}%.2f seconds.")
+      System.err.flush()
+    }
 
   @main
   def index : Unit =
-    val cfgInfo = makeIndexConfig
-    val xtfHomeFile = File(cfgInfo.xtfHomePath)
-    val srcTreeProcessor = SrcTreeProcessor(cfgInfo,tokenizedFields)
-    val srcRootFile = File(cfgInfo.indexInfo.sourcePath)
-    val indexFile = File(cfgInfo.indexInfo.indexPath)
-    val subDirFilter : SubDirFilter = null
+    ellapse("index creationg") {
+      val cfgInfo = makeIndexConfig
+      val xtfHomeFile = File(cfgInfo.xtfHomePath)
+      val srcTreeProcessor = SrcTreeProcessor(cfgInfo, tokenizedFields)
+      val srcRootFile = File(cfgInfo.indexInfo.sourcePath)
+      val indexFile = File(cfgInfo.indexInfo.indexPath)
+      val subDirFilter: SubDirFilter = null
 
-    ellapse("processDir ") {
-      srcTreeProcessor.processDir(srcRootFile, subDirFilter, true)
-    }
-    println("processDir ended. Calling srcTreeProcessor.close()")
-    ellapse("srcTreeProcessor.close") {
-      srcTreeProcessor.close()
+      val t1 = new Thread(new Runnable {
+        override def run(): Unit =
+          ellapse("processDir ") {
+            srcTreeProcessor.processDir(srcRootFile, subDirFilter, true)
+            srcTreeProcessor.finishInput()
+          }
+      }, "processDirThread")
+
+      val t2 = new Thread(new Runnable {
+        override def run(): Unit =
+          ellapse("srcTreeProcessor.close") {
+            srcTreeProcessor.close()
+          }
+      }, "closeThread")
+      t1.start()
+      t2.start()
+      t1.join()
+      t2.join()
+      ellapse("optimization") {
+        val optimizer = new IdxTreeOptimizer()
+        val idxRootDir = new File(Path.resolveRelOrAbs(
+          cfgInfo.xtfHomePath,
+          cfgInfo.indexInfo.indexPath))
+        optimizer.processDir(idxRootDir)
+      }
     }
    
   val tokenizedFields : java.util.List[String] = {

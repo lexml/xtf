@@ -74,7 +74,7 @@ public class Path
   public final static String normalizePath(String path) 
   {
     // Create a buffer in which we can normalize the Path.
-    StringBuffer trimPath = new StringBuffer();
+    StringBuilder trimPath = new StringBuilder();
 
     // Remove any leading or trailing whitespace from the Path.
     trimPath.append(path.trim());

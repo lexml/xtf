@@ -79,7 +79,7 @@ public abstract class Cache<K,V>
 
     if (keyMap.containsKey(key)) 
     {
-      ListEntry entry = (ListEntry)keyMap.get(key);
+      ListEntry<K,V> entry = keyMap.get(key);
 
       // If dependency checks pass, freshen the entry and return.
       if (dependenciesValid(key)) {
@@ -109,7 +109,7 @@ public abstract class Cache<K,V>
    *              was created, or zero if not present.
    */
   public synchronized long lastSet(K key) {
-    ListEntry ent = (ListEntry)keyMap.get(key);
+    ListEntry ent = keyMap.get(key);
     return (ent == null) ? 0 : ent.setTime;
   } // lastSet()
 
@@ -123,16 +123,14 @@ public abstract class Cache<K,V>
   {
     cleanup();
 
-    ListEntry ent = (ListEntry)keyMap.get(key);
+    ListEntry<K,V> ent = keyMap.get(key);
     if (ent == null)
       return false;
 
-    Iterator i = ent.dependencies.iterator();
-    while (i.hasNext()) {
-      Dependency d = (Dependency)i.next();
-      if (!d.validate())
-        return false;
-    }
+      for (Dependency d : ent.dependencies) {
+          if (!d.validate())
+              return false;
+      }
 
     return true;
   } // dependenciesValid()
@@ -164,7 +162,7 @@ public abstract class Cache<K,V>
 
     // If we have the key, remove it and return the object.
     if (keyMap.containsKey(key)) {
-      ListEntry entry = (ListEntry)keyMap.get(key);
+      ListEntry<K,V> entry = (ListEntry)keyMap.get(key);
       ageList.remove(entry);
       keyMap.remove(key);
       logAction("Removed", key, entry.value);
@@ -202,7 +200,7 @@ public abstract class Cache<K,V>
     {
       // Remove entries until we meet the maxEntries restriction.
       while (ageList.getCount() > maxEntries) {
-        ListEntry ent = (ListEntry)ageList.removeHead();
+        ListEntry<K,V> ent = (ListEntry)ageList.removeHead();
         logAction(
           "Expired to maintain max # cache entries... was " +
           (ageList.getCount() + 1) + ", must be <= " + maxEntries,
@@ -219,9 +217,9 @@ public abstract class Cache<K,V>
       long maxTimeMillis = maxTime * 1000;
       long expireTime = System.currentTimeMillis() - maxTimeMillis;
       while (ageList.getCount() > 0 &&
-             ((ListEntry)ageList.getHead()).lastUsedTime < expireTime) 
+             ageList.getHead().lastUsedTime < expireTime)
       {
-        ListEntry ent = (ListEntry)ageList.removeHead();
+        ListEntry<K,V> ent = (ListEntry)ageList.removeHead();
         logAction(
           "Expired due to over-age... age is " +
           ((System.currentTimeMillis() - ent.lastUsedTime) / 1000) +
@@ -261,7 +259,7 @@ public abstract class Cache<K,V>
   } // class NullIterator()
 
   /** An entry in the age list maintained by the cache */
-  protected class ListEntry extends LinkableImpl 
+  protected class ListEntry<K,V> extends LinkableImpl<ListEntry<K,V>>
   {
     /** The key being tracked */
     K key;
@@ -296,5 +294,5 @@ public abstract class Cache<K,V>
    * used to find the least-recently-used entry to remove when the cache
    * constraints (time or # of entries) are exceeded.
    */
-  protected EmbeddedList ageList;
+  protected EmbeddedList<ListEntry<K,V>> ageList;
 } // class Cache

@@ -29,9 +29,8 @@ package org.cdlib.xtf.textIndexer;
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-import java.io.File;
-import java.io.IOException;
-import java.io.StringReader;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -73,7 +72,13 @@ import org.xml.sax.InputSource;
  */
 public class SrcTreeProcessor 
 {
-  private IndexerConfig cfgInfo;
+
+  private static final FileFilter dcFileFilter = pathname -> pathname.isFile() && pathname.getName().endsWith(".dc.xml");
+
+
+  private static final FileFilter subDirFileFilter = pathname -> pathname.isDirectory();
+
+  private final IndexerConfig cfgInfo;
   // Instantiate a text processor object to use on each XML file
   // encountered in the file tree.
   //
@@ -87,6 +92,7 @@ public class SrcTreeProcessor
   private File docSelCacheFile;
   private final DocSelCache docSelCache = new DocSelCache();
 
+  private final Templates[] preFilters;
     /** Indexing open function. <br><br>
      *
      *  Calls the {@link org.cdlib.xtf.textIndexer.XMLTextProcessor}
@@ -105,6 +111,7 @@ public class SrcTreeProcessor
   public SrcTreeProcessor(IndexerConfig cfgInfo,List<String> tokenizedFields) throws Exception {
       // Hang on to a reference to the config info.
       this.cfgInfo = cfgInfo;
+      assert this.cfgInfo != null;
       this.textProcessor = new XMLTextProcessor(tokenizedFields);
 
       // If no XTF home directory specified, assume it is the same
@@ -129,6 +136,8 @@ public class SrcTreeProcessor
             cfgInfo.force);
       //}
       cfgInfo.clean = false;
+      this.preFilters = new Templates[] { stylesheetCache.find(Path.resolveRelOrAbs(cfgInfo.xtfHomePath, "style/textIndexer/dcPreFilter.xsl")) };
+      assert this.preFilters[0] != null;
   }
     // open()
 
@@ -150,8 +159,7 @@ public class SrcTreeProcessor
    *
    */
   public void close()
-    throws IOException 
-  {
+          throws IOException, InterruptedException {
     // Flush the remaining open documents.
     if (!cfgInfo.prefilterOnly)
       textProcessor.processQueuedTexts();
@@ -161,8 +169,7 @@ public class SrcTreeProcessor
     //
     saveCache();
 
-    // Let go of the config info now that we're done with it.
-    cfgInfo = null;
+
 
     // Close the index database.
     textProcessor.close();
@@ -252,7 +259,10 @@ public class SrcTreeProcessor
     }
   } // saveCache()
 
+  private long count =  0L;
   ////////////////////////////////////////////////////////////////////////////
+
+
 
   /** Process a directory containing source XML files. <br><br>
    *
@@ -270,62 +280,53 @@ public class SrcTreeProcessor
    *
    */
 
-  public void processDir(File curDir, SubDirFilter subDirFilter, boolean topLevel)
+  public void processDir(final File curDir, SubDirFilter subDirFilter, boolean topLevel)
     throws Exception 
   {
+      if(curDir == null) return;
+      count = count + 1;
+      if (/*count < 4440 &&*/ (count % 100) == 0) {
+          System.err.println();
+          System.err.print(String.format("%012d",count) + ": ");
+      } /*else if (count >= 4479) {
+          System.err.println(String.format("%012d",count) + ": " + curDir);
+      } */
+      System.err.print('.');
+      System.err.flush();
     // If we're only doing a subset and this directory isn't in it, skip.
-    if (subDirFilter != null && !subDirFilter.approve(curDir))
-      return;
-    
-    // We're looking at a directory. Get the list of files it contains.
-    String[] fileStrs = curDir.getAbsoluteFile().list();
-    if (fileStrs == null) {
+    /* if (subDirFilter != null && !subDirFilter.approve(curDir))
+      return; */
+
+    File[] files;
+    try {
+        files = curDir.listFiles(dcFileFilter);
+    } catch (Throwable throwable) {
+        throwable.printStackTrace();
+        System.exit(10);
+        return;
+    }
+
+    if (files == null) {
       Trace.warning(
         "Warning: error retrieving file list for directory: " + curDir);
       return;
     }
 
-    List<String> list = new ArrayList<>(fileStrs.length);
-    list.addAll(Arrays.asList(fileStrs));
-    Collections.sort(list);
 
     // Process all of the non-directory files first. Form a document 
     // representing the directory and all its files.
     //
-    docBuf.setLength(0);
-    dirBuf.setLength(0);
+    //docBuf.setLength(0);
+    //dirBuf.setLength(0);
 
-    String dirPath = Path.normalizePath(curDir.toString());
-    docBuf.append("<directory dirPath=\"").append(StringUtil.escapeHTMLChars(dirPath)).append("\">\n");
+    //String dirPath = Path.normalizePath(curDir.toString());
+    //docBuf.append("<directory dirPath=\"").append(StringUtil.escapeHTMLChars(dirPath)).append("\">\n");
     int nFiles = 0;
-      for (String o : list) {
-          File subFile = new File(curDir, o);
-          if (!subFile.getAbsoluteFile().isDirectory()) {
-              docBuf.append("  <file fileName=\"");
-              docBuf.append(StringUtil.escapeHTMLChars(subFile.getName()));
-              docBuf.append("\"/>\n");
+    for (File f : files) {
+        processFile(f, preFilters);
+        ++nFiles;
+    }
 
-              dirBuf.append(StringUtil.escapeHTMLChars(subFile.getName()));
-              dirBuf.append(':');
-              dirBuf.append(subFile.lastModified());
-              dirBuf.append("\n");
-
-              ++nFiles;
-
-              // Print out dots as we process large amounts of files, just so
-              // the user knows something is happening.
-              //
-              /*if (((nScanned++) % 200) == 0)
-                  Trace.more(Trace.info, ".");*/
-          }
-      }
-    docBuf.append("</directory>\n");
-
-    // Now process the document using the docSelector stylesheet.
-    boolean anyProcessed = false;
-    boolean runStylesheet;
-    String inStr = docBuf.toString();
-    String filesAndTimes = dirBuf.toString();
     String dirKey;
     if (topLevel)
       dirKey = cfgInfo.indexInfo.indexName + ":/";
@@ -333,103 +334,28 @@ public class SrcTreeProcessor
       dirKey = IndexUtil.calcDocKey(new File(cfgInfo.xtfHomePath),
                                     cfgInfo.indexInfo, curDir);
     
-    if (nFiles == 0)
-      runStylesheet = false;
-    else 
-    {
-      DocSelCache.Entry ent = docSelCache.get(dirKey);
-      if (ent == null)
-        runStylesheet = true;
-      else if (cfgInfo.force || !ent.filesAndTimes.equals(filesAndTimes)) {
-        docSelCache.remove(dirKey);
-        runStylesheet = true;
-      }
-      else {
-        anyProcessed = ent.anyProcessed;
-        runStylesheet = false;
-      }
-    }
-
-    if (runStylesheet) 
-    {
-      InputSource docSelectorInput = new InputSource(new StringReader(inStr));
-
-      if (Trace.getOutputLevel() >= Trace.debug) {
-        Trace.debug("*** docSelector input ***\n" + inStr);
-        Trace.debug("");
-      }
-
-      TreeBuilder tree = new TreeBuilder();
-      Transformer docSelectorTrans = docSelector.newTransformer();
-      
-      // Handle pass-through attributes from the config file.
-      for (Iterator<Attrib> i = cfgInfo.indexInfo.passThroughAttribs.iterator(); i.hasNext();) {
-        Attrib a = i.next();
-        if (a.value == null || a.value.isEmpty())
-          continue;
-        docSelectorTrans.setParameter(a.key, new StringValue(a.value));
-      }
-
-      docSelectorTrans.transform(new SAXSource(docSelectorInput), tree);
-      NodeInfo result = tree.getCurrentRoot();
-
-      if (Trace.getOutputLevel() >= Trace.debug) {
-        Trace.debug("*** docSelector output ***\n" +
-                    XMLWriter.toString(result));
-        Trace.debug("");
-      }
-
-      // Iterate the result, and queue any files to index.
-      EasyNode root = new EasyNode(result);
-      for (int i = 0; i < root.nChildren(); i++) 
-      {
-        EasyNode node = root.child(i);
-        if (!node.isElement())
-          continue;
-
-        String tagName = node.name();
-
-        if (tagName.equalsIgnoreCase("indexFiles")) {
-          root = node;
-          i = -1;
-          continue;
-        }
-
-        if (tagName.equalsIgnoreCase("indexFile")) {
-          if (processFile(dirPath, node))
-            anyProcessed = true;
-        }
-        else {
-          Trace.error(
-            "Error: docSelector returned unknown element '" + tagName + "'");
-          return;
-        }
-      } // while
-
-      // Store this in the cache so we don't have to run the stylesheet
-      // next time (that is, unless the directory contents or stylesheet
-      // are different).
-      //
-      docSelCache.put(dirKey, new DocSelCache.Entry(filesAndTimes, anyProcessed));
-    } // if nFiles > 0
-
-    // In the old mode (scanAllDirs = false), if we found any files to process, 
+    // In the old mode (scanAllDirs = false), if we found any files to process,
     // the convention is that subdirectories contain file related to the ones 
     // we processed, and that they shouldn't be processed individually.
     //
     // In the new mode (scanAllDirs = true), we always process subdirs. This
     // seems to be what most people really want and expect.
     //
-    if (anyProcessed && !cfgInfo.indexInfo.scanAllDirs)
+    if (nFiles > 0 && !cfgInfo.indexInfo.scanAllDirs)
       return;
 
     // Recursively try sub-directories.
-    for (String s : list) {
-        File subFile = new File(curDir, s);
-        if (subFile.getAbsoluteFile().isDirectory())
-            processDir(subFile, subDirFilter, false);
+    File[] subDirs = curDir.listFiles(subDirFileFilter);
+    if(subDirs != null) {
+        for (File f : subDirs) {
+            processDir(f, subDirFilter, false);
+        }
     }
   } // processDir()
+
+  public void finishInput() throws InterruptedException {
+      textProcessor.queueText(null,false);
+  }
 
   ////////////////////////////////////////////////////////////////////////////
 
@@ -451,104 +377,97 @@ public class SrcTreeProcessor
    *
    */
   public boolean processFile(String dir, EasyNode parentEl)
-    throws Exception 
-  {
-    // Gather all the info from the element's attributes.
-    File srcPath = null;
-    Vector<Templates> preFilterVec = new Vector<>();
-    String format = null;
+    throws Exception {
+      // Gather all the info from the element's attributes.
+      File srcPath = null;
+      Vector<Templates> preFilterVec = new Vector<>();
+      String format = null;
 
-    for (int i = 0; i < parentEl.nAttrs(); i++) 
-    {
-      String attrName = parentEl.attrName(i);
-      String attrVal = parentEl.attrValue(i);
+      for (int i = 0; i < parentEl.nAttrs(); i++) {
+          String attrName = parentEl.attrName(i);
+          String attrVal = parentEl.attrValue(i);
 
-      // Get the file name and check it.
-      if (attrName.equalsIgnoreCase("fileName")) 
-      {
-        srcPath = new File(Path.normalizeFileName(dir + attrVal));
-        if (!srcPath.canRead()) {
-          Trace.error("Error: cannot read input document '" + srcPath + "'");
+          // Get the file name and check it.
+          if (attrName.equalsIgnoreCase("fileName")) {
+              srcPath = new File(Path.normalizeFileName(dir + attrVal));
+              if (!srcPath.canRead()) {
+                  Trace.error("Error: cannot read input document '" + srcPath + "'");
+                  return false;
+              }
+          }
+
+          // Is there an input filter(s) specified?
+          else if (attrName.equalsIgnoreCase("preFilter")) {
+              // Break up a list separated by semicolons or commas.
+              StringTokenizer st = new StringTokenizer(attrVal, ";,");
+              while (st.hasMoreTokens()) {
+                  String partialPath = st.nextToken();
+                  String preFilterPath = Path.resolveRelOrAbs(cfgInfo.xtfHomePath,
+                          partialPath);
+                  preFilterVec.add(stylesheetCache.find(preFilterPath));
+              } // while
+          } // else
+
+          // Is there a format specified?
+          else if (attrName.equalsIgnoreCase("type")) {
+              format = attrVal;
+              if (format.equalsIgnoreCase("XML"))
+                  format = "XML";
+              else if (format.equalsIgnoreCase("PDF"))
+                  format = "PDF";
+              else if (format.equalsIgnoreCase("HTML"))
+                  format = "HTML";
+              else if (format.equalsIgnoreCase("DOC") || format.equalsIgnoreCase("MSWord"))
+                  format = "MSWord";
+              else if (format.equalsIgnoreCase("Text"))
+                  format = "Text";
+              else if (format.equalsIgnoreCase("MARC"))
+                  format = "MARC";
+              else {
+                  Trace.error("Error: docSelector returned unknown type: '" + format +
+                          "'");
+                  return false;
+              }
+          }
+
+          // Other attributes are in error.
+          else {
+              Trace.error(
+                      "Error: docSelector returned unknown attribute: '" + attrName + "'");
+              return false;
+          }
+      } // while
+
+      // Make sure the filename was specified.
+      if (srcPath == null) {
+          Trace.error("Error: docSelector must return 'fileName' attribute");
           return false;
-        }
       }
 
-      // Is there an input filter(s) specified?
-      else if (attrName.equalsIgnoreCase("preFilter")) 
-      {
-        // Break up a list separated by semicolons or commas.
-        StringTokenizer st = new StringTokenizer(attrVal, ";,");
-        while (st.hasMoreTokens()) {
-          String partialPath = st.nextToken();
-          String preFilterPath = Path.resolveRelOrAbs(cfgInfo.xtfHomePath,
-                                                      partialPath);
-          preFilterVec.add(stylesheetCache.find(preFilterPath));
-        } // while
-      } // else
-
-      // Is there a format specified?
-      else if (attrName.equalsIgnoreCase("type")) 
-      {
-        format = attrVal;
-        if (format.equalsIgnoreCase("XML"))
-          format = "XML";
-        else if (format.equalsIgnoreCase("PDF"))
-          format = "PDF";
-        else if (format.equalsIgnoreCase("HTML"))
-          format = "HTML";
-        else if (format.equalsIgnoreCase("DOC") || format.equalsIgnoreCase("MSWord"))
-          format = "MSWord";
-        else if (format.equalsIgnoreCase("Text"))
-          format = "Text";
-        else if (format.equalsIgnoreCase("MARC"))
-          format = "MARC";
-        else {
-          Trace.error("Error: docSelector returned unknown type: '" + format +
-                      "'");
+      // If no format was specified, bail out.
+      if (format == null) {
+          Trace.warning(
+                  "Warning: file type not specified for '" +
+                          srcPath);
           return false;
-        }
       }
-
-      // Other attributes are in error.
-      else {
-        Trace.error(
-          "Error: docSelector returned unknown attribute: '" + attrName + "'");
-        return false;
-      }
-    } // while
-
-    // Make sure the filename was specified.
-    if (srcPath == null) {
-      Trace.error("Error: docSelector must return 'fileName' attribute");
-      return false;
-    }
-
-    // If no format was specified, bail out.
-    if (format == null)
-    {
-        Trace.warning(
-          "Warning: file type not specified for '" +
-          srcPath);
-        return false;
-    }
-
+      return processFile(srcPath, preFilterVec.toArray(new Templates[0]));
+  }
+  public boolean processFile(File srcPath,Templates[] preFilters) throws Exception {
     // We need to refer to the file in a way that isn't dependent on the
     // particular location the index is at right now. So calculate a key
     // that just contains the index name and the part of the path after that
     // index's data directory.
     //
-    String key = IndexUtil.calcDocKey(new File(cfgInfo.xtfHomePath),
-                                      cfgInfo.indexInfo, srcPath);
+    String key = srcPath.getName().replaceAll("\\..*","");/*IndexUtil.calcDocKey(new File(cfgInfo.xtfHomePath),
+                                      cfgInfo.indexInfo, srcPath);*/
 
     // Calculate a proper system ID for this file.
     String systemId = srcPath.toURI().toURL().toString();
 
-    // Convert the prefilter(s) to an array.
-    Templates[] preFilters = null;
-    if (!preFilterVec.isEmpty())
-      preFilters = preFilterVec.toArray(new Templates[0]);
+    byte[] data = Files.readAllBytes(srcPath.toPath());
 
-    InputSource finalSrc = new InputSource(systemId);
+    InputSource finalSrc = new InputSource(new ByteArrayInputStream(data));// BufferedInputStream(new FileInputStream()))//= new InputSource(systemId);
     processFile(key,finalSrc,srcPath.lastModified(),srcPath.length(),preFilters);
 
     // Let the caller know we didn't skip the file.

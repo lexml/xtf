@@ -52,7 +52,7 @@ package org.cdlib.xtf.util;
  * interface. The easiest way to do this is to simply extend the
  * {@link LinkableImpl} class, and then no additional work is needed.
  */
-public class EmbeddedList 
+public class EmbeddedList<L extends Linkable>
 {
   /**
    * Add an object to the head of the list.
@@ -60,7 +60,7 @@ public class EmbeddedList
    * @param l     The object to add. Note that it must not be in any other
    *              EmbeddedList.
    */
-  public void addHead(Linkable l) 
+  public void addHead(L l) 
   {
     if (l.getOwner() != null)
       throw new IllegalArgumentException();
@@ -87,7 +87,7 @@ public class EmbeddedList
    * @param l     The object to add. Note that it must not be in any other
    *              EmbeddedList.
    */
-  public void addTail(Linkable l) 
+  public void addTail(L l) 
   {
     if (l.getOwner() != null)
       throw new IllegalArgumentException();
@@ -113,7 +113,7 @@ public class EmbeddedList
    *
    * @return  The object, or null if there are none in the list.
    */
-  public Linkable getHead() {
+  public L getHead() {
     return head;
   }
 
@@ -122,7 +122,7 @@ public class EmbeddedList
    *
    * @return  The object, or null if there are none in the list.
    */
-  public Linkable getTail() {
+  public L getTail() {
     return tail;
   }
 
@@ -140,7 +140,7 @@ public class EmbeddedList
    *
    * @return  The first object in the list, or null if the list is empty.
    */
-  public Linkable removeHead() {
+  public L removeHead() {
     if (head == null)
       return null;
     else
@@ -152,7 +152,7 @@ public class EmbeddedList
    *
    * @return  The last object in the list, or null if the list is empty.
    */
-  public Linkable removeTail() {
+  public L removeTail() {
     if (tail == null)
       return null;
     else
@@ -163,7 +163,7 @@ public class EmbeddedList
    * Move the specified object to the head of the list (if it isn't
    * already there).
    */
-  public void moveToHead(Linkable l) 
+  public void moveToHead(L l) 
   {
     if (l.getOwner() != this)
       throw new IllegalArgumentException();
@@ -178,7 +178,7 @@ public class EmbeddedList
    * Move the specified object to the tail of the list (if it isn't
    * already there).
    */
-  public void moveToTail(Linkable l) 
+  public void moveToTail(L l) 
   {
     if (l.getOwner() != this)
       throw new IllegalArgumentException();
@@ -196,10 +196,10 @@ public class EmbeddedList
    *
    * @return  The same object, useful for operator chaining.
    */
-  public Linkable remove(Linkable l) 
+  public L remove(L l) 
   {
-    Linkable prev = l.getPrev();
-    Linkable next = l.getNext();
+    L prev = (L) l.getPrev();
+    L next = (L) l.getNext();
 
     if (l.getOwner() != this)
       throw new IllegalArgumentException();
@@ -232,10 +232,10 @@ public class EmbeddedList
   }
 
   /** Reference to the first object in the list, or null if empty */
-  private Linkable head;
+  private L head;
 
   /** Reference to the last object in the list, or null if empty */
-  private Linkable tail;
+  private L tail;
 
   /** How many objects are currently in the list */
   private int count = 0;

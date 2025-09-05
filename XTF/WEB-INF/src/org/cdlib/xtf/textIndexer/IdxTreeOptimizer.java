@@ -134,6 +134,9 @@ public class IdxTreeOptimizer
       Directory dir = NativeFSDirectory.getDirectory(idxDirToOptimize);
       IndexWriter indexWriter = new IndexWriter(dir, new StandardAnalyzer(), false);
 
+      indexWriter.setMergeFactor(20);
+      indexWriter.setMaxMergeDocs(Integer.MAX_VALUE);
+      indexWriter.setMaxBufferedDocs(1000);
       // Previously we were paranoid about using compound files, on the
       // mistaken assumption that indexes could not be modified. This is
       // not true... the modifications simply take place at the next merge,
