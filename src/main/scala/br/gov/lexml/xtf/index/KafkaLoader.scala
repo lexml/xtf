@@ -10,9 +10,11 @@ import org.xml.sax.InputSource
 import zio.*
 import zio.stream.*
 
-import java.io.{File, IOException}
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, File, IOException}
 import java.nio.file.{Files, Path, Paths}
-import javax.xml.transform.Templates
+import javax.xml.transform.{OutputKeys, Templates}
+import javax.xml.transform.sax.SAXSource
+import javax.xml.transform.stream.{StreamResult, StreamSource}
 
 object KafkaLoader:
   def pathStream(root : File, fileFilter : File => Boolean = _ => true, subDirFilter : File => Boolean = _ => true)
@@ -36,8 +38,10 @@ object KafkaLoader:
 
   private val dcPreFilterFile =
     File(File(xtfHomePath), "style/textIndexer/dcPreFilter.xsl")
-  if(!dcPreFilterFile.exists()) then
-    throw new RuntimeException()  
+  if !dcPreFilterFile.exists() then
+    throw new RuntimeException()
+  else ()
+
   private val transformerFactory = {
     val tfConfig = new net.sf.saxon.Configuration()
     tfConfig.setNamePool(NamePool.getDefaultNamePool)
@@ -48,28 +52,28 @@ object KafkaLoader:
     tf.setAttribute(FeatureKeys.SOURCE_PARSER_CLASS, classOf[DTDSuppressingXMLReader].getName)
     tf
   }
-  
+
+  private val dcStyleSheet =
+    transformerFactory.newTemplates(new StreamSource(Files.newInputStream(dcPreFilterFile.toPath)))
+
+  private val expectedIncrease : Double = 0.2
+
+  def transformStream(templates : Templates,paralelism : Int = 16) : ZPipeline[Any,Exception,Array[Byte],Either[Exception,Array[Byte]]] =
+    ZPipeline.mapZIOParUnordered[Any,Exception,Array[Byte],Either[Exception,Array[Byte]]](paralelism) { inBytes =>
+      (for {
+        tf <- ZIO.attempt { templates.newTransformer() }
+        _ <- ZIO.attempt {
+          tf.setOutputProperty(OutputKeys.METHOD, "xml")
+          tf.setOutputProperty(OutputKeys.ENCODING, "UTF-8")
+          tf.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes")
+        }
+        baos = new ByteArrayOutputStream((inBytes.length * (1.0 + expectedIncrease)).toInt)
+        _ <- ZIO.attempt {
+          tf.transform(new StreamSource(new ByteArrayInputStream(inBytes)),
+            new StreamResult(baos))
+        }
+      } yield baos.toByteArray).refineOrDie { case ex : Exception => ex }.either
+    }
 
 
-  private lazy val dcStyleSheet = {
-    transformerFactory.newTemplates(new SAXSource(new InputSource(dcPreFilterFilter.toURL)))
-    stylesheetCache.find(org.cdlib.xtf.util.Path.resolveRelOrAbs(
-      xtfHomePath, "style/textIndexer/dcPreFilter.xsl"))
-  }
 
-  private val preFilters = Array(dcStyleSheet)
-  def transform(f : File, handler : LuceneDocBuilderHandler) =
-    // Instantiate a new XML parser, being sure to get the right one.
-    val xmlParser = IndexUtil.createSAXParser()
-
-    // Get the input source from the record.
-    val xmlSource = new InputSource(Files.newBufferedReader(f.toPath))
-
-    IndexUtil.applyPreFilters(preFilters,
-      xmlParser.getXMLReader(),
-      xmlSource,
-      null,
-      new SAXResult(handler));
-
-
-  def readAndTransformFile(f : File) :
