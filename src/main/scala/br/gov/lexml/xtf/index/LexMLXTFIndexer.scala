@@ -43,7 +43,7 @@ object LexMLXTFIndexer:
     }
 
   @main
-  def index : Unit =
+  def index() : Unit =
     ellapse("index creationg") {
       val cfgInfo = makeIndexConfig
       val xtfHomeFile = File(cfgInfo.xtfHomePath)
